@@ -80,55 +80,102 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ),
                 );
               }
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio:
-                        (snapshot.data.length / (snapshot.data.length + 1))),
-                itemCount: snapshot.data.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.of(context)
-                          .pushNamed(Dashboard.routeName, arguments: {
-                        'category': snapshot.data[index],
-                        'userType': userType,
-                      });
+
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: snapshot.data.map<Widget>(
+                    (category) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context)
+                              .pushNamed(Dashboard.routeName, arguments: {
+                            'category': category,
+                            'userType': userType,
+                          });
+                        },
+                        child: Column(
+                          children: <Widget>[
+                            Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    fit: BoxFit.fill,
+                                    image: NetworkImage(
+                                      Utils.URL + "images/" + category.imgPath,
+                                    ),
+                                  )),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text(
+                                AppLocalizations.of(context)
+                                    .translate(category.name),
+                                style: TextStyle(
+                                    fontSize: 22,
+                                    color: Color(0xFF739b21),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                fit: BoxFit.fill,
-                                image: NetworkImage(
-                                  Utils.URL +
-                                      "images/" +
-                                      snapshot.data[index].imgPath,
-                                ),
-                              )),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Text(
-                            AppLocalizations.of(context)
-                                .translate(snapshot.data[index].name),
-                            style: TextStyle(
-                                fontSize: 22,
-                                color: Color(0xFF739b21),
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                  ).toList(),
+                ),
               );
+              // return GridView.builder(
+              //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              //       crossAxisCount: 2,
+              //       childAspectRatio:
+              //           (snapshot.data.length / (snapshot.data.length + 1))),
+              //   itemCount: snapshot.data.length,
+              //   itemBuilder: (BuildContext context, int index) {
+              //     return GestureDetector(
+              //       onTap: () {
+              //         Navigator.of(context)
+              //             .pushNamed(Dashboard.routeName, arguments: {
+              //           'category': snapshot.data[index],
+              //           'userType': userType,
+              //         });
+              //       },
+              //       child: Column(
+              //         mainAxisAlignment: MainAxisAlignment.center,
+              //         crossAxisAlignment: CrossAxisAlignment.center,
+              //         children: <Widget>[
+              //           Container(
+              //             width: 150,
+              //             height: 150,
+              //             decoration: BoxDecoration(
+              //                 shape: BoxShape.circle,
+              //                 image: DecorationImage(
+              //                   fit: BoxFit.fill,
+              //                   image: NetworkImage(
+              //                     Utils.URL +
+              //                         "images/" +
+              //                         snapshot.data[index].imgPath,
+              //                   ),
+              //                 )),
+              //           ),
+              //           Padding(
+              //             padding: EdgeInsets.all(8),
+              //             child: Text(
+              //               AppLocalizations.of(context)
+              //                   .translate(snapshot.data[index].name),
+              //               style: TextStyle(
+              //                   fontSize: 22,
+              //                   color: Color(0xFF739b21),
+              //                   fontWeight: FontWeight.bold),
+              //             ),
+              //           ),
+              //         ],
+              //       ),
+              //     );
+              //   },
+              // );
             }));
   }
 }

@@ -1,6 +1,7 @@
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
+import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +89,7 @@ class _MyAppState extends State<MyApp> {
         MapSample.routeName: (ctx) => MapSample(),
         ProdReqAdd.routeName: (ctx) => ProdReqAdd(),
         SingUpScreen.routeName: (ctx) => SingUpScreen(),
+        ProdReqDetail.routeName: (ctx) => ProdReqDetail(),
       },
 
       home: isLangSelected ? CheckUserScreen() : ChooseLanguageScreen(),

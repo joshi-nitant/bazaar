@@ -7,6 +7,7 @@ import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
+import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -38,12 +39,16 @@ class _DashboardState extends State<Dashboard> {
     List<Requirement> requirements = [];
     for (var u in jsondata) {
       Requirement requirement = Requirement(
-        req_id: u['req_id'],
+        id: u['req_id'],
         quantity: u['quantity'],
         price_expected: u['price_expected'],
-        location: u['city'],
         breed: u['breed'],
         category_id: u['category_id'],
+        city: u['city'],
+        state: u['state'],
+        latitude: u['latitude'],
+        longitude: u['longitude'],
+        remaining_qty: u['remaining_qty'],
       );
       requirements.add(requirement);
     }
@@ -66,12 +71,16 @@ class _DashboardState extends State<Dashboard> {
     List<Product> products = [];
     for (var u in jsondata) {
       Product product = Product(
-        prod_id: u['prod_id'],
+        id: u['prod_id'],
         quantity: u['quantity'],
         price_expected: u['price_expected'],
-        location: u['city'],
         breed: u['breed'],
         category_id: u['category_id'],
+        city: u['city'],
+        state: u['state'],
+        latitude: u['latitude'],
+        longitude: u['longitude'],
+        remaining_qty: u['remaining_qty'],
       );
       products.add(product);
     }
@@ -188,11 +197,11 @@ class _DashboardState extends State<Dashboard> {
                                 children: <Widget>[
                                   Padding(
                                     padding: EdgeInsets.all(3),
-                                    child: Text(snapshot.data[index].breed +
-                                        " |" +
-                                        "${AppLocalizations.of(context).translate(category.name)}"
-                                            " in " +
-                                        snapshot.data[index].location),
+                                    child: Text(
+                                      snapshot.data[index].breed +
+                                          " |" +
+                                          "${AppLocalizations.of(context).translate(category.name)}",
+                                    ),
                                   ),
                                   Row(
                                     mainAxisAlignment:
@@ -237,7 +246,14 @@ class _DashboardState extends State<Dashboard> {
                                 padding: EdgeInsets.all(8),
                                 child: RaisedButton(
                                   color: Color(0xFF739b21),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.of(context).pushNamed(
+                                      ProdReqDetail.routeName,
+                                      arguments: {
+                                        "object": snapshot.data[index]
+                                      },
+                                    );
+                                  },
                                   child: Text(
                                     "Bid",
                                     style: TextStyle(

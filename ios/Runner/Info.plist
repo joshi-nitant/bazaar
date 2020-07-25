@@ -47,5 +47,9 @@
 	<string>This app requires access to your location.</string>
 	<key>io.flutter.embedded_views_preview</key>
 	<string>YES</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow baazar to access your camera</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow baazar to access your camera</string>
 </dict>
 </plist>
