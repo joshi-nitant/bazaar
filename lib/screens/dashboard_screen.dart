@@ -8,6 +8,7 @@ import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
+import 'package:baazar/screens/prod_req_view_screen.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -71,21 +72,33 @@ class _DashboardState extends State<Dashboard> {
     List<Product> products = [];
     for (var u in jsondata) {
       Product product = Product(
-          id: u['prod_id'],
-          quantity: u['quantity'],
-          price_expected: u['price_expected'],
-          breed: u['breed'],
-          category_id: u['category_id'],
-          city: u['city'],
-          state: u['state'],
-          latitude: u['latitude'],
-          longitude: u['longitude'],
-          remaining_qty: u['remaining_qty'],
-          image: u['image']);
+        id: u['prod_id'],
+        quantity: u['quantity'],
+        price_expected: u['price_expected'],
+        breed: u['breed'],
+        category_id: u['category_id'],
+        city: u['city'],
+        state: u['state'],
+        latitude: u['latitude'],
+        longitude: u['longitude'],
+        remaining_qty: u['remaining_qty'],
+        image: u['image'],
+        qualityCertificate: u['quality_certificate'],
+      );
       products.add(product);
     }
     print(jsondata);
     return products;
+  }
+
+  void _redirectToManageScreeen() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
+      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
+    } else {
+      print('redirecting');
+      Navigator.of(context).pushNamed(ProdReqViewScreen.routeName);
+    }
   }
 
   void _checkUserIsLoggedIn() async {
@@ -135,9 +148,9 @@ class _DashboardState extends State<Dashboard> {
               // },
             ),
             ListTile(
-              title: Text("About"),
+              title: Text("Manage your items"),
               onTap: () {
-                //
+                _redirectToManageScreeen();
               },
             ),
             ListTile(

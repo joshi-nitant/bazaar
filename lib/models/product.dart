@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:baazar/models/category.dart';
+import 'package:flutter/material.dart';
 
 class Product {
   String id;
@@ -12,6 +13,10 @@ class Product {
   String city;
   String image;
   String remaining_qty;
+  Category category;
+  String qualityCertificate;
+  String address;
+  String postalCode;
 
   Product({
     @required this.id,
@@ -25,5 +30,13 @@ class Product {
     @required this.longitude,
     @required this.remaining_qty,
     @required this.image,
+    this.category,
+    this.qualityCertificate,
+    this.address,
+    this.postalCode,
   });
+
+  String get quality_certificate {
+    return this.qualityCertificate;
+  }
 }

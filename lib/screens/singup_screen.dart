@@ -89,11 +89,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
         String dialogMesage = "Singup insertion failed.";
         String buttonMessage = "Ok!!";
 
-        DialogWidget(
-          title: text,
-          dialogMessage: dialogMesage,
-          buttonTitle: buttonMessage,
-        );
+        showMyDialog(context, text, dialogMesage, buttonMessage);
       }
     }
   }

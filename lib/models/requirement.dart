@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+import 'category.dart';
 
 class Requirement {
   String id;
@@ -11,6 +13,9 @@ class Requirement {
   String city;
   String latitude;
   String longitude;
+  Category category;
+  String address;
+  String postalCode;
 
   Requirement({
     @required this.id,
@@ -23,5 +28,8 @@ class Requirement {
     @required this.latitude,
     @required this.longitude,
     @required this.remaining_qty,
+    this.category,
+    this.address,
+    this.postalCode,
   });
 }

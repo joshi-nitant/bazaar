@@ -30,17 +30,17 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class ProdReqAdd extends StatefulWidget {
-  static final String routeName = "/add";
+class ProdReqUpdate extends StatefulWidget {
+  static final String routeName = "/update";
 
   @override
-  _ProdReqAddState createState() => _ProdReqAddState();
+  _ProdReqUpdateState createState() => _ProdReqUpdateState();
 }
 
-class _ProdReqAddState extends State<ProdReqAdd> {
+class _ProdReqUpdateState extends State<ProdReqUpdate> {
   bool isSeller;
   List<Category> catgeoryList;
-
+  dynamic _selectedObject;
   var finalLocation;
   var _selectedAddress;
   final _breedController = TextEditingController();
@@ -63,6 +63,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
 
     setState(() {
       _image = File(pickedFile.path);
+      _selectedObject.image = _image.path.split('/').last;
     });
   }
 
@@ -112,9 +113,10 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   void _categoryHandler(String value) {
     print(value);
     setState(() {
-      this.dropDownValue = value;
-      selectedCategory =
+      _selectedObject.category.name = value;
+      _selectedObject.category =
           catgeoryList.firstWhere((category) => category.name == value);
+      selectedCategory = _selectedObject.category;
     });
   }
 
@@ -144,6 +146,12 @@ class _ProdReqAddState extends State<ProdReqAdd> {
       print(_selectedAddress);
       _selectedCoord = finalLocation;
       _selectedAddress = finalAddress.first;
+      _selectedObject.address = _selectedAddress.addressLine;
+      _selectedObject.state = _selectedAddress.adminArea;
+      _selectedObject.postalCode = _selectedAddress.postalCode.toString();
+      _selectedObject.city = _selectedAddress.subAdminArea.toString();
+      _selectedObject.latitude = _selectedCoord.latitude.toString();
+      _selectedObject.longitude = _selectedCoord.longitude.toString();
     });
   }
 
@@ -203,6 +211,8 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     File file = await FilePicker.getFile();
     setState(() {
       this.qualityCertificate = file;
+      _selectedObject.qualityCertificate =
+          this.qualityCertificate.path.split('/').last;
     });
   }
 
@@ -240,41 +250,42 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   // }
 
   Future<String> uploadData() async {
-    String fileName;
-    // if (isSeller) {
-    //   qualityCertificate.path.split('/').last;
-    // }
+    print(qualityCertificate);
+    print(_image);
     FormData formData = FormData.fromMap(
       {
-        // "qualityCertificate": isSeller
-        //     ? await MultipartFile.fromFile(qualityCertificate.path,
-        //         filename: fileName)
-        //     : null,
-        "productImage": isSeller
+        "qualityCertificate": isSeller && qualityCertificate != null
             ? await MultipartFile.fromFile(
-                _image.path,
-                filename: _image.path.split('/').last,
+                this.qualityCertificate.path,
+                filename: _selectedObject.qualityCertificate,
               )
             : null,
+        "productImage": isSeller && _image != null
+            ? await MultipartFile.fromFile(
+                _image.path,
+                filename: _selectedObject.image,
+              )
+            : null,
+        "id": _selectedObject.id,
         "isSeller": isSeller,
         "price": _priceController.text,
         "breed": _breedController.text,
         "quantity": _quantityController.text,
-        "date": _selectedDate,
-        "address": _selectedAddress.addressLine,
-        "state": _selectedAddress.adminArea,
-        "pincode": _selectedAddress.postalCode,
-        "city": _selectedAddress.subAdminArea,
-        "latitude": _selectedCoord.latitude,
-        "longitude": _selectedCoord.longitude,
+        "address": _selectedObject.address,
+        "state": _selectedObject.state,
+        "pincode": _selectedObject.postalCode,
+        "city": _selectedObject.city,
+        "latitude": _selectedObject.latitude,
+        "longitude": _selectedObject.longitude,
         "user_id": _userId,
-        "category": selectedCategory.id,
+        "category": _selectedObject.category.id,
       },
     );
     try {
       var dio = Dio();
       Response response =
-          await dio.post(Utils.URL + "/insertProdReq.php", data: formData);
+          await dio.post(Utils.URL + "/updateProdReq.php", data: formData);
+      print(response.data);
       return response.data as String;
     } on Exception catch (e) {
       print(e);
@@ -287,30 +298,26 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     print(_priceController.text);
     print(_breedController.text);
     print(_quantityController.text);
-    print(_selectedAddress.addressLine);
+    //print(_selectedAddress.addressLine);
     print(selectedCategory);
     print(_userId);
     if (_priceController.text != null &&
         _breedController.text != null &&
         _quantityController.text != null &&
-        _selectedAddress != null &&
-        selectedCategory != null &&
         _userId != null) {
-      if ((isSeller && _image != null) || !isSeller) {
-        print("got eveything");
-        String jsonResponse = await uploadData();
-        var data = json.decode(jsonResponse);
-        if (data['response_code'] == 404) {
-          String text = "Sorry!!!";
-          String dialogMesage = "Product insertion failed. Retry.....";
-          String buttonMessage = "Ok!!";
-          showMyDialog(context, text, dialogMesage, buttonMessage);
-        } else if (data['response_code'] == 100) {
-          String text = "Congratulations!!!";
-          String dialogMesage = "Product added successfully.";
-          String buttonMessage = "Done";
-          showMyDialog(context, text, dialogMesage, buttonMessage);
-        }
+      print("got eveything");
+      String jsonResponse = await uploadData();
+      var data = json.decode(jsonResponse);
+      if (data['response_code'] == 404) {
+        String text = "Sorry!!!";
+        String dialogMesage = "Product updation failed. Retry.....";
+        String buttonMessage = "Ok!!";
+        showMyDialog(context, text, dialogMesage, buttonMessage);
+      } else if (data['response_code'] == 100) {
+        String text = "Congratulations!!!";
+        String dialogMesage = "Product updated successfully.";
+        String buttonMessage = "Done";
+        showMyDialog(context, text, dialogMesage, buttonMessage);
       }
     }
   }
@@ -327,6 +334,12 @@ class _ProdReqAddState extends State<ProdReqAdd> {
 
   @override
   Widget build(BuildContext context) {
+    var routeArgs =
+        ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
+    _selectedObject = routeArgs['selected_object'];
+    _breedController.text = _selectedObject.breed;
+    _quantityController.text = _selectedObject.quantity;
+    _priceController.text = _selectedObject.price_expected;
     final data = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -351,7 +364,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
               child: Container(
                 child: Column(
                   children: <Widget>[
-                    CategoryDropDown(dropDownValue,
+                    CategoryDropDown(_selectedObject.category.name,
                         getCategoryNameAsList(snapshot.data), _categoryHandler),
                     Row(
                       children: <Widget>[
@@ -373,7 +386,8 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                         if (isSeller)
                           CircleAvatar(
                             backgroundImage: _image == null
-                                ? AssetImage('assests/images/logo.png')
+                                ? NetworkImage(
+                                    "${Utils.URL}images/${_selectedObject.image}")
                                 : FileImage(File(_image.path)),
                             backgroundColor: Colors.white,
                             radius: 25.0,
@@ -400,12 +414,22 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                         )),
                       ],
                     ),
-                    // Row(
-                    //   children: <Widget>[
-                    //     Expanded(child: prefix.buildButton(context, Icons.insert_drive_file, 'Add Certificate')),
-                    //     Expanded(child: Text('Certificate Name'))
-                    //   ],
-                    // ),
+                    if (isSeller)
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                              child: ButtonWidget(
+                            iconData: Icons.insert_drive_file,
+                            text: 'Add Certificate',
+                            handlerMethod: pickFile,
+                          )),
+                          Expanded(
+                            child: _selectedObject.quality_certificate == null
+                                ? Text("You didn't upload any certifcate")
+                                : Text(_selectedObject.qualityCertificate),
+                          )
+                        ],
+                      ),
                     // TextField(
                     //   // onChanged: (query) async {
                     //   //   await getAutoCompleteResponse(query);
@@ -448,9 +472,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                           ),
                         ),
                         Expanded(
-                          child: _selectedAddress != null
-                              ? Text(_selectedAddress.addressLine)
-                              : Text("Your address"),
+                          child: Text(_selectedObject.address),
                         ),
                       ],
                     ),
