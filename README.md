@@ -1,16 +1,8 @@
-# baazar
+APK is located inside apk folder:-
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+According to the various researches held by different agricultural universities,  farmers only get paid 20–25% of the end consumer price.  Think of it this way. Farmers have little choice of picking their mandis since its illegal for them (in most states) to sell their produce outside of these market areas. Once they get to the mandi they get “one quote” since the traders collude. In essence, the system only has one buyer. Economists call this a monopolistic marketplace — where the price is determined by a single buyer. And there’s no way you can get a fair quote when you’re operating in such unfavorable conditions. imagine a situation where a farmer has to throw off his products at very low price because there were limited buyers who were not ready to give a reasonable price to him! 
+so to solve this issue govt removed APMC act, the farmer can sell his product wherever he wants to sell without paying taxes to mandi. interesting fact is that Bihar has removed this act around 10 years ago, but the prices didn't rise at the end of farmers, because the mess of intermediaries was still there, farmers were not exposed to the real buyer(processors) hence they were  dealing to the same traders they were dealing before. to increase the income farmer we must find a way where the farmer can deal directly with processors, with credibility,quality assurance and logistics.
+and there is no other best way than a digital trading platform which connects buyers and farmers which takes responsibility of credibility and quality assurance. our project does it all. It is a digital platform which connects all the agricultural buyers at farmer's fingertip. the digital auction can give the best prices as the identity of buyers remains disclosed.
+the farmer has to register and post its products and buyers will be able to see it and bid on it. there will be an rating system for the buyers and farmers according to completion of their transactions , ease of payment, assured quality etc. Which will be a credibility decider of respective buyer and farmer.
+It is worth noting that, after note-ban and pandemic, the farmers have become digitally adaptive because of day to day requirements. 
+The plan is to perform the pilot execution in north Gujarat region which is a castor belt for Asia, a high producer of maize,cotton and Ground nut.
