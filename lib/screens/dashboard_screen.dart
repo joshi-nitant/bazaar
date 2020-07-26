@@ -43,7 +43,7 @@ class _DashboardState extends State<Dashboard> {
         quantity: u['quantity'],
         price_expected: u['price_expected'],
         breed: u['breed'],
-        category_id: u['category_id'],
+        category_id: u['category'],
         city: u['city'],
         state: u['state'],
         latitude: u['latitude'],
@@ -71,17 +71,17 @@ class _DashboardState extends State<Dashboard> {
     List<Product> products = [];
     for (var u in jsondata) {
       Product product = Product(
-        id: u['prod_id'],
-        quantity: u['quantity'],
-        price_expected: u['price_expected'],
-        breed: u['breed'],
-        category_id: u['category_id'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        remaining_qty: u['remaining_qty'],
-      );
+          id: u['prod_id'],
+          quantity: u['quantity'],
+          price_expected: u['price_expected'],
+          breed: u['breed'],
+          category_id: u['category_id'],
+          city: u['city'],
+          state: u['state'],
+          latitude: u['latitude'],
+          longitude: u['longitude'],
+          remaining_qty: u['remaining_qty'],
+          image: u['image']);
       products.add(product);
     }
     print(jsondata);

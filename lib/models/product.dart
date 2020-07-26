@@ -24,5 +24,6 @@ class Product {
     @required this.latitude,
     @required this.longitude,
     @required this.remaining_qty,
+    @required this.image,
   });
 }
