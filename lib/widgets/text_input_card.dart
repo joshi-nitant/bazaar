@@ -1,4 +1,3 @@
-import 'package:baazar/classes/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class TextInputCard extends StatefulWidget {
@@ -20,13 +19,13 @@ class _TextInputCardState extends State<TextInputCard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       borderOnForeground: false,
       child: Container(
-        width: widget.mdata.size.width * 0.9,
+        width: widget.mdata.size.width * 0.3,
         child: ListTile(
           title: TextFormField(
             controller: widget.controller,
             keyboardType: widget.titype,
             decoration: InputDecoration(
-              hintText: AppLocalizations.of(context).translate(widget.htext),
+              hintText: widget.htext,
               hintStyle: TextStyle(color: Theme.of(context).primaryColor),
               contentPadding: EdgeInsets.all(12),
               focusedBorder: InputBorder.none,

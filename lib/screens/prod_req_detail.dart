@@ -16,7 +16,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:search_map_place/search_map_place.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:baazar/widgets/text_input_card.dart';
 import 'package:google_maps_webservice/places.dart';
 //import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
@@ -71,6 +71,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
 
     if (_detailObject is Product) {
       product = _detailObject;
+      print(product.breed);
       isProduct = true;
     } else {
       requirement = _detailObject;
@@ -234,8 +235,30 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     );
   }
 
+  Row firstCardInnerRow(
+      String text, BuildContext context, TextDirection direction) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            text,
+            textDirection: direction,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+                color: Colors.black,
+                fontSize: MediaQuery.of(context).textScaleFactor * 14,
+                fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final data = MediaQuery.of(context);
+    final curScaleFactor = MediaQuery.of(context).textScaleFactor;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -252,129 +275,522 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                 ),
               );
             }
-            return Container(
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      isSeller
-                          ? Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: CircleAvatar(
-                                radius: 30.0,
-                                backgroundImage: NetworkImage(
-                                  Utils.URL + "images/" + category.imgPath,
-                                ),
-                                backgroundColor: Colors.transparent,
-                              ),
-                            )
-                          : Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: CircleAvatar(
-                                radius: 30.0,
-                                backgroundImage: NetworkImage(
-                                  Utils.URL + "images/" + product.image,
-                                ),
-                                backgroundColor: Colors.transparent,
-                              ),
-                            ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
+            return SingleChildScrollView(
+              child: Container(
+                child: Column(
+                  children: <Widget>[
+                    Container(
+                      height: data.size.height * 0.4,
+                      width: data.size.width,
+                      child: Card(
+                        child: Row(
                           children: <Widget>[
                             Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: Text(AppLocalizations.of(context)
-                                  .translate(category.name)),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  isSeller
+                                      ? CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                            Utils.URL +
+                                                "images/" +
+                                                category.imgPath,
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                          radius: data.size.height * 0.06,
+                                        )
+                                      : CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                            Utils.URL +
+                                                "images/" +
+                                                product.image,
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                          radius: data.size.height * 0.06,
+                                        )
+                                ],
+                              ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(isProduct
-                                  ? "City ${product.city}"
-                                  : "City ${requirement.city}"),
+                            Expanded(
+                              flex: 3,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  firstCardInnerRow(
+                                    AppLocalizations.of(context)
+                                        .translate(category.name),
+                                    context,
+                                    TextDirection.ltr,
+                                  ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'Location',
+                                    context,
+                                    TextDirection.ltr,
+                                  ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'Delievry Charges',
+                                    context,
+                                    TextDirection.ltr,
+                                  ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'Packaging Charges',
+                                    context,
+                                    TextDirection.ltr,
+                                  ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'Transaction Charges',
+                                    context,
+                                    TextDirection.ltr,
+                                  ),
+                                ],
+                              ),
                             ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: <Widget>[
+                                  isProduct
+                                      ? firstCardInnerRow(
+                                          product.breed,
+                                          context,
+                                          TextDirection.rtl,
+                                        )
+                                      : firstCardInnerRow(
+                                          requirement.breed,
+                                          context,
+                                          TextDirection.rtl,
+                                        ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  isProduct
+                                      ? firstCardInnerRow(
+                                          "${product.city},${product.state}",
+                                          context,
+                                          TextDirection.rtl,
+                                        )
+                                      : firstCardInnerRow(
+                                          "${requirement.city},${requirement.state}",
+                                          context,
+                                          TextDirection.rtl,
+                                        ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'xxxxxx',
+                                    context,
+                                    TextDirection.rtl,
+                                  ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'xxxxxx',
+                                    context,
+                                    TextDirection.rtl,
+                                  ),
+                                  SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  firstCardInnerRow(
+                                    'xxxxxx',
+                                    context,
+                                    TextDirection.rtl,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0)),
+                        color: Colors.grey[200],
+                      ),
+                    ),
+                    Container(
+                      height: data.size.height * 0.1,
+                      width: data.size.width,
+                      child: Card(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: <Widget>[
                             Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(isProduct
-                                      ? "State ${product.state}"
-                                      : "State ${requirement.state}"),
+                                Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.line_weight,
+                                      color: Theme.of(context).primaryColor,
+                                      size: 20.0,
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 1.0),
+                                      child: isProduct
+                                          ? Text(
+                                              product.remaining_qty,
+                                              style: TextStyle(
+                                                fontSize: curScaleFactor * 14,
+                                                color: Colors.black,
+                                              ),
+                                            )
+                                          : Text(
+                                              requirement.remaining_qty,
+                                              style: TextStyle(
+                                                fontSize: curScaleFactor * 14,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  margin: EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                    'Available Qty',
+                                    style: TextStyle(
+                                      fontSize: curScaleFactor * 14,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                             Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
                                 Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text("Delivery $_deliveryAmount"),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(20, 0, 10, 0),
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(
+                                        Icons.monetization_on,
+                                        color: Theme.of(context).primaryColor,
+                                        size: 20.0,
+                                      ),
+                                      isProduct
+                                          ? Text(
+                                              product.price_expected,
+                                              style: TextStyle(
+                                                fontSize: curScaleFactor * 14,
+                                                color: Colors.black,
+                                              ),
+                                            )
+                                          : Text(
+                                              requirement.price_expected,
+                                              style: TextStyle(
+                                                fontSize: curScaleFactor * 14,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: <Widget>[
+                                    Text(
+                                      'Offer',
+                                      style: TextStyle(
+                                        fontSize: curScaleFactor * 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.line_weight,
+                                      color: Theme.of(context).primaryColor,
+                                      size: 20.0,
+                                    ),
+                                    isProduct
+                                        ? Text(
+                                            product.quantity,
+                                            style: TextStyle(
+                                              fontSize: curScaleFactor * 14,
+                                              color: Colors.black,
+                                            ),
+                                          )
+                                        : Text(
+                                            requirement.quantity,
+                                            style: TextStyle(
+                                              fontSize: curScaleFactor * 14,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                  ],
+                                ),
+                                Row(
+                                  children: <Widget>[
+                                    Text(
+                                      'Total Qty',
+                                      style: TextStyle(
+                                        fontSize: curScaleFactor * 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      )
-                    ],
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(isProduct
-                            ? "Remaining ${product.remaining_qty}"
-                            : "Remaining ${requirement.remaining_qty}"),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0)),
+                        color: Colors.grey[200],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(isProduct
-                            ? "Total ${product.quantity}"
-                            : "Total ${requirement.quantity}"),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(isProduct
-                            ? "Price ${product.price_expected}"
-                            : "Price ${requirement.price_expected}"),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
+                    ),
+                    if (isProduct)
+                      Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32.0)),
                         child: Container(
-                          width: 100,
-                          child: TextField(
-                              keyboardType: TextInputType.number,
-                              controller: _priceBidController),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          width: 100,
-                          child: TextField(
-                            keyboardType: TextInputType.number,
-                            controller: _quantityBidController,
+                          height: 55,
+                          width: data.size.width,
+                          child: FlatButton.icon(
+                            icon: Icon(
+                              Icons.file_download,
+                              color: Colors.white,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.0),
+                            ),
+                            color: Theme.of(context).primaryColor,
+                            textColor: Theme.of(context).primaryColor,
+                            padding: EdgeInsets.all(8.0),
+                            onPressed: () {},
+                            label: Text(
+                              'Quality Certificate',
+                              overflow: TextOverflow.fade,
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  // RaisedButton(
-                  //   onPressed: () {
-                  //     _openGoogleMaps(context);
-                  //   },
-                  //   child: Text('Find address'),
-                  // ),
-                  //SearchMapPlaceWidget(apiKey: Utils.API_KEY),
-                  RaisedButton(
-                    child: Text('Send Offer'),
-                    onPressed: userId == null ? null : _submitData,
-                  ),
-                ],
+                    Container(
+                      height: data.size.height * 0.2,
+                      width: data.size.width,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: <Widget>[
+                              Expanded(
+                                flex: 2,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: <Widget>[
+                                    Expanded(
+                                      flex: 1,
+                                      child: TextInputCard(
+                                        icon: Icons.ac_unit,
+                                        titype: TextInputType.number,
+                                        htext: "Quantity",
+                                        mdata: data,
+                                        controller: _quantityBidController,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: TextInputCard(
+                                        icon: Icons.ac_unit,
+                                        titype: TextInputType.number,
+                                        htext: "Price",
+                                        mdata: data,
+                                        controller: _priceBidController,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Container(
+                                  width: data.size.width * 1,
+                                  child: RaisedButton(
+                                    onPressed:
+                                        userId == null ? null : _submitData,
+                                    child: Text(
+                                      'Send Offer',
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          color: Colors.black, fontSize: 14.0),
+                                    ),
+                                    disabledColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12.0)),
+                                    elevation: 25.0,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        color: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
+            // return Container(
+            //   child: Column(
+            //     children: <Widget>[
+            //       Row(
+            //         children: <Widget>[
+            //           isSeller
+            //               ? Padding(
+            //                   padding: const EdgeInsets.all(8.0),
+            //                   child: CircleAvatar(
+            //                     radius: 30.0,
+            //                     backgroundImage: NetworkImage(
+            //                       Utils.URL + "images/" + category.imgPath,
+            //                     ),
+            //                     backgroundColor: Colors.transparent,
+            //                   ),
+            //                 )
+            //               : Padding(
+            //                   padding: const EdgeInsets.all(8.0),
+            //                   child: CircleAvatar(
+            //                     radius: 30.0,
+            //                     backgroundImage: NetworkImage(
+            //                       Utils.URL + "images/" + product.image,
+            //                     ),
+            //                     backgroundColor: Colors.transparent,
+            //                   ),
+            //                 ),
+            //           Padding(
+            //             padding: const EdgeInsets.all(8.0),
+            //             child: Column(
+            //               children: <Widget>[
+            //                 Padding(
+            //                   padding: const EdgeInsets.all(8.0),
+            //                   child: Text(AppLocalizations.of(context)
+            //                       .translate(category.name)),
+            //                 ),
+            //                 Padding(
+            //                   padding: const EdgeInsets.all(8.0),
+            //                   child: Text(isProduct
+            //                       ? "City ${product.city}"
+            //                       : "City ${requirement.city}"),
+            //                 ),
+            //                 Column(
+            //                   children: <Widget>[
+            //                     Padding(
+            //                       padding: const EdgeInsets.all(8.0),
+            //                       child: Text(isProduct
+            //                           ? "State ${product.state}"
+            //                           : "State ${requirement.state}"),
+            //                     ),
+            //                   ],
+            //                 ),
+            //                 Column(
+            //                   children: <Widget>[
+            //                     Padding(
+            //                       padding: const EdgeInsets.all(8.0),
+            //                       child: Text("Delivery $_deliveryAmount"),
+            //                     ),
+            //                   ],
+            //                 ),
+            //               ],
+            //             ),
+            //           )
+            //         ],
+            //       ),
+            //       Row(
+            //         children: <Widget>[
+            //           Padding(
+            //             padding: const EdgeInsets.all(8.0),
+            //             child: Text(isProduct
+            //                 ? "Remaining ${product.remaining_qty}"
+            //                 : "Remaining ${requirement.remaining_qty}"),
+            //           ),
+            //           Padding(
+            //             padding: const EdgeInsets.all(8.0),
+            //             child: Text(isProduct
+            //                 ? "Total ${product.quantity}"
+            //                 : "Total ${requirement.quantity}"),
+            //           ),
+            //           Padding(
+            //             padding: const EdgeInsets.all(8.0),
+            //             child: Text(isProduct
+            //                 ? "Price ${product.price_expected}"
+            //                 : "Price ${requirement.price_expected}"),
+            //           ),
+            //         ],
+            //       ),
+            //       Row(
+            //         children: <Widget>[
+            //           Padding(
+            //             padding: const EdgeInsets.all(8.0),
+            //             child: Container(
+            //               width: 100,
+            //               child: TextField(
+            //                   keyboardType: TextInputType.number,
+            //                   controller: _priceBidController),
+            //             ),
+            //           ),
+            //           Padding(
+            //             padding: const EdgeInsets.all(8.0),
+            //             child: Container(
+            //               width: 100,
+            //               child: TextField(
+            //                 keyboardType: TextInputType.number,
+            //                 controller: _quantityBidController,
+            //               ),
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       // RaisedButton(
+            //       //   onPressed: () {
+            //       //     _openGoogleMaps(context);
+            //       //   },
+            //       //   child: Text('Find address'),
+            //       // ),
+            //       //SearchMapPlaceWidget(apiKey: Utils.API_KEY),
+            //       RaisedButton(
+            //         child: Text('Send Offer'),
+            //         onPressed: userId == null ? null : _submitData,
+            //       ),
+            //     ],
+            //   ),
+            // );
           }),
     );
   }
