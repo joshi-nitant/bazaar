@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 //import 'package:intl/intl.dart';
 import 'package:location/location.dart';
+import 'package:search_map_place/search_map_place.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'google_maps_screen.dart';
@@ -54,8 +55,8 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   LatLng _selectedCoord;
   File _image;
   final picker = ImagePicker();
-
-  static const String kGoogleApiKey = "AIzaSyBuZTVFf0pDt_MgQedl5aNsOxu286k7Wmw";
+  String _addressText = "Enter location";
+  static const String kGoogleApiKey = Utils.API_KEY;
   GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
 
   Future getImage() async {
@@ -66,31 +67,32 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     });
   }
 
-  Future<void> _getLocation() async {
+  Future<String> _getLocation() async {
     // show input autocomplete with selected mode
     // then get the Prediction selected
     Prediction p = await PlacesAutocomplete.show(
-      context: context,
-      apiKey: kGoogleApiKey,
-    );
-    print("here");
-    print(p);
-    displayPrediction(p);
+        context: context,
+        apiKey: kGoogleApiKey,
+        mode: Mode.overlay, // Mode.fullscreen
+        language: "en",
+        components: [new Component(Component.country, "in")]);
+    _addressText = await displayPrediction(p);
+    return _addressText;
   }
 
-  Future<List<String>> getAutoCompleteResponse(String query) async {
-    var prs;
+  // Future<List<String>> getAutoCompleteResponse(String query) async {
+  //   var prs;
 
-    PlacesAutocompleteResponse placesAutocompleteResponse =
-        await _places.autocomplete(query);
-    prs = placesAutocompleteResponse.predictions
-        .map((prediction) => prediction.description)
-        .toList();
-    print('Predictions: ' + prs.toString());
-    return prs;
-  }
+  //   PlacesAutocompleteResponse placesAutocompleteResponse =
+  //       await _places.autocomplete(query);
+  //   prs = placesAutocompleteResponse.predictions
+  //       .map((prediction) => prediction.description)
+  //       .toList();
+  //   print('Predictions: ' + prs.toString());
+  //   return prs;
+  // }
 
-  Future<Null> displayPrediction(Prediction p) async {
+  Future<String> displayPrediction(Prediction p) async {
     if (p != null) {
       PlacesDetailsResponse detail =
           await _places.getDetailsByPlaceId(p.placeId);
@@ -103,9 +105,12 @@ class _ProdReqAddState extends State<ProdReqAdd> {
 
       print(p.description);
       var address = await Geocoder.local.findAddressesFromQuery(p.description);
-      print("Address $address");
-      print(lat);
-      print(lng);
+      print(address.toString());
+      this._selectedAddress = address.first;
+      _addressText = _selectedAddress.addressLine;
+      this._selectedCoord = LatLng(lat, lng);
+
+      return _addressText;
     }
   }
 
@@ -261,12 +266,12 @@ class _ProdReqAddState extends State<ProdReqAdd> {
         "breed": _breedController.text,
         "quantity": _quantityController.text,
         "date": _selectedDate,
-        "address": _selectedAddress.addressLine,
-        "state": _selectedAddress.adminArea,
-        "pincode": _selectedAddress.postalCode,
-        "city": _selectedAddress.subAdminArea,
-        "latitude": _selectedCoord.latitude,
-        "longitude": _selectedCoord.longitude,
+        // "address": _selectedAddress.addressLine,
+        // "state": _selectedAddress.adminArea,
+        // "pincode": _selectedAddress.postalCode,
+        // "city": _selectedAddress.subAdminArea,
+        // "latitude": _selectedCoord.latitude,
+        // "longitude": _selectedCoord.longitude,
         "user_id": _userId,
         "category": selectedCategory.id,
       },
@@ -275,6 +280,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
       var dio = Dio();
       Response response =
           await dio.post(Utils.URL + "/insertProdReq.php", data: formData);
+      print(response.data);
       return response.data as String;
     } on Exception catch (e) {
       print(e);
@@ -287,19 +293,17 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     print(_priceController.text);
     print(_breedController.text);
     print(_quantityController.text);
-    print(_selectedAddress.addressLine);
     print(selectedCategory);
     print(_userId);
     if (_priceController.text != null &&
         _breedController.text != null &&
         _quantityController.text != null &&
-        _selectedAddress != null &&
         selectedCategory != null &&
         _userId != null) {
       if ((isSeller && _image != null) || !isSeller) {
-        print("got eveything");
         String jsonResponse = await uploadData();
         var data = json.decode(jsonResponse);
+
         if (data['response_code'] == 404) {
           String text = "Sorry!!!";
           String dialogMesage = "Product insertion failed. Retry.....";
@@ -309,7 +313,8 @@ class _ProdReqAddState extends State<ProdReqAdd> {
           String text = "Congratulations!!!";
           String dialogMesage = "Product added successfully.";
           String buttonMessage = "Done";
-          showMyDialog(context, text, dialogMesage, buttonMessage);
+          await showMyDialog(context, text, dialogMesage, buttonMessage);
+          Navigator.of(context).pop();
         }
       }
     }
@@ -323,6 +328,13 @@ class _ProdReqAddState extends State<ProdReqAdd> {
       catList.add(category.name);
     }
     return catList;
+  }
+
+  void _clickHandler() async {
+    String address = await _getLocation();
+    setState(() {
+      _addressText = address;
+    });
   }
 
   @override
@@ -356,12 +368,15 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                     Row(
                       children: <Widget>[
                         Expanded(
-                            child: TextInputCard(
-                                icon: Icons.fiber_pin,
-                                titype: TextInputType.number,
-                                htext: 'Breed',
-                                mdata: data,
-                                controller: _breedController)),
+                          child: TextInputCard(
+                            icon: Icons.fiber_pin,
+                            titype: TextInputType.number,
+                            htext: 'Breed',
+                            mdata: data,
+                            controller: _breedController,
+                            width: data.size.width * 0.9,
+                          ),
+                        ),
                         if (isSeller)
                           Expanded(
                             child: ButtonWidget(
@@ -389,6 +404,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                           htext: 'Quantity',
                           mdata: data,
                           controller: _quantityController,
+                          width: data.size.width * 0.9,
                         )),
                         Expanded(
                             child: TextInputCard(
@@ -397,6 +413,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                           htext: 'Price',
                           mdata: data,
                           controller: _priceController,
+                          width: data.size.width * 0.9,
                         )),
                       ],
                     ),
@@ -406,65 +423,38 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                     //     Expanded(child: Text('Certificate Name'))
                     //   ],
                     // ),
-                    // TextField(
-                    //   // onChanged: (query) async {
-                    //   //   await getAutoCompleteResponse(query);
-                    //   //   setState(() {});
-                    //   // },
-                    //   onTap: () async {
-                    //     //_openGoogleMaps(context);
-                    //     //show input autocomplete with selected mode
-                    //     //then get the Prediction selected
 
-                    //     print("onTap");
-                    //     Prediction p = await PlacesAutocomplete.show(
-                    //       context: context,
-                    //       apiKey: kGoogleApiKey,
-                    //       language: "en",
-                    //       mode: Mode.fullscreen,
-                    //       components: [Component(Component.country, "in")],
-                    //     );
-                    //     print("here");
-                    //     print(p);
-                    //     displayPrediction(p);
-                    //   },
-
-                    //   textInputAction: TextInputAction.search,
-                    //   decoration: InputDecoration(
-                    //     hintText: "Enter your location",
-                    //     border: InputBorder.none,
-                    //     contentPadding: EdgeInsets.only(left: 15.0, top: 15.0),
+                    // Container(
+                    //   width: data.size.width * 0.9,
+                    //   //height: data.size.height * 0.1,
+                    //   child: Card(
+                    //     shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(32.0)),
+                    //     child: FlatButton.icon(
+                    //       icon: Icon(Icons.location_on),
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(32.0),
+                    //       ),
+                    //       color: Colors.white,
+                    //       textColor: Theme.of(context).primaryColor,
+                    //       padding: EdgeInsets.all(8.0),
+                    //       onPressed: _clickHandler,
+                    //       label: Text(
+                    //         _addressText,
+                    //         textAlign: TextAlign.justify,
+                    //         overflow: TextOverflow.ellipsis,
+                    //         style: TextStyle(
+                    //           fontSize: 14.0,
+                    //         ),
+                    //       ),
+                    //     ),
                     //   ),
                     // ),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: ButtonWidget(
-                            iconData: Icons.search,
-                            text: "Enter Location",
-                            handlerMethod: () {
-                              _openGoogleMaps(context);
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: _selectedAddress != null
-                              ? Text(_selectedAddress.addressLine)
-                              : Text("Your address"),
-                        ),
-                      ],
-                    ),
 
                     SizedBox(
                       height: 20.0,
                     ),
 
-                    // Container(
-                    //   height: data.size.height * 0.2,
-                    //   width: data.size.width * 0.9,
-                    //   color: primarycolor,
-                    //   child: Text('Put Map Here'),
-                    // ),
                     SizedBox(
                       height: 50.0,
                     ),
@@ -495,97 +485,6 @@ class _ProdReqAddState extends State<ProdReqAdd> {
               ),
             ),
           );
-
-          // return Card(
-          //   elevation: 5,
-          //   child: Container(
-          //     height: 400,
-          //     padding: EdgeInsets.all(10),
-          //     child: Column(
-          //       crossAxisAlignment: CrossAxisAlignment.end,
-          //       children: <Widget>[
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Breed')),
-          //           controller: _breedController,
-          //           onSubmitted: (_) => _submitData(),
-          //         ),
-          //         CategoryDropDown(dropDownValue,
-          //             getCategoryNameAsList(snapshot.data), _categoryHandler),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Quantity')),
-          //           controller: _quantityController,
-          //           keyboardType: TextInputType.number,
-          //           onSubmitted: (_) => _submitData(),
-          //         ),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Price')),
-          //           controller: _priceController,
-          //           keyboardType: TextInputType.number,
-          //           onSubmitted: (_) => _submitData(),
-          //         ),
-          //         RaisedButton(
-          //           child: Text(AppLocalizations.of(context)
-          //               .translate('Select Location')),
-          //           color: Theme.of(context).primaryColor,
-          //           textColor: Theme.of(context).textTheme.button.color,
-          //           onPressed: () {
-          //             _openGoogleMaps(context);
-          //           },
-          //         ),
-          //         Container(
-          //           height: 40,
-          //           child: Row(
-          //             children: <Widget>[
-          //               Expanded(
-          //                 child: Text(
-          //                   _selectedDate == null
-          //                       ? 'No Date Chosen!'
-          //                       : 'Picked Date ${DateFormat.yMd().format(_selectedDate)}',
-          //                 ),
-          //               ),
-          //               FlatButton(
-          //                 textColor: Theme.of(context).primaryColor,
-          //                 child: Text(
-          //                   AppLocalizations.of(context)
-          //                       .translate('Choose Date'),
-          //                   style: TextStyle(
-          //                     fontWeight: FontWeight.bold,
-          //                   ),
-          //                 ),
-          //                 onPressed: _presentDatePicker,
-          //               ),
-          //             ],
-          //           ),
-          //         ),
-          //         Row(
-          //           children: <Widget>[
-          //             if (isSeller)
-          //               RaisedButton(
-          //                 child: Text(AppLocalizations.of(context)
-          //                     .translate("Choose Quality Certificate")),
-          //                 onPressed: () {
-          //                   pickFile();
-          //                 },
-          //               ),
-          //             RaisedButton(
-          //               child:
-          //                   Text(AppLocalizations.of(context).translate("Add")),
-          //               onPressed: () {
-          //                 _submitData();
-          //               },
-          //             ),
-          //           ],
-          //         )
-          //       ],
-          //     ),
-          //   ),
-          // );
         },
       ),
     );

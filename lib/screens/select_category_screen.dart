@@ -31,7 +31,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     SharedPreferences sharedPreference = await SharedPreferences.getInstance();
     sharedPreference.setString(
         CategoryScreen.CATEGORY_LIST_SHARED_PREFERENCE, json.encode(jsonData));
-    print("Data stored ${json.encode(jsonData)}");
+    //print("Data stored ${json.encode(jsonData)}");
   }
 
   Future<List<Category>> _getCategory() async {

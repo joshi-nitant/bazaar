@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:baazar/classes/app_localizations.dart';
@@ -13,7 +14,13 @@ import 'package:baazar/widgets/text_input_card.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:geocoder/geocoder.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_otp/flutter_otp.dart';
+import 'package:otp/otp.dart';
 
 class SingUpScreen extends StatefulWidget {
   static final String routeName = "/singup";
@@ -28,6 +35,12 @@ class _SingUpScreenState extends State<SingUpScreen> {
   final _addressController = TextEditingController();
   File _aadharCard;
   File _panCard;
+  String _addressText = "Enter location";
+  static const String kGoogleApiKey = Utils.API_KEY;
+  GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
+  LatLng _selectedCoord;
+  var finalLocation;
+  var _selectedAddress;
 
   Future<bool> _checkUserType() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -49,16 +62,56 @@ class _SingUpScreenState extends State<SingUpScreen> {
     });
   }
 
+  Future<String> _getLocation() async {
+    // show input autocomplete with selected mode
+    // then get the Prediction selected
+    Prediction p = await PlacesAutocomplete.show(
+        context: context,
+        apiKey: kGoogleApiKey,
+        mode: Mode.overlay, // Mode.fullscreen
+        language: "en",
+        components: [new Component(Component.country, "in")]);
+    await displayPrediction(p);
+    return _addressText;
+  }
+
+  Future<String> displayPrediction(Prediction p) async {
+    if (p != null) {
+      PlacesDetailsResponse detail =
+          await _places.getDetailsByPlaceId(p.placeId);
+
+      print("detail $detail");
+
+      var placeId = p.placeId;
+      double lat = detail.result.geometry.location.lat;
+      double lng = detail.result.geometry.location.lng;
+
+      print(p.description);
+      var address = await Geocoder.local.findAddressesFromQuery(p.description);
+      print(address.toString());
+      this._selectedAddress = address.first;
+      _addressText = _selectedAddress.addressLine;
+      this._selectedCoord = LatLng(lat, lng);
+
+      return _addressText;
+    }
+  }
+
   Future<String> _uploadData(bool isSeller) async {
     String panCardName = _panCard.path.split('/').last;
-    print(isSeller);
+    //print(isSeller);
     FormData formData = FormData.fromMap({
       "panCard":
           await MultipartFile.fromFile(_panCard.path, filename: panCardName),
       "username": _usernameController.text,
-      "address": _addressController.text,
+      "address": _selectedAddress.addressLine,
       "contact_number": _contactNumberController.text,
-      "isSeller": isSeller
+      "isSeller": isSeller,
+      "state": _selectedAddress.adminArea,
+      "pincode": _selectedAddress.postalCode,
+      "city": _selectedAddress.subAdminArea,
+      "latitude": _selectedCoord.latitude,
+      "longitude": _selectedCoord.longitude,
     });
     try {
       var dio = Dio();
@@ -69,6 +122,66 @@ class _SingUpScreenState extends State<SingUpScreen> {
     } on Exception catch (e) {
       return "Error";
     }
+  }
+
+  Future<void> _clickHandler() async {
+    var address = await _getLocation();
+    setState(() {
+      _addressText = address;
+    });
+  }
+
+  Future<void> showOtpDialog(bool isSeller) async {
+    // var code = OTP.generateTOTPCodeString(
+    //     'JBSWY3DPEHPK3PXP', DateTime.now().millisecondsSinceEpoch);
+    // print(code);
+    FlutterOtp otp = FlutterOtp();
+    otp.sendOtp(_contactNumberController.text);
+
+    String enteredOtp;
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
+          title: Text("Otp is sent to ${_contactNumberController.text}"),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                    maxLength: 4,
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) {
+                      enteredOtp = val;
+                    })
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("Verify"),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32.0)),
+              color: Theme.of(context).primaryColor,
+              onPressed: () {
+                if (otp.resultChecker(int.parse(enteredOtp))) {
+                  Navigator.pop(context);
+                  _submitData(isSeller);
+                } else {
+                  print("failed");
+                  Navigator.pop(context);
+                  showMyDialog(context, "OTP Verification failed",
+                      "OTP verification failed please retry.", "OK");
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _submitData(bool isSeller) async {
@@ -83,6 +196,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
 
       if (userId != -1) {
         _storeUserId(userId);
+        // /Navigator.of(context).pop();
         Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
       } else {
         String text = "Sorry!!!";
@@ -144,6 +258,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
                           htext: 'Name',
                           mdata: data,
                           controller: _usernameController,
+                          width: data.size.width * 0.9,
                         ),
                         TextInputCard(
                           icon: Icons.phone,
@@ -151,17 +266,82 @@ class _SingUpScreenState extends State<SingUpScreen> {
                           htext: 'Contact Number',
                           mdata: data,
                           controller: _contactNumberController,
+                          width: data.size.width * 0.9,
                         ),
-                        TextInputCard(
-                          icon: Icons.location_on,
-                          titype: TextInputType.multiline,
-                          htext: 'Address',
-                          mdata: data,
-                          controller: _addressController,
+
+                        GestureDetector(
+                          onTap: _clickHandler,
+                          child: Wrap(
+                            children: <Widget>[
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(32.0)),
+                                child: Container(
+                                  width: data.size.width * 0.9,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: <Widget>[
+                                        Icon(
+                                          Icons.location_on,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            _addressText,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontSize: 17.0,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            //overflow: TextOverflow.clip,
+                                            //maxLines: 5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+
                         SizedBox(
                           height: 10.0,
                         ),
+                        // Container(
+                        //   width: data.size.width * 0.9,
+                        //   //height: data.size.height * 0.1,
+                        //   child: Card(
+                        //     shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(32.0)),
+                        //     child: FlatButton.icon(
+                        //       icon: Icon(Icons.location_on),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(32.0),
+                        //       ),
+                        //       color: Colors.white,
+                        //       textColor: Theme.of(context).primaryColor,
+                        //       padding: EdgeInsets.all(8.0),
+                        //       onPressed: _clickHandler,
+                        //       label: Text(
+                        //         _addressText,
+                        //         textAlign: TextAlign.justify,
+                        //         overflow: TextOverflow.ellipsis,
+                        //         style: TextStyle(
+                        //           fontSize: 14.0,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
+                        // SizedBox(
+                        //   height: 10.0,
+                        // ),
                         Row(
                           children: <Widget>[
                             Expanded(
@@ -202,7 +382,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             textColor: Colors.white,
                             padding: EdgeInsets.all(8.0),
                             onPressed: () {
-                              _submitData(snapshot.data);
+                              showOtpDialog(snapshot.data);
                             },
                             child: Text(
                               AppLocalizations.of(context).translate("Sign Up"),

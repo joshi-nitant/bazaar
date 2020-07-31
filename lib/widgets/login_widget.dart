@@ -34,6 +34,7 @@ class _LoginCardState extends State<LoginCard> {
             },
             keyboardType: widget.titype,
             decoration: InputDecoration(
+              errorText: "This is required",
               hintText: AppLocalizations.of(context).translate(widget.htext),
               hintStyle: TextStyle(color: Theme.of(context).primaryColor),
               contentPadding: EdgeInsets.all(12),

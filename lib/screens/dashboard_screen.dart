@@ -6,9 +6,11 @@ import 'package:baazar/models/category.dart';
 import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/manage_offer_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/prod_req_view_screen.dart';
+import 'package:baazar/widgets/list_tile_widget.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -49,7 +51,8 @@ class _DashboardState extends State<Dashboard> {
         state: u['state'],
         latitude: u['latitude'],
         longitude: u['longitude'],
-        remaining_qty: u['remaining_qty'],
+        remainingQty: u['remaining_qty'],
+        userId: u['user_id'],
       );
       requirements.add(requirement);
     }
@@ -69,6 +72,7 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
     var jsondata = json.decode(response.body);
+    //print(jsondata);
     List<Product> products = [];
     for (var u in jsondata) {
       Product product = Product(
@@ -81,13 +85,14 @@ class _DashboardState extends State<Dashboard> {
         state: u['state'],
         latitude: u['latitude'],
         longitude: u['longitude'],
-        remaining_qty: u['remaining_qty'],
+        remainingQty: u['remaining_qty'],
         image: u['image'],
         qualityCertificate: u['quality_certificate'],
+        userId: u['user_id'],
       );
       products.add(product);
     }
-    print(jsondata);
+    //print(jsondata);
     return products;
   }
 
@@ -97,7 +102,21 @@ class _DashboardState extends State<Dashboard> {
       //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
     } else {
       print('redirecting');
-      Navigator.of(context).pushNamed(ProdReqViewScreen.routeName);
+      Navigator.of(context).pushNamed(ProdReqViewScreen.routeName).then(
+            (value) => Navigator.pop(context),
+          );
+    }
+  }
+
+  void _redirectToOfferScreeen() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
+      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
+    } else {
+      print('redirecting');
+      Navigator.of(context).pushNamed(OfferViewScreen.routeName).then(
+            (value) => Navigator.pop(context),
+          );
     }
   }
 
@@ -131,37 +150,82 @@ class _DashboardState extends State<Dashboard> {
         iconTheme: IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(
+        // Add a ListView to the drawer. This ensures the user can scroll
+        // through the options in the drawer if there isn't enough vertical
+        // space to fit everything.
         child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
           children: <Widget>[
-            UserAccountsDrawerHeader(
-              accountName: Text("Baazar"),
-              accountEmail: Text("baazar0@gmail.com"),
-              currentAccountPicture: CircleAvatar(
-                backgroundImage: NetworkImage("https://i.pravatar.cc/"),
+            DrawerHeader(
+              child: Container(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      backgroundImage: AssetImage('assests/images/logo.png'),
+                      radius: 45.0,
+                    ),
+                  ],
+                ),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
               ),
             ),
-            ListTile(
-              title: Text("Register"),
-              // onTap: () {
-              //   Navigator.of(context).push(
-              //       MaterialPageRoute(builder: (context) => Registration()));
-              // },
+            ListTileWidget(
+              Icons.insert_drive_file,
+              'Transaction History',
+              null,
             ),
-            ListTile(
-              title: Text("Manage your items"),
-              onTap: () {
-                _redirectToManageScreeen();
-              },
+            ListTileWidget(
+              Icons.people,
+              'Manage Request',
+              _redirectToOfferScreeen,
             ),
-            ListTile(
-              title: Text("Settings"),
-              onTap: () {
-                //
-              },
+            ListTileWidget(
+              Icons.monetization_on,
+              'Current Transaction',
+              null,
             ),
+            ListTileWidget(
+                Icons.list, 'Requirement List', _redirectToManageScreeen),
           ],
         ),
       ),
+      // drawer: Drawer(
+      //   child: ListView(
+      //     children: <Widget>[
+      //       UserAccountsDrawerHeader(
+      //         accountName: Text("Baazar"),
+      //         accountEmail: Text("baazar0@gmail.com"),
+      //         currentAccountPicture: CircleAvatar(
+      //           backgroundImage: NetworkImage("https://i.pravatar.cc/"),
+      //         ),
+      //       ),
+      //       ListTile(
+      //         title: Text("Register"),
+      //         // onTap: () {
+      //         //   Navigator.of(context).push(
+      //         //       MaterialPageRoute(builder: (context) => Registration()));
+      //         // },
+      //       ),
+      //       ListTile(
+      //         title: Text("Manage your items"),
+      //         onTap: () {
+      //           _redirectToManageScreeen();
+      //         },
+      //       ),
+      //       ListTile(
+      //         title: Text("Settings"),
+      //         onTap: () {
+      //           //
+      //         },
+      //       ),
+      //     ],
+      //   ),
+      // ),
       body: FutureBuilder(
           future: userType == "buyer" ? _getProducts() : _getRequirements(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {

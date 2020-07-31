@@ -1,5 +1,7 @@
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
+import 'package:baazar/screens/manage_offer_screen.dart';
+import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/prod_req_view_screen.dart';
@@ -94,6 +96,8 @@ class _MyAppState extends State<MyApp> {
         ProdReqDetail.routeName: (ctx) => ProdReqDetail(),
         ProdReqViewScreen.routeName: (ctx) => ProdReqViewScreen(),
         ProdReqUpdate.routeName: (ctx) => ProdReqUpdate(),
+        OfferViewScreen.routeName: (ctx) => OfferViewScreen(),
+        PaymentScreen.routeName: (ctx) => PaymentScreen(),
       },
 
       home: isLangSelected ? CheckUserScreen() : ChooseLanguageScreen(),

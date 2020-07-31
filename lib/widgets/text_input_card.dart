@@ -6,8 +6,16 @@ class TextInputCard extends StatefulWidget {
   String htext;
   MediaQueryData mdata;
   TextEditingController controller;
-  TextInputCard(
-      {this.icon, this.titype, this.htext, this.mdata, this.controller});
+  double width;
+  TextInputCard({
+    this.icon,
+    this.titype,
+    this.htext,
+    this.mdata,
+    this.controller,
+    @required this.width,
+  });
+
   @override
   _TextInputCardState createState() => _TextInputCardState();
 }
@@ -19,14 +27,14 @@ class _TextInputCardState extends State<TextInputCard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       borderOnForeground: false,
       child: Container(
-        width: widget.mdata.size.width * 0.3,
+        width: this.widget.width,
         child: ListTile(
           title: TextFormField(
             controller: widget.controller,
             keyboardType: widget.titype,
             decoration: InputDecoration(
               hintText: widget.htext,
-              hintStyle: TextStyle(color: Theme.of(context).primaryColor),
+              //hintStyle: TextStyle(color: Theme.of(context).primaryColor),
               contentPadding: EdgeInsets.all(12),
               focusedBorder: InputBorder.none,
               enabledBorder: InputBorder.none,
@@ -35,9 +43,9 @@ class _TextInputCardState extends State<TextInputCard> {
                 color: Theme.of(context).primaryColor,
               ),
             ),
-            style: TextStyle(
-              color: Theme.of(context).primaryColor,
-            ),
+            // style: TextStyle(
+            //   color: Theme.of(context).primaryColor,
+            // ),
           ),
         ),
       ),

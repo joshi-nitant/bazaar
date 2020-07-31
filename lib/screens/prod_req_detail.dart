@@ -18,6 +18,7 @@ import 'package:search_map_place/search_map_place.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baazar/widgets/text_input_card.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:http/http.dart' as http;
 //import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
 
@@ -43,6 +44,9 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   LatLng deliveryCoord;
   double _distance = 0.0;
   int _deliveryAmount = 0;
+  User _currentUser;
+  User _ownerUser;
+  int _costPerKm = 10;
 
   _getCategoryList() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -64,6 +68,34 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     return isSeller;
   }
 
+  _getUser(int id) async {
+    var response = await http.post(
+      Utils.URL + "getUser.php",
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(
+        <String, int>{
+          'id': id,
+        },
+      ),
+    );
+    print(response.body);
+    var jsondata = json.decode(response.body);
+    print(jsondata);
+    var userMap = jsondata[0];
+    User user = User(
+      id: userMap['user_id'],
+      latitude: userMap['latitude'],
+      longitude: userMap['longitude'],
+      address: userMap['address'],
+      state: userMap['state'],
+      city: userMap['city'],
+    );
+
+    return user;
+  }
+
   Future<Category> _loadCatAndUserType() async {
     var routeArgs =
         ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
@@ -71,15 +103,36 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
 
     if (_detailObject is Product) {
       product = _detailObject;
-      print(product.breed);
       isProduct = true;
     } else {
       requirement = _detailObject;
       isProduct = false;
     }
-    String jsonString = await _getCategoryList();
+
     this.isSeller = await _getUserType();
     this.userId = await _getUserId();
+    if (this.userId != null) {
+      this._currentUser = await _getUser(this.userId);
+
+      if (isProduct) {
+        this._ownerUser = await _getUser(int.parse(product.userId));
+      } else {
+        this._ownerUser = await _getUser(int.parse(requirement.userId));
+      }
+
+      LatLng startCoordinate = LatLng(
+        double.parse(_currentUser.latitude),
+        double.parse(_currentUser.longitude),
+      );
+      LatLng endCoordinate = LatLng(
+        double.parse(_ownerUser.latitude),
+        double.parse(_ownerUser.longitude),
+      );
+      double distance = await _getDistance(startCoordinate, endCoordinate);
+      distance = distance / 1000;
+      _deliveryAmount = (distance * _costPerKm).toInt();
+    }
+    String jsonString = await _getCategoryList();
     var jsonData = json.decode(jsonString);
     List<Category> categoryList = [];
     for (var category in jsonData) {
@@ -91,15 +144,18 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
         ),
       );
     }
+
+    print(product);
     if (_detailObject is Product) {
-      category = categoryList.firstWhere((element) => element.id == product.id,
+      category = categoryList.firstWhere(
+          (element) => element.id == product.category_id,
           orElse: () => null);
     } else {
       category = categoryList.firstWhere(
-          (element) => element.id == requirement.id,
+          (element) => element.id == requirement.category_id,
           orElse: () => null);
     }
-    print(category.id);
+    //print(product.image);
     return category;
   }
 
@@ -119,25 +175,17 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     }
   }
 
-  Future<List<Address>> _getLocationFromCoordinate(LatLng coords) async {
-    final coordinates = new Coordinates(coords.latitude, coords.longitude);
-    var addresses =
-        await Geocoder.local.findAddressesFromCoordinates(coordinates);
-    //print("Inside address");
-    //print(addresses);
-    return addresses;
-  }
+  // Future<List<Address>> _getLocationFromCoordinate(LatLng coords) async {
+  //   final coordinates = new Coordinates(coords.latitude, coords.longitude);
+  //   var addresses =
+  //       await Geocoder.local.findAddressesFromCoordinates(coordinates);
+  //   //print("Inside address");
+  //   //print(addresses);
+  //   return addresses;
+  // }
 
-  Future<double> _getDistance(LatLng destinationCoordinates) async {
-    LatLng startCoordinates;
-    if (isProduct) {
-      startCoordinates = LatLng(
-          double.parse(product.latitude), double.parse(product.longitude));
-    } else {
-      startCoordinates = LatLng(double.parse(requirement.latitude),
-          double.parse(requirement.longitude));
-    }
-
+  Future<double> _getDistance(
+      LatLng startCoordinates, LatLng destinationCoordinates) async {
     double distanceInMeters = await Geolocator().distanceBetween(
       startCoordinates.latitude,
       startCoordinates.longitude,
@@ -147,20 +195,20 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     return distanceInMeters;
   }
 
-  void _openGoogleMaps(BuildContext context) async {
-    var finalLocation = await Navigator.of(context).pushNamed(
-      MapSample.routeName,
-    );
-    var finalAddress = await _getLocationFromCoordinate(finalLocation);
-    double distance = await _getDistance(finalLocation);
-    setState(() {
-      //print("Inside finalLocation");
-      _distance = distance;
-      print(deliveryAddress);
-      deliveryCoord = finalLocation;
-      deliveryAddress = finalAddress.first;
-    });
-  }
+  // void _openGoogleMaps(BuildContext context) async {
+  //   var finalLocation = await Navigator.of(context).pushNamed(
+  //     MapSample.routeName,
+  //   );
+  //   var finalAddress = await _getLocationFromCoordinate(finalLocation);
+  //   //double distance = await _getDistance(finalLocation);
+  //   setState(() {
+  //     //print("Inside finalLocation");
+  //     _distance = distance;
+  //     print(deliveryAddress);
+  //     deliveryCoord = finalLocation;
+  //     deliveryAddress = finalAddress.first;
+  //   });
+  // }
 
   Future<String> _uploadData() async {
     FormData formData = FormData.fromMap({
@@ -170,6 +218,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
       "user_id": userId,
       "delivery_amount": _deliveryAmount,
       "id": isProduct ? product.id : requirement.id,
+      'category': isProduct ? product.category_id : requirement.category_id,
     });
     try {
       var dio = Dio();
@@ -193,11 +242,24 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
         String dialogMesage = "Offer request failed. Retry.....";
         String buttonMessage = "Ok!!";
         _showMyDialog(text, dialogMesage, buttonMessage);
+      } else if (data['response_code'] == 405) {
+        String text = "Sorry!!!";
+        String dialogMesage =
+            "You have not listed any product of ${category.name}";
+        String buttonMessage = "Ok!!";
+        _showMyDialog(text, dialogMesage, buttonMessage);
+      } else if (data['response_code'] == 406) {
+        String text = "Sorry!!!";
+        String dialogMesage =
+            "You do not have sufficient quantity of ${category.name}";
+        String buttonMessage = "Ok!!";
+        _showMyDialog(text, dialogMesage, buttonMessage);
       } else if (data['response_code'] == 100) {
         String text = "Congratulations!!!";
         String dialogMesage = "Offer sent successfully.";
         String buttonMessage = "Done";
-        _showMyDialog(text, dialogMesage, buttonMessage);
+        await _showMyDialog(text, dialogMesage, buttonMessage);
+        Navigator.pop(context);
       }
     }
   }
@@ -235,23 +297,17 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     );
   }
 
-  Row firstCardInnerRow(
+  Widget firstCardInnerRow(
       String text, BuildContext context, TextDirection direction) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            text,
-            textDirection: direction,
-            softWrap: false,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-                color: Colors.black,
-                fontSize: MediaQuery.of(context).textScaleFactor * 14,
-                fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
+    return Text(
+      text,
+      textDirection: direction,
+      //softWrap: false,
+      //overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+          color: Colors.black,
+          fontSize: MediaQuery.of(context).textScaleFactor * 14,
+          fontWeight: FontWeight.bold),
     );
   }
 
@@ -259,6 +315,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
     final curScaleFactor = MediaQuery.of(context).textScaleFactor;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -280,141 +337,120 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                 child: Column(
                   children: <Widget>[
                     Container(
-                      height: data.size.height * 0.4,
+                      height: isSeller
+                          ? data.size.height * 0.2
+                          : data.size.height * 0.3,
                       width: data.size.width,
+                      margin: EdgeInsets.all(data.size.width * 0.02),
                       child: Card(
-                        child: Row(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: <Widget>[
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  isSeller
-                                      ? CircleAvatar(
-                                          backgroundImage: NetworkImage(
-                                            Utils.URL +
-                                                "images/" +
-                                                category.imgPath,
-                                          ),
-                                          backgroundColor: Colors.grey[200],
-                                          radius: data.size.height * 0.06,
-                                        )
-                                      : CircleAvatar(
-                                          backgroundImage: NetworkImage(
-                                            Utils.URL +
-                                                "images/" +
-                                                product.image,
-                                          ),
-                                          backgroundColor: Colors.grey[200],
-                                          radius: data.size.height * 0.06,
-                                        )
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              flex: 3,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  firstCardInnerRow(
-                                    AppLocalizations.of(context)
-                                        .translate(category.name),
-                                    context,
-                                    TextDirection.ltr,
-                                  ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'Location',
-                                    context,
-                                    TextDirection.ltr,
-                                  ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'Delievry Charges',
-                                    context,
-                                    TextDirection.ltr,
-                                  ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'Packaging Charges',
-                                    context,
-                                    TextDirection.ltr,
-                                  ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'Transaction Charges',
-                                    context,
-                                    TextDirection.ltr,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: <Widget>[
-                                  isProduct
-                                      ? firstCardInnerRow(
-                                          product.breed,
-                                          context,
-                                          TextDirection.rtl,
-                                        )
-                                      : firstCardInnerRow(
-                                          requirement.breed,
-                                          context,
-                                          TextDirection.rtl,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                isSeller
+                                    ? CircleAvatar(
+                                        backgroundImage: NetworkImage(
+                                          Utils.URL +
+                                              "images/" +
+                                              category.imgPath,
                                         ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  isProduct
-                                      ? firstCardInnerRow(
-                                          "${product.city},${product.state}",
-                                          context,
-                                          TextDirection.rtl,
-                                        )
-                                      : firstCardInnerRow(
-                                          "${requirement.city},${requirement.state}",
-                                          context,
-                                          TextDirection.rtl,
+                                        backgroundColor: Colors.grey[200],
+                                        radius: data.size.height * 0.06,
+                                      )
+                                    : CircleAvatar(
+                                        backgroundImage: NetworkImage(
+                                          Utils.URL +
+                                              "productImage/" +
+                                              product.image,
                                         ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'xxxxxx',
-                                    context,
-                                    TextDirection.rtl,
-                                  ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'xxxxxx',
-                                    context,
-                                    TextDirection.rtl,
-                                  ),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  firstCardInnerRow(
-                                    'xxxxxx',
-                                    context,
-                                    TextDirection.rtl,
-                                  ),
-                                ],
-                              ),
+                                        backgroundColor: Colors.grey[200],
+                                        radius: data.size.height * 0.06,
+                                      ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: <Widget>[
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    firstCardInnerRow(
+                                      AppLocalizations.of(context)
+                                          .translate(category.name),
+                                      context,
+                                      TextDirection.ltr,
+                                    ),
+                                    firstCardInnerRow(
+                                      'Location',
+                                      context,
+                                      TextDirection.ltr,
+                                    ),
+                                    if (isSeller == false)
+                                      firstCardInnerRow(
+                                        'Delivery Charges',
+                                        context,
+                                        TextDirection.ltr,
+                                      ),
+                                    if (isSeller == false)
+                                      firstCardInnerRow(
+                                        'Packaging Charges',
+                                        context,
+                                        TextDirection.ltr,
+                                      ),
+                                    if (isSeller == false)
+                                      firstCardInnerRow(
+                                        'Transaction Charges',
+                                        context,
+                                        TextDirection.ltr,
+                                      ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: <Widget>[
+                                    isProduct
+                                        ? firstCardInnerRow(
+                                            product.breed,
+                                            context,
+                                            TextDirection.rtl,
+                                          )
+                                        : firstCardInnerRow(
+                                            requirement.breed,
+                                            context,
+                                            TextDirection.rtl,
+                                          ),
+                                    firstCardInnerRow(
+                                      "${_ownerUser.city},${_ownerUser.state}",
+                                      context,
+                                      TextDirection.rtl,
+                                    ),
+                                    if (isSeller == false)
+                                      firstCardInnerRow(
+                                        this.userId == null
+                                            ? "Login Required"
+                                            : _deliveryAmount.toString(),
+                                        context,
+                                        TextDirection.rtl,
+                                      ),
+                                    if (isSeller == false)
+                                      firstCardInnerRow(
+                                        'xxxxxx',
+                                        context,
+                                        TextDirection.rtl,
+                                      ),
+                                    if (isSeller == false)
+                                      firstCardInnerRow(
+                                        'xxxxxx',
+                                        context,
+                                        TextDirection.rtl,
+                                      ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -426,6 +462,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                     Container(
                       height: data.size.height * 0.1,
                       width: data.size.width,
+                      margin: EdgeInsets.all(data.size.width * 0.02),
                       child: Card(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -445,14 +482,14 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                       padding: EdgeInsets.only(left: 1.0),
                                       child: isProduct
                                           ? Text(
-                                              product.remaining_qty,
+                                              product.remainingQty,
                                               style: TextStyle(
                                                 fontSize: curScaleFactor * 14,
                                                 color: Colors.black,
                                               ),
                                             )
                                           : Text(
-                                              requirement.remaining_qty,
+                                              requirement.remainingQty,
                                               style: TextStyle(
                                                 fontSize: curScaleFactor * 14,
                                                 color: Colors.black,
@@ -566,32 +603,17 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                         color: Colors.grey[200],
                       ),
                     ),
-                    if (isProduct)
-                      Card(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32.0)),
-                        child: Container(
-                          height: 55,
-                          width: data.size.width,
-                          child: FlatButton.icon(
-                            icon: Icon(
-                              Icons.file_download,
-                              color: Colors.white,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                            color: Theme.of(context).primaryColor,
-                            textColor: Theme.of(context).primaryColor,
-                            padding: EdgeInsets.all(8.0),
-                            onPressed: () {},
-                            label: Text(
-                              'Quality Certificate',
-                              overflow: TextOverflow.fade,
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                color: Colors.white,
-                              ),
+                    if (isProduct && product.qualityCertificate != null)
+                      Container(
+                        height: data.size.height * 0.2,
+                        width: data.size.width * 0.9,
+                        margin: EdgeInsets.all(data.size.width * 0.02),
+                        child: FittedBox(
+                          fit: BoxFit.fitHeight,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              "${Utils.URL}qualityCertificate/${product.qualityCertificate}",
                             ),
                           ),
                         ),
@@ -599,6 +621,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                     Container(
                       height: data.size.height * 0.2,
                       width: data.size.width,
+                      margin: EdgeInsets.all(data.size.width * 0.02),
                       child: Card(
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -619,6 +642,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                         htext: "Quantity",
                                         mdata: data,
                                         controller: _quantityBidController,
+                                        width: data.size.width * 0.3,
                                       ),
                                     ),
                                     Expanded(
@@ -629,6 +653,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                         htext: "Price",
                                         mdata: data,
                                         controller: _priceBidController,
+                                        width: data.size.width * 0.3,
                                       ),
                                     ),
                                   ],
@@ -648,11 +673,11 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                       style: TextStyle(
                                           color: Colors.black, fontSize: 14.0),
                                     ),
-                                    disabledColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(12.0)),
                                     elevation: 25.0,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),

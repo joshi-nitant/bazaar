@@ -46,6 +46,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   final _breedController = TextEditingController();
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
+  final _remainingQtyController = TextEditingController();
   DateTime _selectedDate;
   File qualityCertificate;
   Category selectedCategory;
@@ -67,48 +68,48 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
     });
   }
 
-  Future<void> _getLocation() async {
-    // show input autocomplete with selected mode
-    // then get the Prediction selected
-    Prediction p = await PlacesAutocomplete.show(
-      context: context,
-      apiKey: kGoogleApiKey,
-    );
-    print("here");
-    print(p);
-    displayPrediction(p);
-  }
+  // Future<void> _getLocation() async {
+  //   // show input autocomplete with selected mode
+  //   // then get the Prediction selected
+  //   Prediction p = await PlacesAutocomplete.show(
+  //     context: context,
+  //     apiKey: kGoogleApiKey,
+  //   );
+  //   print("here");
+  //   print(p);
+  //   displayPrediction(p);
+  // }
 
-  Future<List<String>> getAutoCompleteResponse(String query) async {
-    var prs;
+  // Future<List<String>> getAutoCompleteResponse(String query) async {
+  //   var prs;
 
-    PlacesAutocompleteResponse placesAutocompleteResponse =
-        await _places.autocomplete(query);
-    prs = placesAutocompleteResponse.predictions
-        .map((prediction) => prediction.description)
-        .toList();
-    print('Predictions: ' + prs.toString());
-    return prs;
-  }
+  //   PlacesAutocompleteResponse placesAutocompleteResponse =
+  //       await _places.autocomplete(query);
+  //   prs = placesAutocompleteResponse.predictions
+  //       .map((prediction) => prediction.description)
+  //       .toList();
+  //   print('Predictions: ' + prs.toString());
+  //   return prs;
+  // }
 
-  Future<Null> displayPrediction(Prediction p) async {
-    if (p != null) {
-      PlacesDetailsResponse detail =
-          await _places.getDetailsByPlaceId(p.placeId);
+  // Future<Null> displayPrediction(Prediction p) async {
+  //   if (p != null) {
+  //     PlacesDetailsResponse detail =
+  //         await _places.getDetailsByPlaceId(p.placeId);
 
-      print("detail $detail");
+  //     print("detail $detail");
 
-      var placeId = p.placeId;
-      double lat = detail.result.geometry.location.lat;
-      double lng = detail.result.geometry.location.lng;
+  //     var placeId = p.placeId;
+  //     double lat = detail.result.geometry.location.lat;
+  //     double lng = detail.result.geometry.location.lng;
 
-      print(p.description);
-      var address = await Geocoder.local.findAddressesFromQuery(p.description);
-      print("Address $address");
-      print(lat);
-      print(lng);
-    }
-  }
+  //     print(p.description);
+  //     var address = await Geocoder.local.findAddressesFromQuery(p.description);
+  //     print("Address $address");
+  //     print(lat);
+  //     print(lng);
+  //   }
+  // }
 
   void _categoryHandler(String value) {
     print(value);
@@ -120,49 +121,49 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
     });
   }
 
-  void _presentDatePicker() {
-    showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2019),
-      lastDate: DateTime.now(),
-    ).then((pickedDate) {
-      if (pickedDate == null) {
-        return;
-      }
-      setState(() {
-        _selectedDate = pickedDate;
-      });
-    });
-  }
+  // void _presentDatePicker() {
+  //   showDatePicker(
+  //     context: context,
+  //     initialDate: DateTime.now(),
+  //     firstDate: DateTime(2019),
+  //     lastDate: DateTime.now(),
+  //   ).then((pickedDate) {
+  //     if (pickedDate == null) {
+  //       return;
+  //     }
+  //     setState(() {
+  //       _selectedDate = pickedDate;
+  //     });
+  //   });
+  // }
 
-  void _openGoogleMaps(BuildContext context) async {
-    var finalLocation = await Navigator.of(context).pushNamed(
-      MapSample.routeName,
-    );
-    var finalAddress = await _getLocationFromCoordinate(finalLocation);
-    setState(() {
-      //print("Inside finalLocation");
-      print(_selectedAddress);
-      _selectedCoord = finalLocation;
-      _selectedAddress = finalAddress.first;
-      _selectedObject.address = _selectedAddress.addressLine;
-      _selectedObject.state = _selectedAddress.adminArea;
-      _selectedObject.postalCode = _selectedAddress.postalCode.toString();
-      _selectedObject.city = _selectedAddress.subAdminArea.toString();
-      _selectedObject.latitude = _selectedCoord.latitude.toString();
-      _selectedObject.longitude = _selectedCoord.longitude.toString();
-    });
-  }
+  // void _openGoogleMaps(BuildContext context) async {
+  //   var finalLocation = await Navigator.of(context).pushNamed(
+  //     MapSample.routeName,
+  //   );
+  //   var finalAddress = await _getLocationFromCoordinate(finalLocation);
+  //   setState(() {
+  //     //print("Inside finalLocation");
+  //     print(_selectedAddress);
+  //     _selectedCoord = finalLocation;
+  //     _selectedAddress = finalAddress.first;
+  //     _selectedObject.address = _selectedAddress.addressLine;
+  //     _selectedObject.state = _selectedAddress.adminArea;
+  //     _selectedObject.postalCode = _selectedAddress.postalCode.toString();
+  //     _selectedObject.city = _selectedAddress.subAdminArea.toString();
+  //     _selectedObject.latitude = _selectedCoord.latitude.toString();
+  //     _selectedObject.longitude = _selectedCoord.longitude.toString();
+  //   });
+  // }
 
-  Future<List<Address>> _getLocationFromCoordinate(LatLng coords) async {
-    final coordinates = new Coordinates(coords.latitude, coords.longitude);
-    var addresses =
-        await Geocoder.local.findAddressesFromCoordinates(coordinates);
-    //print("Inside address");
-    //print(addresses);
-    return addresses;
-  }
+  // Future<List<Address>> _getLocationFromCoordinate(LatLng coords) async {
+  //   final coordinates = new Coordinates(coords.latitude, coords.longitude);
+  //   var addresses =
+  //       await Geocoder.local.findAddressesFromCoordinates(coordinates);
+  //   //print("Inside address");
+  //   //print(addresses);
+  //   return addresses;
+  // }
 
   _getCategoryList() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -271,12 +272,13 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
         "price": _priceController.text,
         "breed": _breedController.text,
         "quantity": _quantityController.text,
-        "address": _selectedObject.address,
-        "state": _selectedObject.state,
-        "pincode": _selectedObject.postalCode,
-        "city": _selectedObject.city,
-        "latitude": _selectedObject.latitude,
-        "longitude": _selectedObject.longitude,
+        "remainingQty": _remainingQtyController.text,
+        // "address": _selectedObject.address,
+        // "state": _selectedObject.state,
+        // "pincode": _selectedObject.postalCode,
+        // "city": _selectedObject.city,
+        // "latitude": _selectedObject.latitude,
+        // "longitude": _selectedObject.longitude,
         "user_id": _userId,
         "category": _selectedObject.category.id,
       },
@@ -304,20 +306,25 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
     if (_priceController.text != null &&
         _breedController.text != null &&
         _quantityController.text != null &&
-        _userId != null) {
+        _userId != null &&
+        _remainingQtyController != null) {
       print("got eveything");
       String jsonResponse = await uploadData();
       var data = json.decode(jsonResponse);
+
       if (data['response_code'] == 404) {
         String text = "Sorry!!!";
         String dialogMesage = "Product updation failed. Retry.....";
         String buttonMessage = "Ok!!";
         showMyDialog(context, text, dialogMesage, buttonMessage);
+        Navigator.pop(context);
       } else if (data['response_code'] == 100) {
         String text = "Congratulations!!!";
         String dialogMesage = "Product updated successfully.";
         String buttonMessage = "Done";
-        showMyDialog(context, text, dialogMesage, buttonMessage);
+
+        await showMyDialog(context, text, dialogMesage, buttonMessage);
+        Navigator.pop(context);
       }
     }
   }
@@ -340,6 +347,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
     _breedController.text = _selectedObject.breed;
     _quantityController.text = _selectedObject.quantity;
     _priceController.text = _selectedObject.price_expected;
+    _remainingQtyController.text = _selectedObject.remainingQty;
     final data = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -369,12 +377,15 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                     Row(
                       children: <Widget>[
                         Expanded(
-                            child: TextInputCard(
-                                icon: Icons.fiber_pin,
-                                titype: TextInputType.number,
-                                htext: 'Breed',
-                                mdata: data,
-                                controller: _breedController)),
+                          child: TextInputCard(
+                            icon: Icons.fiber_pin,
+                            titype: TextInputType.number,
+                            htext: 'Breed',
+                            mdata: data,
+                            controller: _breedController,
+                            width: data.size.width * 0.9,
+                          ),
+                        ),
                         if (isSeller)
                           Expanded(
                             child: ButtonWidget(
@@ -387,7 +398,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                           CircleAvatar(
                             backgroundImage: _image == null
                                 ? NetworkImage(
-                                    "${Utils.URL}images/${_selectedObject.image}")
+                                    "${Utils.URL}productImage/${_selectedObject.image}")
                                 : FileImage(File(_image.path)),
                             backgroundColor: Colors.white,
                             radius: 25.0,
@@ -403,6 +414,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                           htext: 'Quantity',
                           mdata: data,
                           controller: _quantityController,
+                          width: data.size.width * 0.9,
                         )),
                         Expanded(
                             child: TextInputCard(
@@ -411,7 +423,20 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                           htext: 'Price',
                           mdata: data,
                           controller: _priceController,
+                          width: data.size.width * 0.9,
                         )),
+                      ],
+                    ),
+                    Row(
+                      children: <Widget>[
+                        TextInputCard(
+                          icon: Icons.line_weight,
+                          titype: TextInputType.number,
+                          htext: "Remaining Quantity",
+                          controller: _remainingQtyController,
+                          mdata: data,
+                          width: data.size.width * 0.9,
+                        ),
                       ],
                     ),
                     if (isSeller)
@@ -460,26 +485,26 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                     //     contentPadding: EdgeInsets.only(left: 15.0, top: 15.0),
                     //   ),
                     // ),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: ButtonWidget(
-                            iconData: Icons.search,
-                            text: "Enter Location",
-                            handlerMethod: () {
-                              _openGoogleMaps(context);
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(_selectedObject.address),
-                        ),
-                      ],
-                    ),
+                    // Row(
+                    //   children: <Widget>[
+                    //     Expanded(
+                    //       child: ButtonWidget(
+                    //         iconData: Icons.search,
+                    //         text: "Enter Location",
+                    //         handlerMethod: () {
+                    //           _openGoogleMaps(context);
+                    //         },
+                    //       ),
+                    //     ),
+                    //     Expanded(
+                    //       child: Text(_selectedObject.address),
+                    //     ),
+                    //   ],
+                    // ),
 
-                    SizedBox(
-                      height: 20.0,
-                    ),
+                    // SizedBox(
+                    //   height: 20.0,
+                    // ),
 
                     // Container(
                     //   height: data.size.height * 0.2,

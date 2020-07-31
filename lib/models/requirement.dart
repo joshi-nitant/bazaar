@@ -8,7 +8,7 @@ class Requirement {
   String price_expected;
   String breed;
   String category_id;
-  String remaining_qty;
+  String remainingQty;
   String state;
   String city;
   String latitude;
@@ -16,6 +16,7 @@ class Requirement {
   Category category;
   String address;
   String postalCode;
+  String userId;
 
   Requirement({
     @required this.id,
@@ -27,9 +28,10 @@ class Requirement {
     @required this.city,
     @required this.latitude,
     @required this.longitude,
-    @required this.remaining_qty,
+    @required this.remainingQty,
     this.category,
     this.address,
     this.postalCode,
+    this.userId,
   });
 }

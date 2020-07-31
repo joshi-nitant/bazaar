@@ -12,11 +12,12 @@ class Product {
   String state;
   String city;
   String image;
-  String remaining_qty;
+  String remainingQty;
   Category category;
   String qualityCertificate;
   String address;
   String postalCode;
+  String userId;
 
   Product({
     @required this.id,
@@ -28,12 +29,13 @@ class Product {
     @required this.city,
     @required this.latitude,
     @required this.longitude,
-    @required this.remaining_qty,
+    @required this.remainingQty,
     @required this.image,
     this.category,
     this.qualityCertificate,
     this.address,
     this.postalCode,
+    this.userId,
   });
 
   String get quality_certificate {

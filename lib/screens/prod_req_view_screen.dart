@@ -77,7 +77,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         latitude: u['latitude'],
         longitude: u['longitude'],
         postalCode: u['pincode'],
-        remaining_qty: u['remaining_qty'],
+        remainingQty: u['remaining_qty'],
         image: u['image'],
         address: u['address'],
         qualityCertificate: u['quality_certificate'],
@@ -117,7 +117,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         latitude: u['latitude'],
         longitude: u['longitude'],
         postalCode: u['pincode'],
-        remaining_qty: u['remaining_qty'],
+        remainingQty: u['remaining_qty'],
         address: u['address'],
         category: await _getCategory(u['category']),
       );
@@ -270,7 +270,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                               backgroundImage: _isProduct
                                   ? NetworkImage(
                                       Utils.URL +
-                                          "images/" +
+                                          "productImage/" +
                                           snapshot.data[index].image,
                                     )
                                   : NetworkImage(
@@ -280,17 +280,38 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                                     ),
                               radius: 30,
                             ),
-                            title: Text(
-                              snapshot.data[index].category.name,
-                              style: Theme.of(context).textTheme.headline6,
+                            title: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                snapshot.data[index].category.name,
+                                style: Theme.of(context).textTheme.headline6,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                             subtitle: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                Text(
-                                  "Price = ${snapshot.data[index].price_expected}",
+                                Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.attach_money,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    Text(
+                                      "${snapshot.data[index].price_expected}",
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  "Quantity = ${snapshot.data[index].quantity}",
+                                Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.line_weight,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    Text(
+                                      "Quantity = ${snapshot.data[index].quantity}",
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
