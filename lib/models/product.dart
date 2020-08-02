@@ -7,16 +7,16 @@ class Product {
   String price_expected;
   String breed;
   String category_id;
-  String latitude;
-  String longitude;
-  String state;
-  String city;
+  // String latitude;
+  // String longitude;
+  // String state;
+  // String city;
   String image;
   String remainingQty;
   Category category;
   String qualityCertificate;
   String address;
-  String postalCode;
+  //String postalCode;
   String userId;
 
   Product({
@@ -25,16 +25,16 @@ class Product {
     @required this.price_expected,
     @required this.breed,
     @required this.category_id,
-    @required this.state,
-    @required this.city,
-    @required this.latitude,
-    @required this.longitude,
+    // @required this.state,
+    // @required this.city,
+    // @required this.latitude,
+    // @required this.longitude,
     @required this.remainingQty,
     @required this.image,
     this.category,
     this.qualityCertificate,
     this.address,
-    this.postalCode,
+    //this.postalCode,
     this.userId,
   });
 

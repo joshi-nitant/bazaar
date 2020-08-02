@@ -4,6 +4,7 @@ import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
+import 'package:baazar/widgets/footer_widget.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
@@ -83,7 +84,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('app_title')),
+        title: Text(
+          AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder(
@@ -96,60 +104,82 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ),
             );
           }
+          if (snapshot.data.length == 0) {
+            return Container(
+              child: Center(
+                child: Text(
+                  "There are no category available.",
+                  style: TextStyle(
+                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
+                ),
+              ),
+            );
+          }
           return SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(25.0),
-              child: Container(
-                height: data.size.height,
-                width: data.size.width,
-                child: SingleChildScrollView(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: snapshot.data.map<Widget>(
-                        (category) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pushNamed(
-                                Dashboard.routeName,
-                                arguments: {
-                                  'category': category,
-                                  'userType': userType,
-                                },
-                              );
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Card(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(55.0)),
-                                  child: CircleAvatar(
-                                    backgroundImage: NetworkImage(
-                                      Utils.URL + "images/" + category.imgPath,
-                                    ),
-                                    backgroundColor: Colors.white,
-                                    radius: 55.0,
+            child: Container(
+              height: data.size.height,
+              width: data.size.width,
+              child: Column(
+                children: <Widget>[
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      child: SingleChildScrollView(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: snapshot.data.map<Widget>(
+                              (category) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).pushNamed(
+                                      Dashboard.routeName,
+                                      arguments: {
+                                        'category': category,
+                                        'userType': userType,
+                                      },
+                                    );
+                                  },
+                                  child: Column(
+                                    children: <Widget>[
+                                      Card(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(55.0)),
+                                        child: CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                            Utils.URL +
+                                                "images/" +
+                                                category.imgPath,
+                                          ),
+                                          backgroundColor: Colors.white,
+                                          radius: 55.0,
+                                        ),
+                                      ),
+                                      Text(
+                                        AppLocalizations.of(context)
+                                            .translate(category.name),
+                                        style: TextStyle(
+                                          color: Theme.of(context).primaryColor,
+                                          fontSize: 20.0,
+                                        ),
+                                      ),
+                                      SizedBox(height: 15.0),
+                                    ],
                                   ),
-                                ),
-                                Text(
-                                  AppLocalizations.of(context)
-                                      .translate(category.name),
-                                  style: TextStyle(
-                                    color: Theme.of(context).primaryColor,
-                                    fontSize: 20.0,
-                                  ),
-                                ),
-                                SizedBox(height: 15.0),
-                              ],
-                            ),
-                          );
-                        },
-                      ).toList(),
+                                );
+                              },
+                            ).toList(),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  Container(
+                    child: FooterWidget(),
+                  )
+                ],
               ),
             ),
           );

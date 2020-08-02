@@ -72,11 +72,11 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         price_expected: u['price_expected'],
         breed: u['breed'],
         category_id: u['category_id'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        postalCode: u['pincode'],
+        // city: u['city'],
+        // state: u['state'],
+        // latitude: u['latitude'],
+        // longitude: u['longitude'],
+        //postalCode: u['pincode'],
         remainingQty: u['remaining_qty'],
         image: u['image'],
         address: u['address'],
@@ -112,13 +112,13 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         price_expected: u['price_expected'],
         breed: u['breed'],
         category_id: u['category'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        postalCode: u['pincode'],
+        // city: u['city'],
+        // state: u['state'],
+        // latitude: u['latitude'],
+        // longitude: u['longitude'],
+        // postalCode: u['pincode'],
         remainingQty: u['remaining_qty'],
-        address: u['address'],
+        //address: u['address'],
         category: await _getCategory(u['category']),
       );
       requirements.add(requirement);
@@ -220,7 +220,12 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
         ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
         future: _getList(),
@@ -232,7 +237,17 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
               ),
             );
           }
-
+          if (snapshot.data.length == 0) {
+            return Container(
+              child: Center(
+                child: Text(
+                  "There are no products added so far.",
+                  style: TextStyle(
+                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
+                ),
+              ),
+            );
+          }
           return Container(
             height: 450,
             child: snapshot.data.length == 0

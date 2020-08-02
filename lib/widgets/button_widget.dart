@@ -4,8 +4,10 @@ class ButtonWidget extends StatefulWidget {
   Function handlerMethod;
   IconData iconData;
   String text;
-
-  ButtonWidget({this.iconData, this.text, this.handlerMethod});
+  int width = -1;
+  int height = -1;
+  ButtonWidget(
+      {this.iconData, this.text, this.handlerMethod, this.width, this.height});
   @override
   _ButtonWidgetState createState() => _ButtonWidgetState();
 }
@@ -16,8 +18,8 @@ class _ButtonWidgetState extends State<ButtonWidget> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       child: Container(
-        height: 55,
-        width: 150,
+        height: widget.height == -1 ? 55 : widget.height.toDouble(),
+        width: widget.width == -1 ? 150 : widget.width.toDouble(),
         child: FlatButton.icon(
           icon: Icon(widget.iconData),
           shape: RoundedRectangleBorder(

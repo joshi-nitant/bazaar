@@ -351,7 +351,14 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
     final data = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate("app_title")),
+        title: Text(
+          AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
         future: _loadCatAndUserType(),

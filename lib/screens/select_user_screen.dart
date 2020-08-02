@@ -24,6 +24,16 @@ class CheckUserScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
       backgroundColor: Colors.white,
       body: Container(
         child: Column(

@@ -4,16 +4,19 @@ import 'dart:ffi';
 import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/category.dart';
+import 'package:baazar/models/prod_bid.dart';
 import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement_bid.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/select_category_screen.dart';
+import 'package:baazar/widgets/dialog_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +31,8 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   RequirementBid _requirementBid;
+  ProductBid _productBid;
+
   int _buyerId;
   int _deliveryAmount;
   int _packagingAmount;
@@ -42,6 +47,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   LatLng _sellerCoordinate;
   bool _isFirstLoading = true;
   Razorpay razorpay;
+  bool _isReqBid;
+  int _productCharge;
+  int _transactionId;
+  final formatter = new intl.NumberFormat("#,###");
 
   @override
   void initState() {
@@ -78,8 +87,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  void _paymentSucess() {
-    print('sucess');
+  void _paymentSucess(PaymentSuccessResponse res) async {
+    String data = await _sendPaymentDetails(res);
+    print(data);
+    Navigator.of(context).pop();
+    if (data == "101") {
+      showMyDialog(context, "Payment Succefull",
+          "Congratulations your payment is successfull", "Ok");
+    }
+  }
+
+  Future<String> _sendPaymentDetails(PaymentSuccessResponse res) async {
+    var response = await http.post(
+      Utils.URL + "transactionCompleted.php",
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(
+        <String, String>{
+          'transaction_id': _transactionId.toString(),
+          'delivery_address': _buyer.address,
+          'total_amount': _getTotalAmount().toString(),
+          'product_amount': _productCharge.toString(),
+          'transaction_charge': _transactionAmount.toString(),
+          'packaging_charge': _packagingAmount.toString(),
+          'delivery_charge': _deliveryAmount.toString(),
+          'razorpay_payment_id': res.paymentId,
+          'razorpay_order_id': res.orderId,
+          'razorpay_signature': res.signature,
+        },
+      ),
+    );
+    print(response.body);
+    return json.decode(response.body);
   }
 
   void _paymentError() {
@@ -149,12 +189,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (_isFirstLoading) {
       var routeArgs =
           ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
-      _requirementBid = routeArgs['requirement_bid'];
+      dynamic bidObject = routeArgs['bid_object'];
+      _transactionId = routeArgs['transaction_id'];
+      if (bidObject is RequirementBid) {
+        _requirementBid = bidObject;
+        _isReqBid = true;
+      } else {
+        _productBid = bidObject;
+        _isReqBid = false;
+      }
 
       _buyerId = await _getUserId();
       if (_buyerId != null) {
         this._buyer = await _getUser(_buyerId);
-        this._seller = await _getUser(_requirementBid.userId);
+
+        if (_isReqBid) {
+          this._seller = await _getUser(_requirementBid.userId);
+        } else {
+          this._seller = await _getUser(int.parse(_productBid.prodId.userId));
+        }
+
         _buyerCoordinate = LatLng(
           double.parse(_buyer.latitude),
           double.parse(_buyer.longitude),
@@ -167,6 +221,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _deliveryAmount = _getDeliveryAmount(_distance).toInt();
         _transactionAmount = (_deliveryAmount * 3) ~/ 100;
         _packagingAmount = 30;
+        if (_isReqBid) {
+          _productCharge =
+              (_requirementBid.price * _requirementBid.quantity).toInt();
+        } else {
+          _productCharge = (_productBid.price * _productBid.quantity).toInt();
+        }
       }
       String jsonString = await _getCategoryList();
       var jsonData = json.decode(jsonString);
@@ -205,7 +265,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   int _getTotalAmount() {
-    return _deliveryAmount + _transactionAmount + _packagingAmount;
+    return _deliveryAmount +
+        _transactionAmount +
+        _packagingAmount +
+        _productCharge;
   }
 
   Future<User> _getLocation() async {
@@ -260,10 +323,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var routeArgs =
-        ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
-    _requirementBid = routeArgs['requirement_bid'];
-    print(_requirementBid);
     final data = MediaQuery.of(context);
     final curScaleFactor = MediaQuery.of(context).textScaleFactor;
 
@@ -271,7 +330,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
         ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
         future: _loadCatAndUserType(),
@@ -402,6 +466,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       MainAxisAlignment.spaceEvenly,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
+                                    normalText('Product Charge : '),
                                     normalText('Delivery Charge : '),
                                     normalText('Transaction Charge : '),
                                     normalText('Package Charge : '),
@@ -417,11 +482,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       MainAxisAlignment.spaceEvenly,
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: <Widget>[
-                                    normalText(_deliveryAmount.toString()),
-                                    normalText(_transactionAmount.toString()),
-                                    normalText(_packagingAmount.toString()),
+                                    normalText(
+                                        formatter.format(_productCharge)),
+                                    normalText(
+                                        formatter.format(_deliveryAmount)),
+                                    normalText(
+                                        formatter.format(_transactionAmount)),
+                                    normalText(
+                                        formatter.format(_packagingAmount)),
                                     SizedBox(height: 15.0),
-                                    largeText(_getTotalAmount().toString()),
+                                    largeText(
+                                        formatter.format(_getTotalAmount())),
                                   ],
                                 ),
                               ),

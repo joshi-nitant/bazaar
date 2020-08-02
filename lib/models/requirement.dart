@@ -1,3 +1,4 @@
+import 'package:baazar/models/user.dart';
 import 'package:flutter/material.dart';
 
 import 'category.dart';
@@ -9,13 +10,13 @@ class Requirement {
   String breed;
   String category_id;
   String remainingQty;
-  String state;
-  String city;
-  String latitude;
-  String longitude;
+  // String state;
+  // String city;
+  // String latitude;
+  // String longitude;
   Category category;
-  String address;
-  String postalCode;
+  // String address;
+  // String postalCode;
   String userId;
 
   Requirement({
@@ -24,14 +25,14 @@ class Requirement {
     @required this.price_expected,
     @required this.breed,
     @required this.category_id,
-    @required this.state,
-    @required this.city,
-    @required this.latitude,
-    @required this.longitude,
+    // @required this.state,
+    // @required this.city,
+    // @required this.latitude,
+    // @required this.longitude,
     @required this.remainingQty,
     this.category,
-    this.address,
-    this.postalCode,
+    //this.address,
+    //this.postalCode,
     this.userId,
   });
 }

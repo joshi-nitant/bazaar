@@ -1,4 +1,5 @@
 import 'package:baazar/models/requirement.dart';
+import 'package:baazar/models/user.dart';
 import 'package:flutter/material.dart';
 
 class RequirementBid {
@@ -10,15 +11,16 @@ class RequirementBid {
   int quantity;
   double price;
   Requirement reqId;
+  User seller;
 
   RequirementBid({
     @required this.reqBidId,
     @required this.reqId,
-    @required this.deliveryAmount,
     @required this.quantity,
     @required this.price,
     @required this.isAccepted,
     @required this.userId,
     this.bidDays,
+    this.seller,
   });
 }

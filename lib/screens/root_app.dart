@@ -1,3 +1,4 @@
+import 'package:baazar/screens/current_transaction_screen.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
 import 'package:baazar/screens/manage_offer_screen.dart';
@@ -8,6 +9,7 @@ import 'package:baazar/screens/prod_req_view_screen.dart';
 import 'package:baazar/screens/prod_req_update_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/singup_screen.dart';
+import 'package:baazar/screens/transaction_histroy_scree.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -98,6 +100,8 @@ class _MyAppState extends State<MyApp> {
         ProdReqUpdate.routeName: (ctx) => ProdReqUpdate(),
         OfferViewScreen.routeName: (ctx) => OfferViewScreen(),
         PaymentScreen.routeName: (ctx) => PaymentScreen(),
+        CurrentTransaction.routeName: (ctx) => CurrentTransaction(),
+        TransactionHistory.routeName: (ctx) => TransactionHistory(),
       },
 
       home: isLangSelected ? CheckUserScreen() : ChooseLanguageScreen(),

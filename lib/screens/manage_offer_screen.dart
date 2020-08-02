@@ -78,6 +78,34 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
     return category;
   }
 
+  _getUser(int id) async {
+    var response = await http.post(
+      Utils.URL + "getUser.php",
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(
+        <String, int>{
+          'id': id,
+        },
+      ),
+    );
+    print(response.body);
+    var jsondata = json.decode(response.body);
+    print(jsondata);
+    var userMap = jsondata[0];
+    User user = User(
+      id: userMap['user_id'],
+      latitude: userMap['latitude'],
+      longitude: userMap['longitude'],
+      address: userMap['address'],
+      state: userMap['state'],
+      city: userMap['city'],
+    );
+
+    return user;
+  }
+
   Future<List<ProductBid>> _getProductBids() async {
     var response = await http.post(
       Utils.URL + "getProdReqOffer.php",
@@ -101,11 +129,6 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         price_expected: u['price_expected'],
         breed: u['breed'],
         category_id: u['category_id'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        postalCode: u['pincode'],
         remainingQty: u['remaining_qty'],
         image: u['image'],
         address: u['address'],
@@ -118,8 +141,10 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         prodId: product,
         price: double.parse(u['bid_price']),
         quantity: int.parse(u['bid_quantity']),
-        deliveryAmount: double.parse(u['delivery_amount']),
         isAccepted: u['is_accepted'] == "1",
+        buyer: await _getUser(
+          int.parse(u['user_id']),
+        ),
       );
       productBid.add(bid);
     }
@@ -142,7 +167,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
     );
 
     var jsondata = json.decode(response.body);
-    //print(jsondata);
+    print(jsondata);
     List<RequirementBid> requirementBids = [];
     for (var u in jsondata) {
       Requirement requirement = Requirement(
@@ -151,13 +176,13 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         price_expected: u['price_expected'],
         breed: u['breed'],
         category_id: u['category'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        postalCode: u['pincode'],
+        // city: u['city'],
+        // state: u['state'],
+        // latitude: u['latitude'],
+        // longitude: u['longitude'],
+        // postalCode: u['pincode'],
         remainingQty: u['remaining_qty'],
-        address: u['address'],
+        //address: u['address'],
         category: await _getCategory(u['category']),
       );
       RequirementBid bid = RequirementBid(
@@ -166,8 +191,10 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         reqId: requirement,
         price: double.parse(u['bid_price']),
         quantity: int.parse(u['bid_quantity']),
-        deliveryAmount: double.parse(u['delivery_amount']),
         isAccepted: u['is_accepted'] == "1",
+        seller: await _getUser(
+          int.parse(u['user_id']),
+        ),
       );
       requirementBids.add(bid);
     }
@@ -344,8 +371,11 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               //print(object);
               Navigator.of(context).pushNamed(
                 PaymentScreen.routeName,
-                arguments: {'requirement_bid': object},
-              );
+                arguments: {
+                  'bid_object': object,
+                  'transaction_id': data['transaction_id']
+                },
+              ).then((value) => setState(() {}));
           },
         ),
       ],
@@ -360,7 +390,12 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
         ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
         future: _getOfferList(),
@@ -372,224 +407,210 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               ),
             );
           }
-
+          if (snapshot.data.length == 0) {
+            return Container(
+              child: Center(
+                child: Text(
+                  "There are no pending transactions.",
+                  style: TextStyle(
+                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
+                ),
+              ),
+            );
+          }
           return Container(
             height: 450,
-            child: snapshot.data.length == 0
-                ? Column(
-                    children: <Widget>[
-                      Text(
-                        'Nothing added yet!',
-                        style: Theme.of(context).textTheme.headline6,
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Container(
-                          height: 200,
-                          child: Image.asset(
-                            'assests/images/logo.png',
-                            fit: BoxFit.cover,
-                          )),
-                    ],
-                  )
-                : ListView.builder(
-                    itemBuilder: (ctx, index) {
-                      return GestureDetector(
-                        onTap: () {
-                          // _updateScreen(snapshot.data[index]);
-                        },
-                        child: Container(
-                          width: data.size.width,
-                          height: 100.0,
-                          child: Card(
-                            child: Row(
+            child: ListView.builder(
+              itemBuilder: (ctx, index) {
+                return GestureDetector(
+                  onTap: () {
+                    // _updateScreen(snapshot.data[index]);
+                  },
+                  child: Container(
+                    width: data.size.width,
+                    height: 100.0,
+                    child: Card(
+                      child: Row(
+                        children: <Widget>[
+                          CircleAvatar(
+                            backgroundImage: _isSeller
+                                ? NetworkImage(
+                                    Utils.URL +
+                                        "images/" +
+                                        snapshot.data[index].prodId.category
+                                            .imgPath,
+                                  )
+                                : NetworkImage(
+                                    Utils.URL +
+                                        "images/" +
+                                        snapshot
+                                            .data[index].reqId.category.imgPath,
+                                  ),
+                            backgroundColor: Colors.white,
+                            radius: 38.0,
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
-                                CircleAvatar(
-                                  backgroundImage: _isSeller
-                                      ? NetworkImage(
-                                          Utils.URL +
-                                              "images/" +
-                                              snapshot.data[index].prodId
-                                                  .category.imgPath,
-                                        )
-                                      : NetworkImage(
-                                          Utils.URL +
-                                              "images/" +
-                                              snapshot.data[index].reqId
-                                                  .category.imgPath,
-                                        ),
-                                  backgroundColor: Colors.white,
-                                  radius: 38.0,
+                                Text(
+                                  _isProduct
+                                      ? snapshot
+                                          .data[index].prodId.category.name
+                                      : snapshot
+                                          .data[index].reqId.category.name,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 18.0 * curr,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: <Widget>[
-                                      Text(
-                                        _isProduct
-                                            ? snapshot.data[index].prodId
-                                                .category.name
-                                            : snapshot.data[index].reqId
-                                                .category.name,
+                                _isSeller
+                                    ? Text(
+                                        "${snapshot.data[index].buyer.city},${snapshot.data[index].buyer.state}",
                                         style: TextStyle(
                                           color: Colors.black,
-                                          fontSize: 18.0 * curr,
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16.0,
+                                        ),
+                                      )
+                                    : Text(
+                                        "${snapshot.data[index].seller.city},${snapshot.data[index].seller.state}",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 16.0,
                                         ),
                                       ),
-                                      _isSeller
-                                          ? Text(
-                                              "${snapshot.data[index].prodId.city},${snapshot.data[index].prodId.state}",
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 16.0,
-                                              ),
-                                            )
-                                          : Text(
-                                              "${snapshot.data[index].reqId.city},${snapshot.data[index].reqId.state}",
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 16.0,
-                                              ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    Column(
+                                      children: <Widget>[
+                                        Row(
+                                          children: <Widget>[
+                                            Icon(
+                                              Icons.line_weight,
+                                              color: Theme.of(context)
+                                                  .primaryColor,
                                             ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: <Widget>[
-                                          Column(
-                                            children: <Widget>[
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(
-                                                    Icons.line_weight,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                  ),
-                                                  Text(
-                                                    snapshot
-                                                        .data[index].quantity
-                                                        .toString(),
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 14.0,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                          Column(
-                                            children: <Widget>[
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(
-                                                    Icons.monetization_on,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                  ),
-                                                  Text(
-                                                    snapshot.data[index].price
-                                                        .toString(),
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 14.0,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: <Widget>[
-                                      _isSeller
-                                          ? Text(
-                                              snapshot.data[index].prodId.breed,
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 14.0,
-                                              ),
-                                            )
-                                          : Text(
-                                              snapshot.data[index].reqId.breed,
+                                            Text(
+                                              snapshot.data[index].quantity
+                                                  .toString(),
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 14.0,
                                               ),
                                             ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: <Widget>[
-                                          ClipOval(
-                                            child: Material(
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: <Widget>[
+                                        Row(
+                                          children: <Widget>[
+                                            Icon(
+                                              Icons.monetization_on,
                                               color: Theme.of(context)
-                                                  .primaryColor, // button color
-                                              child: InkWell(
-                                                splashColor: Colors
-                                                    .grey, // inkwell color
-                                                child: SizedBox(
-                                                    width: 44,
-                                                    height: 44,
-                                                    child: Icon(
-                                                      Icons.check,
-                                                      color: Colors.white,
-                                                    )),
-                                                onTap: () {
-                                                  _selectItem(
-                                                      snapshot.data[index]);
-                                                },
+                                                  .primaryColor,
+                                            ),
+                                            Text(
+                                              snapshot.data[index].price
+                                                  .toString(),
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 14.0,
                                               ),
                                             ),
-                                          ),
-                                          ClipOval(
-                                            child: Material(
-                                              color: Theme.of(context)
-                                                  .primaryColor, // button color
-                                              child: InkWell(
-                                                splashColor: Colors
-                                                    .grey, // inkwell color
-                                                child: SizedBox(
-                                                    width: 44,
-                                                    height: 44,
-                                                    child: Icon(
-                                                      Icons.close,
-                                                      color: Colors.white,
-                                                    )),
-                                                onTap: () {
-                                                  _deleteItem(
-                                                      snapshot.data[index]);
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25.0)),
                           ),
-                        ),
-                      );
-                    },
-                    itemCount: snapshot.data.length,
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                _isSeller
+                                    ? Text(
+                                        snapshot.data[index].prodId.breed,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14.0,
+                                        ),
+                                      )
+                                    : Text(
+                                        snapshot.data[index].reqId.breed,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14.0,
+                                        ),
+                                      ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    ClipOval(
+                                      child: Material(
+                                        color: Theme.of(context)
+                                            .primaryColor, // button color
+                                        child: InkWell(
+                                          splashColor:
+                                              Colors.grey, // inkwell color
+                                          child: SizedBox(
+                                              width: 44,
+                                              height: 44,
+                                              child: Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                              )),
+                                          onTap: () {
+                                            _selectItem(snapshot.data[index]);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    ClipOval(
+                                      child: Material(
+                                        color: Theme.of(context)
+                                            .primaryColor, // button color
+                                        child: InkWell(
+                                          splashColor:
+                                              Colors.grey, // inkwell color
+                                          child: SizedBox(
+                                              width: 44,
+                                              height: 44,
+                                              child: Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                              )),
+                                          onTap: () {
+                                            _deleteItem(snapshot.data[index]);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25.0)),
+                    ),
                   ),
+                );
+              },
+              itemCount: snapshot.data.length,
+            ),
           );
         },
       ),

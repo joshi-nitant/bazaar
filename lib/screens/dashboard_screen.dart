@@ -6,10 +6,12 @@ import 'package:baazar/models/category.dart';
 import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/current_transaction_screen.dart';
 import 'package:baazar/screens/manage_offer_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/prod_req_view_screen.dart';
+import 'package:baazar/screens/transaction_histroy_scree.dart';
 import 'package:baazar/widgets/list_tile_widget.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:flutter/material.dart';
@@ -40,22 +42,25 @@ class _DashboardState extends State<Dashboard> {
     );
     var jsondata = json.decode(response.body);
     List<Requirement> requirements = [];
-    for (var u in jsondata) {
-      Requirement requirement = Requirement(
-        id: u['req_id'],
-        quantity: u['quantity'],
-        price_expected: u['price_expected'],
-        breed: u['breed'],
-        category_id: u['category'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        remainingQty: u['remaining_qty'],
-        userId: u['user_id'],
-      );
-      requirements.add(requirement);
+    if (jsondata != 404) {
+      for (var u in jsondata) {
+        Requirement requirement = Requirement(
+          id: u['req_id'],
+          quantity: u['quantity'],
+          price_expected: u['price_expected'],
+          breed: u['breed'],
+          category_id: u['category'],
+          // city: u['city'],
+          // state: u['state'],
+          // latitude: u['latitude'],
+          // longitude: u['longitude'],
+          remainingQty: u['remaining_qty'],
+          userId: u['user_id'],
+        );
+        requirements.add(requirement);
+      }
     }
+    print(jsondata);
     return requirements;
   }
 
@@ -72,27 +77,28 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
     var jsondata = json.decode(response.body);
-    //print(jsondata);
     List<Product> products = [];
-    for (var u in jsondata) {
-      Product product = Product(
-        id: u['prod_id'],
-        quantity: u['quantity'],
-        price_expected: u['price_expected'],
-        breed: u['breed'],
-        category_id: u['category_id'],
-        city: u['city'],
-        state: u['state'],
-        latitude: u['latitude'],
-        longitude: u['longitude'],
-        remainingQty: u['remaining_qty'],
-        image: u['image'],
-        qualityCertificate: u['quality_certificate'],
-        userId: u['user_id'],
-      );
-      products.add(product);
+    if (jsondata != 404) {
+      for (var u in jsondata) {
+        Product product = Product(
+          id: u['prod_id'],
+          quantity: u['quantity'],
+          price_expected: u['price_expected'],
+          breed: u['breed'],
+          category_id: u['category_id'],
+          // city: u['city'],
+          // state: u['state'],
+          // latitude: u['latitude'],
+          // longitude: u['longitude'],
+          remainingQty: u['remaining_qty'],
+          image: u['image'],
+          qualityCertificate: u['quality_certificate'],
+          userId: u['user_id'],
+        );
+        products.add(product);
+      }
     }
-    //print(jsondata);
+    print(jsondata);
     return products;
   }
 
@@ -115,6 +121,30 @@ class _DashboardState extends State<Dashboard> {
     } else {
       print('redirecting');
       Navigator.of(context).pushNamed(OfferViewScreen.routeName).then(
+            (value) => Navigator.pop(context),
+          );
+    }
+  }
+
+  void _redirectToCurrentTransaction() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
+      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
+    } else {
+      print('redirecting');
+      Navigator.of(context).pushNamed(CurrentTransaction.routeName).then(
+            (value) => Navigator.pop(context),
+          );
+    }
+  }
+
+  void _redirectToTransactionHistory() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
+      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
+    } else {
+      print('redirecting');
+      Navigator.of(context).pushNamed(TransactionHistory.routeName).then(
             (value) => Navigator.pop(context),
           );
     }
@@ -177,7 +207,7 @@ class _DashboardState extends State<Dashboard> {
             ListTileWidget(
               Icons.insert_drive_file,
               'Transaction History',
-              null,
+              _redirectToTransactionHistory,
             ),
             ListTileWidget(
               Icons.people,
@@ -187,7 +217,7 @@ class _DashboardState extends State<Dashboard> {
             ListTileWidget(
               Icons.monetization_on,
               'Current Transaction',
-              null,
+              _redirectToCurrentTransaction,
             ),
             ListTileWidget(
                 Icons.list, 'Requirement List', _redirectToManageScreeen),
@@ -236,6 +266,18 @@ class _DashboardState extends State<Dashboard> {
                 ),
               );
             }
+
+            if (snapshot.data.length == 0) {
+              return Container(
+                child: Center(
+                  child: Text(
+                    "There are no ${category.name} available.",
+                    style: TextStyle(
+                        fontSize: 18 * MediaQuery.of(context).textScaleFactor),
+                  ),
+                ),
+              );
+            }
             return Padding(
               padding: EdgeInsets.all(10),
               child: Card(
@@ -263,9 +305,8 @@ class _DashboardState extends State<Dashboard> {
                                 padding: EdgeInsets.only(
                                     left: 10, top: 10, bottom: 10, right: 5),
                                 child: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      "${Utils.URL}images/${category.imgPath}"),
-                                ),
+                                    backgroundImage: NetworkImage(
+                                        "${Utils.URL}images/${category.imgPath}")),
                               ),
                             ),
                             Align(

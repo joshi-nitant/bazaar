@@ -320,7 +320,12 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+          ),
         ),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
           future: _loadCatAndUserType(),
