@@ -18,6 +18,8 @@ class Requirement {
   // String address;
   // String postalCode;
   String userId;
+  User buyer;
+  int distance;
 
   Requirement({
     @required this.id,
@@ -34,5 +36,7 @@ class Requirement {
     //this.address,
     //this.postalCode,
     this.userId,
+    this.buyer,
+    this.distance,
   });
 }

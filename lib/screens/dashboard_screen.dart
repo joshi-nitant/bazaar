@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/classes/utils.dart';
+import 'package:baazar/models/breed.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
@@ -12,9 +13,12 @@ import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/prod_req_view_screen.dart';
 import 'package:baazar/screens/transaction_histroy_scree.dart';
+import 'package:baazar/widgets/filter_dialog_widget.dart';
 import 'package:baazar/widgets/list_tile_widget.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,79 +31,217 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   String userType;
   Category category;
+  List<Product> productList = [];
+  List<Requirement> requirementList = [];
+  List<Product> productFilterList = [];
+  List<Requirement> requirementFilterList = [];
+  Icon cusIcon = Icon(Icons.filter_list);
+  Widget cusSearchBar;
+  int minPrice = 0;
+  int maxPrice = 0;
+  User user;
+  int userId;
+  Set<String> cityList = Set();
+  Function kiloHandler;
+  Function breedHandler;
+  bool _isInitialLoad = true;
+
+  List<String> kilometerList = ["50", "100", "150", "200", "300"];
+  @override
+  void didChangeDependencies() {
+    cusSearchBar = Text(
+      AppLocalizations.of(context).translate('app_title'),
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 25,
+      ),
+    );
+    super.didChangeDependencies();
+  }
+
+  Future<double> _getDistance(
+      LatLng startCoordinates, LatLng destinationCoordinates) async {
+    double distanceInMeters = await Geolocator().distanceBetween(
+      startCoordinates.latitude,
+      startCoordinates.longitude,
+      destinationCoordinates.latitude,
+      destinationCoordinates.longitude,
+    );
+    return distanceInMeters / 1000;
+  }
 
   Future<List<Requirement>> _getRequirements() async {
+    if (_isInitialLoad) {
+      this.userId = await _getUserId();
+      this.user = await _getUser(this.userId);
+      var response = await http.post(
+        Utils.URL + "getRequirements.php",
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(
+          <String, String>{
+            'cat_id': category.id,
+          },
+        ),
+      );
+
+      var jsondata = json.decode(response.body);
+      List<Requirement> requirements = [];
+      if (jsondata != 404) {
+        for (var u in jsondata) {
+          Requirement requirement = Requirement(
+            id: u['req_id'],
+            quantity: u['quantity'],
+            price_expected: u['price_expected'],
+            breed: u['breed'],
+            category_id: u['category'],
+            // city: u['city'],
+            // state: u['state'],
+            // latitude: u['latitude'],
+            // longitude: u['longitude'],
+            remainingQty: u['remaining_qty'],
+            userId: u['user_id'],
+            buyer: _getUser(int.parse(u['user_id'])),
+          );
+          int currPrice = double.parse(requirement.price_expected).toInt();
+          if (currPrice < minPrice) {
+            minPrice = currPrice;
+          } else if (currPrice > maxPrice) {
+            maxPrice = currPrice;
+          }
+          cityList.add(requirement.buyer.city);
+          requirements.add(requirement);
+        }
+      }
+      this.requirementList = requirements;
+      await _calculateDistanceRequirement(requirementList);
+      return this.requirementList;
+    }
+    return this.requirementFilterList;
+  }
+
+  Future<void> _calculateDistanceProduct(List<Product> productList) async {
+    LatLng startCordinate = LatLng(
+      double.parse(this.user.latitude),
+      double.parse(this.user.longitude),
+    );
+
+    for (int i = 0; i < productList.length; i++) {
+      print(productList[i].seller.latitude);
+      LatLng endCordinate = LatLng(
+        double.parse(productList[i].seller.latitude),
+        double.parse(productList[i].seller.longitude),
+      );
+
+      productList[i].distance =
+          (await _getDistance(startCordinate, endCordinate)).toInt();
+    }
+  }
+
+  Future<void> _calculateDistanceRequirement(
+      List<Requirement> requirementList) async {
+    LatLng startCordinate = LatLng(
+      double.parse(this.user.latitude),
+      double.parse(this.user.longitude),
+    );
+
+    for (int i = 0; i < requirementList.length; i++) {
+      LatLng endCordinate = LatLng(
+        double.parse(requirementList[i].buyer.latitude),
+        double.parse(requirementList[i].buyer.longitude),
+      );
+
+      requirementList[i].distance =
+          (await _getDistance(startCordinate, endCordinate)).toInt();
+    }
+  }
+
+  Future<int> _getUserId() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE);
+  }
+
+  _getUser(int id) async {
     var response = await http.post(
-      Utils.URL + "getRequirements.php",
+      Utils.URL + "getUser.php",
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(
-        <String, String>{
-          'cat_id': category.id,
+        <String, int>{
+          'id': id,
         },
       ),
     );
+    print(response.body);
     var jsondata = json.decode(response.body);
-    List<Requirement> requirements = [];
-    if (jsondata != 404) {
-      for (var u in jsondata) {
-        Requirement requirement = Requirement(
-          id: u['req_id'],
-          quantity: u['quantity'],
-          price_expected: u['price_expected'],
-          breed: u['breed'],
-          category_id: u['category'],
-          // city: u['city'],
-          // state: u['state'],
-          // latitude: u['latitude'],
-          // longitude: u['longitude'],
-          remainingQty: u['remaining_qty'],
-          userId: u['user_id'],
-        );
-        requirements.add(requirement);
-      }
-    }
     print(jsondata);
-    return requirements;
+    var userMap = jsondata[0];
+    User user = User(
+      id: userMap['user_id'],
+      latitude: userMap['latitude'],
+      longitude: userMap['longitude'],
+      address: userMap['address'],
+      state: userMap['state'],
+      city: userMap['city'],
+    );
+
+    return user;
   }
 
   Future<List<Product>> _getProducts() async {
-    var response = await http.post(
-      Utils.URL + "getProduct.php",
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(
-        <String, String>{
-          'cat_id': category.id,
+    if (_isInitialLoad) {
+      this.userId = await _getUserId();
+      this.user = await _getUser(this.userId);
+      var response = await http.post(
+        Utils.URL + "getProduct.php",
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
         },
-      ),
-    );
-    var jsondata = json.decode(response.body);
-    List<Product> products = [];
-    if (jsondata != 404) {
-      for (var u in jsondata) {
-        Product product = Product(
-          id: u['prod_id'],
-          quantity: u['quantity'],
-          price_expected: u['price_expected'],
-          breed: u['breed'],
-          category_id: u['category_id'],
-          // city: u['city'],
-          // state: u['state'],
-          // latitude: u['latitude'],
-          // longitude: u['longitude'],
-          remainingQty: u['remaining_qty'],
-          image: u['image'],
-          qualityCertificate: u['quality_certificate'],
-          userId: u['user_id'],
-        );
-        products.add(product);
+        body: jsonEncode(
+          <String, String>{
+            'cat_id': category.id,
+          },
+        ),
+      );
+      var jsondata = json.decode(response.body);
+      List<Product> products = [];
+      if (jsondata != 404) {
+        for (var u in jsondata) {
+          Product product = Product(
+            id: u['prod_id'],
+            quantity: u['quantity'],
+            price_expected: u['price_expected'],
+            breed: u['breed'],
+            category_id: u['category_id'],
+            // city: u['city'],
+            // state: u['state'],
+            // latitude: u['latitude'],
+            // longitude: u['longitude'],
+            remainingQty: u['remaining_qty'],
+            image: u['image'],
+            qualityCertificate: u['quality_certificate'],
+            userId: u['user_id'],
+            seller: await _getUser(int.parse(u['user_id'])),
+          );
+          cityList.add(product.seller.city);
+          print(product.price_expected);
+          int currPrice = double.parse(product.price_expected).toInt();
+          if (currPrice < minPrice) {
+            minPrice = currPrice;
+          } else if (currPrice > maxPrice) {
+            maxPrice = currPrice;
+          }
+          products.add(product);
+        }
       }
+
+      this.productList = products;
+      await _calculateDistanceProduct(productList);
+      return this.productList;
     }
-    print(jsondata);
-    return products;
+    return this.productFilterList;
   }
 
   void _redirectToManageScreeen() async {
@@ -159,6 +301,74 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
+  void _removeHadnler() {
+    if (this.userType == "buyer") {
+      this.productFilterList = this.productList;
+    } else {
+      this.requirementFilterList = this.requirementList;
+    }
+  }
+
+  void _filterHandler(
+      String kilometer, List<String> breed, int startPrice, int endPrice) {
+    //this.cusIcon = Icon(Icons.search);
+    print(kilometer);
+//print("Kilometer = " + kilometer);
+    print("Breed = " + breed.toString());
+    print("Start Price = " + startPrice.toString());
+    print("End Price = " + endPrice.toString());
+    this.cusSearchBar = Text(
+      AppLocalizations.of(context).translate('app_title'),
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 25,
+      ),
+    );
+    setState(() {
+      _isInitialLoad = false;
+
+      if (userType == "buyer") {
+        productFilterList = this.productList;
+        if (breed.length != 0) {
+          productFilterList = (productFilterList
+              .where((product) => breed.contains(product.breed))
+              .toList());
+        }
+        if (kilometer != null) {
+          int distance = int.parse(kilometer);
+          productFilterList = productFilterList
+              .where((product) => product.distance <= distance)
+              .toList();
+        }
+
+        productFilterList = productFilterList
+            .where((product) =>
+                startPrice <= double.parse(product.price_expected).toInt() &&
+                double.parse(product.price_expected).toInt() <= endPrice)
+            .toList();
+      } else {
+        requirementFilterList = this.requirementList;
+        if (kilometer != null) {
+          int distance = int.parse(kilometer);
+          requirementFilterList = (requirementFilterList
+              .where((requirement) => requirement.distance <= distance)
+              .toList());
+        }
+        if (breed.length != 0) {
+          requirementFilterList = (requirementFilterList
+              .where((requirement) => breed.contains(requirement.breed))
+              .toList());
+        }
+        requirementFilterList = (requirementFilterList
+            .where((requirement) =>
+                startPrice <=
+                    double.parse(requirement.price_expected).toInt() &&
+                double.parse(requirement.price_expected).toInt() <= endPrice)
+            .toList());
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var routeArgs =
@@ -170,13 +380,47 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
-        ),
+        title: this.cusSearchBar,
+        actions: <Widget>[
+          IconButton(
+            onPressed: () {
+              setState(() {
+                if (this.cusIcon.icon == Icons.filter_list) {
+                  //this.cusIcon = Icon(Icons.close);
+                  this.cusSearchBar = Text(
+                    "Filter",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 25,
+                    ),
+                  );
+                  showFilterDialog(
+                      context: context,
+                      breedList: category.breed,
+                      //breedHandler: breedHandler,
+                      buttonMessage: "Apply",
+                      minPrice: minPrice,
+                      maxPrice: maxPrice,
+                      dropdownItems: kilometerList,
+                      // dropDownHandler: kiloHandler,
+                      buttonHandler: _filterHandler,
+                      title: "Filter");
+                }
+                // else {
+                //   this.cusIcon = Icon(Icons.search);
+                //   this.cusSearchBar = Text(
+                //     AppLocalizations.of(context).translate('app_title'),
+                //     style: TextStyle(
+                //       color: Colors.white,
+                //       fontSize: 25,
+                //     ),
+                //   );
+                // }
+              });
+            },
+            icon: cusIcon,
+          )
+        ],
         iconTheme: IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(

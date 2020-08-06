@@ -1,4 +1,5 @@
 import 'package:baazar/models/category.dart';
+import 'package:baazar/models/user.dart';
 import 'package:flutter/material.dart';
 
 class Product {
@@ -18,6 +19,8 @@ class Product {
   String address;
   //String postalCode;
   String userId;
+  User seller;
+  int distance;
 
   Product({
     @required this.id,
@@ -36,6 +39,8 @@ class Product {
     this.address,
     //this.postalCode,
     this.userId,
+    this.seller,
+    this.distance,
   });
 
   String get quality_certificate {

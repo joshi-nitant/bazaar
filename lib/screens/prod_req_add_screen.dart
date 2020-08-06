@@ -370,8 +370,11 @@ class _ProdReqAddState extends State<ProdReqAdd> {
               child: Container(
                 child: Column(
                   children: <Widget>[
-                    CategoryDropDown(dropDownValue,
-                        getCategoryNameAsList(snapshot.data), _categoryHandler),
+                    CategoryDropDown(
+                        dropDownValue,
+                        getCategoryNameAsList(snapshot.data),
+                        _categoryHandler,
+                        "Category"),
                     Row(
                       children: <Widget>[
                         Expanded(

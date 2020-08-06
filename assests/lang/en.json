@@ -1,29 +1,69 @@
 {
     "app_title": "Bazzar",
-    "who_r_u":"Who are you?",
+
+    "who_r_u": "Who are you?",
     "buyer": "Buyer",
-    "seller":"Seller",
-    "Castor":"Castor",
-    "Cotton":"Cotton",
-    "Maize":"Maize",
-    "Groundnut":"Groundnut",
-    "Breed":"Breed",
-    "Select Location":"Select Location",
-    "Quantity":"Quantity",
-    "Price":"Price",
-    "Choose Date":"Choose Date",
-    "Choose Quality Certificate":"Choose Quality Certificate",
-    "Add":"Add",
-    "Name":"Name",
-    "Password":"Password",
-    "Contact Number":"Contact Number",
-    "Address":"Address",
-    "Pan Card":"Pan Card",
-    "Aadhar Card":"Aadhar Card",
-    "Sign Up":"SignUp",
-    "Name of the file":"Not selected",
-    "Add Photo":"Add Photo",
-    "Enter Location":"Enter Location",
-    "Post Offer":"Post Offer",
-    "Remaining Quantity":"Remaining Quantity"
+    "seller": "Seller",
+
+    "Castor": "Castor",
+    "Cotton": "Cotton",
+    "Maize": "Maize",
+    "Groundnut": "Groundnut",
+
+    "Filter": "Filter",
+    "Add Requirements": "Add Requirements",
+    "Add Products": "Add Products",
+
+    "Breed": "Breed",
+    "Select Location": "Select Location",
+    "Price": "Price",
+
+    "Requirement List": "Requirement List",
+    "Product List": "Product List",
+    "Transaction History": "Transaction History",
+    "Current Transaction": "Current Transaction",
+    "Manage Offer": "Manage Offer",
+    "Bid": "Bid",
+
+    "Name": "Name",
+    "Contact Number": "Contact Number",
+    "Address": "Address",
+    "Sign Up": "SignUp",
+    "Pan Card": "Pan Card",
+    "Signup successful": "Signup successful",
+    "Signup unsuccessful": "Signup unsuccessful. Retry...",
+
+
+
+    "Quantity": "Quantity",
+    "Choose category": "Choose Category",
+    "Remaining Quantity": "Remaining Quantity",
+    "Choose Quality Certificate": "Choose Quality Certificate",
+
+    "Add": "Add",
+    "Name of the file": "Not selected",
+    "Add Photo": "Add Photo",
+    "Enter Location": "Enter Location",
+
+    "Delivery Address": "Delivery Address",
+    "Delivery Charge": "Delivery Charge",
+    "Transaction Charge": "Transaction Charge",
+    "Packaging Charge": "Packaging Charge",
+    "Product Charge": "Product Charge",
+    "Total": "Total",
+    "Post Offer": "Post Offer",
+    "Checkout": "Checkout",
+
+    "Congratulations": "Congratulations",
+    "Product added ": "Product added successfully",
+    "Product unsuccess": "Unable to add product. Retry....",
+    "Product update": "Product updated successfully",
+    "Product update unsuccess": "Unable to update product. Retry....",
+    "No current transactions": "No pending transactions available",
+    "No product": "Nothing added yet.",
+    "No transaction history": "No transactions made yet",
+    "Payment succesfull": "Payment successfull",
+    "Payment unsuccesfull": "Payment unsuccessfull"
+
+
 }

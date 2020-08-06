@@ -7,11 +7,13 @@ class CategoryDropDown extends StatefulWidget {
   String dropdownValue = 'One';
   List<String> dropDownItems;
   Function categoryHandler;
+  String titleText;
 
   CategoryDropDown(
     this.dropdownValue,
     this.dropDownItems,
     this.categoryHandler,
+    this.titleText,
   );
   @override
   _CategoryDropDownState createState() => _CategoryDropDownState();
@@ -36,7 +38,7 @@ class _CategoryDropDownState extends State<CategoryDropDown> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       child: DropDownFormField(
-        titleText: 'Category',
+        titleText: widget.titleText,
         hintText: 'Please choose one',
         value: widget.dropdownValue,
         // onSaved: (value) {

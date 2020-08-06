@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/classes/utils.dart';
+import 'package:baazar/models/breed.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/widgets/footer_widget.dart';
@@ -35,21 +36,57 @@ class _CategoryScreenState extends State<CategoryScreen> {
     //print("Data stored ${json.encode(jsonData)}");
   }
 
+  Future<List<Breed>> _getCategoryBreed(String categoryId) async {
+    List<Breed> breedList = [];
+    //print("here1");
+    var response = await http.post(
+      Utils.URL + "getBreed.php",
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(
+        <String, String>{
+          'cat_id': categoryId,
+        },
+      ),
+    );
+
+    var jsondata = json.decode(response.body);
+
+    if (jsondata['response_code'] == 101) {
+      for (var breed in jsondata['breed_list']) {
+        breedList.add(new Breed(
+          id: int.parse(breed['breed_id']),
+          catId: int.parse(breed['cat_id']),
+          breed: breed['breed'],
+        ));
+      }
+    }
+
+    return breedList;
+  }
+
   Future<List<Category>> _getCategory() async {
     var response = await http.get(
-      Utils.URL + "getData.php",
+      Utils.URL + "getCategory.php",
     );
+
     var jsonData = json.decode(response.body);
     List<Category> categories = [];
     for (var u in jsonData) {
+      List<Breed> breedList = await _getCategoryBreed(u['cat_id']);
+
       Category category = Category(
-          id: u['cat_id'],
-          name: u['category_name'],
-          imgPath: u['category_image']);
+        id: u['cat_id'],
+        name: u['category_name'],
+        imgPath: u['category_image'],
+        breed: breedList,
+      );
+
       categories.add(category);
     }
     _saveToPreference(jsonData);
-    //print(jsonData.toString());
+
     return categories;
   }
 
