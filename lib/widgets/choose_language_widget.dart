@@ -11,7 +11,13 @@ class ChooseLanguageWidget extends StatelessWidget {
 
   final List<Language> languageList = [
     Language(
-        name: "English",
+      name: "ગુજરતી",
+      code: "gu",
+      dialect: "IN",
+      path: ImagePath.gujaratiLang,
+    ),
+    Language(
+        name: "ENGLISH",
         code: "en",
         dialect: "US",
         path: ImagePath.englishLang),
@@ -21,12 +27,6 @@ class ChooseLanguageWidget extends StatelessWidget {
       dialect: "IN",
       path: ImagePath.hindiLang,
     ),
-    Language(
-      name: "ગુજરતી",
-      code: "gu",
-      dialect: "IN",
-      path: ImagePath.gujaratiLang,
-    ),
   ];
 
   ChooseLanguageWidget({@required this.changeLangHandler});
@@ -35,11 +35,9 @@ class ChooseLanguageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Flexible(
-          flex: 1,
-          fit: FlexFit.tight,
+        Expanded(
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: languageList.map((lang) {
               return GestureDetector(
                 onTap: () {
@@ -49,7 +47,7 @@ class ChooseLanguageWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Container(
-                      height: 100,
+                      height: 130,
                       child: Image.asset(
                         lang.path,
                         fit: BoxFit.fill,
@@ -59,6 +57,9 @@ class ChooseLanguageWidget extends StatelessWidget {
                       margin: EdgeInsets.only(top: 5),
                       child: Text(
                         lang.name,
+                        style: Theme.of(context).textTheme.bodyText1.apply(
+                              color: Theme.of(context).primaryColor,
+                            ),
                       ),
                     )
                   ],
@@ -67,11 +68,9 @@ class ChooseLanguageWidget extends StatelessWidget {
             }).toList(),
           ),
         ),
-        Flexible(
-          flex: 0,
-          fit: FlexFit.tight,
-          child: FooterWidget(),
-        ),
+        // Container(
+        //   child: FooterWidget(),
+        // ),
       ],
     );
   }

@@ -185,7 +185,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return user;
   }
 
-  Future<RequirementBid> _loadCatAndUserType() async {
+  Future<dynamic> _loadCatAndUserType() async {
     if (_isFirstLoading) {
       var routeArgs =
           ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
@@ -241,12 +241,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
         );
       }
       _addressText = _buyer.address;
-      _requirementBid.reqId.category = categoryList.firstWhere(
-          (element) => element.id == _requirementBid.reqId.category_id,
-          orElse: () => null);
+      if (_isReqBid) {
+        _requirementBid.reqId.category = categoryList.firstWhere(
+            (element) => element.id == _requirementBid.reqId.category_id,
+            orElse: () => null);
+      } else {
+        _productBid.prodId.category = categoryList.firstWhere(
+            (element) => element.id == _productBid.prodId.category_id,
+            orElse: () => null);
+      }
+
       _isFirstLoading = false;
     }
-    return _requirementBid;
+
+    if (_isReqBid) {
+      return _requirementBid;
+    } else {
+      return _productBid;
+    }
   }
 
   Future<double> _getDistance(
@@ -321,6 +333,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
+  String _getImage(dynamic object) {
+    if (_isReqBid) {
+      return "${Utils.URL}/images/${object.reqId.category.imgPath}";
+    } else {
+      object = object as ProductBid;
+      return "${Utils.URL}/productImage/${object.prodId.image}";
+    }
+  }
+
+  String _getCategoryname(dynamic object) {
+    if (_isReqBid) {
+      return "${_requirementBid.reqId.category.name}";
+    } else {
+      object = object as ProductBid;
+      return "${_productBid.prodId.category.name}";
+    }
+  }
+
+  String _getBreed(dynamic object) {
+    if (_isReqBid) {
+      return "${_requirementBid.reqId.breed}";
+    } else {
+      object = object as ProductBid;
+      return "${_productBid.prodId.breed}";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
@@ -329,11 +368,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          AppLocalizations.of(context).translate('Checkout'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -375,7 +414,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       children: <Widget>[
                                         CircleAvatar(
                                           backgroundImage: NetworkImage(
-                                              "${Utils.URL}/images/${snapshot.data.reqId.category.imgPath}"),
+                                            _getImage(snapshot.data),
+                                          ),
                                           backgroundColor: Colors.white,
                                           radius: 45.0,
                                         ),
@@ -390,12 +430,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: <Widget>[
-                                        largeText(_requirementBid
-                                            .reqId.category.name),
-                                        normalText(
+                                        largeText(context,
+                                            _getCategoryname(snapshot.data)),
+                                        normalText(context,
                                             "${_seller.city},${_seller.state}"),
                                         normalText(
-                                            "${_requirementBid.reqId.breed}"),
+                                            context, _getBreed(snapshot.data)),
                                       ],
                                     ),
                                   )
@@ -426,10 +466,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                               Expanded(
                                                 child: Text(
                                                   _buyer.address,
-                                                  style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 17.0,
-                                                  ),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyText2,
                                                   textAlign: TextAlign.center,
                                                   //overflow: TextOverflow.clip,
                                                   //maxLines: 5,
@@ -466,12 +505,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       MainAxisAlignment.spaceEvenly,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    normalText('Product Charge : '),
-                                    normalText('Delivery Charge : '),
-                                    normalText('Transaction Charge : '),
-                                    normalText('Package Charge : '),
+                                    normalText(context, 'Product Charge : '),
+                                    normalText(context, 'Delivery Charge : '),
+                                    normalText(
+                                        context, 'Transaction Charge : '),
+                                    normalText(context, 'Package Charge : '),
                                     SizedBox(height: 15.0),
-                                    largeText('Total Charge : '),
+                                    largeText(context, 'Total Charge : '),
                                   ],
                                 ),
                               ),
@@ -482,16 +522,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       MainAxisAlignment.spaceEvenly,
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: <Widget>[
-                                    normalText(
+                                    normalText(context,
                                         formatter.format(_productCharge)),
-                                    normalText(
+                                    normalText(context,
                                         formatter.format(_deliveryAmount)),
-                                    normalText(
+                                    normalText(context,
                                         formatter.format(_transactionAmount)),
-                                    normalText(
+                                    normalText(context,
                                         formatter.format(_packagingAmount)),
                                     SizedBox(height: 15.0),
-                                    largeText(
+                                    largeText(context,
                                         formatter.format(_getTotalAmount())),
                                   ],
                                 ),
@@ -518,7 +558,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           onPressed: () {
                             _openCheckout();
                           },
-                          child: largeText('Checkout')),
+                          child: Text(
+                            AppLocalizations.of(context).translate("Checkout"),
+                            style: Theme.of(context).textTheme.bodyText1.apply(
+                                  color: Colors.white,
+                                ),
+                          )),
                     ),
                   ],
                 ),

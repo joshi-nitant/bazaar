@@ -1,10 +1,11 @@
 {
-    "app_title": "Bazzar",
+    "app_title": "BAAZAR",
 
     "who_r_u": "Who are you?",
     "buyer": "Buyer",
     "seller": "Seller",
 
+    "No Category": "There are no categories available",
     "Castor": "Castor",
     "Cotton": "Cotton",
     "Maize": "Maize",
@@ -13,10 +14,34 @@
     "Filter": "Filter",
     "Add Requirements": "Add Requirements",
     "Add Products": "Add Products",
+    "Dashboard Empty": "Nothing available yet.",
+    "Search": "Search",
+    "Filter Km Drop": "Select Region",
 
     "Breed": "Breed",
     "Select Location": "Select Location",
     "Price": "Price",
+    "Product Details": "Product Details",
+    "Category": "Category",
+    "Drop Down Hint": "Please Choose One",
+
+    "Category not selected": "Category not selected",
+    "Breed must be added": "Breed must be added",
+    "Breed must be have less than 10 characters": "Breed must be have less than 10 characters",
+    "Quantity must be added": "Quantity must be added",
+    "Quantity must be a number": "Quantity must be a number",
+    "Remove decimal point": "Remove decimal point",
+    "Greater than 0": "Greater than 0",
+    "Price must be added": "Price must be added",
+    "Price must be a number": "Price must be a number",
+    "Photo not added": "Photo not added",
+
+    "Remaining Quantity must be a number": "Remaining Quantity must be a number",
+    "Remaining Quantity must be added": "Remaining Quantity must be added",
+    "Shoule be less than total quantity": "Shoule be less than total quantity",
+    "Change Photo": "Change Photo",
+
+
 
     "Requirement List": "Requirement List",
     "Product List": "Product List",
@@ -24,6 +49,7 @@
     "Current Transaction": "Current Transaction",
     "Manage Offer": "Manage Offer",
     "Bid": "Bid",
+    "Manage Request": "Manage Request",
 
     "Name": "Name",
     "Contact Number": "Contact Number",
@@ -32,8 +58,8 @@
     "Pan Card": "Pan Card",
     "Signup successful": "Signup successful",
     "Signup unsuccessful": "Signup unsuccessful. Retry...",
-
-
+    "Trade Details": "Trade Details",
+    "Update Product": "Update Product",
 
     "Quantity": "Quantity",
     "Choose category": "Choose Category",
@@ -45,17 +71,18 @@
     "Add Photo": "Add Photo",
     "Enter Location": "Enter Location",
 
+
     "Delivery Address": "Delivery Address",
     "Delivery Charge": "Delivery Charge",
     "Transaction Charge": "Transaction Charge",
     "Packaging Charge": "Packaging Charge",
     "Product Charge": "Product Charge",
     "Total": "Total",
-    "Post Offer": "Post Offer",
+    "Post Offer": "POST OFFER",
     "Checkout": "Checkout",
 
-    "Congratulations": "Congratulations",
-    "Product added ": "Product added successfully",
+    "Congratulations": "Congratulations!!!",
+    "Product added": "Product added successfully",
     "Product unsuccess": "Unable to add product. Retry....",
     "Product update": "Product updated successfully",
     "Product update unsuccess": "Unable to update product. Retry....",
@@ -63,7 +90,11 @@
     "No product": "Nothing added yet.",
     "No transaction history": "No transactions made yet",
     "Payment succesfull": "Payment successfull",
-    "Payment unsuccesfull": "Payment unsuccessfull"
+    "Payment unsuccesfull": "Payment unsuccessfull",
+    "Sorry": "Sorry!!!",
+    "OK": "OK",
+    "Done": "Done",
+    "Updating Please Wait...": "Updating Please Wait..."
 
 
 }

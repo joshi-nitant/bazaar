@@ -30,6 +30,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
   bool _isSeller;
   int _userId;
   final formatter = new NumberFormat("#,###");
+  bool _isProduct;
 
   _getCategoryList() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -90,6 +91,8 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
       return _pendingTransactions;
     }
     if (jsondata['transaction_requirement'] != null) {
+      _isProduct = false;
+
       for (var u in jsondata['transaction_requirement']) {
         Requirement requirement = Requirement(
           id: u['req_id'],
@@ -99,6 +102,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
           category_id: u['category'],
           remainingQty: u['remaining_qty'],
           category: await _getCategory(u['category']),
+          userId: u['user_id'],
         );
         RequirementBid bid = RequirementBid(
           reqBidId: int.parse(u['req_bid_id']),
@@ -121,6 +125,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
     }
     //print(_pendingTransactions.length);
     if (jsondata['transaction_product'] != null) {
+      _isProduct = true;
       for (var u in jsondata['transaction_product']) {
         Product product = Product(
           id: u['prod_id'],
@@ -133,6 +138,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
           address: u['address'],
           qualityCertificate: u['quality_certificate'],
           category: await _getCategory(u['category_id']),
+          userId: u['user_id'],
         );
         ProductBid bid = ProductBid(
           prodBidId: int.parse(u['prod_bid_id']),
@@ -158,7 +164,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
 
   int _getTotalAmount(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (_isSeller) {
+    if (_isProduct) {
       return (tn.productBidId.quantity * tn.productBidId.price).toInt();
     } else {
       return (tn.reqbidId.quantity * tn.reqbidId.price).toInt();
@@ -167,7 +173,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
 
   String _getTitle(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (_isSeller) {
+    if (_isProduct) {
       return tn.productBidId.prodId.category.name;
     } else {
       return tn.reqbidId.reqId.category.name;
@@ -176,7 +182,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
 
   String _getBreed(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (_isSeller) {
+    if (_isProduct) {
       return tn.productBidId.prodId.breed;
     } else {
       return tn.reqbidId.reqId.breed;
@@ -207,7 +213,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
           'bid_object': tn.productBidId,
           'transaction_id': tn.transactionId
         },
-      );
+      ).then((value) => setState(() {}));
     } else if (tn.reqbidId != null) {
       Navigator.of(context).pushNamed(
         PaymentScreen.routeName,
@@ -229,10 +235,10 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -258,79 +264,94 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
             );
           }
           return Container(
-            child: ListView.builder(
-              itemBuilder: (ctx, index) {
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 5,
-                  margin: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 5,
-                  ),
-                  child: ListTile(
-                    //contentPadding: EdgeInsets.only(bottom: 10),
-                    //isThreeLine: true,
-                    leading: CircleAvatar(
-                      radius: 30.0,
-                      backgroundImage: _getImage(snapshot.data[index]),
-                      backgroundColor: Colors.transparent,
-                    ),
-                    title: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _getTitle(snapshot.data[index]),
-                        style: Theme.of(context).textTheme.title,
-                        textAlign: TextAlign.center,
+            height: MediaQuery.of(context).size.height,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+              child: Card(
+                color: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0)),
+                child: ListView.builder(
+                  itemBuilder: (ctx, index) {
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                    subtitle: Text(
-                      //"Pending transaction of \u20B9 ${_getTotalAmount(snapshot.data[index])}",
-                      "Pending transaction of \u20B9${formatter.format(123456)}",
-                      style: TextStyle(
-                        fontSize: 15 * curr,
-                      ),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                    ),
-                    trailing: !_isSeller
-                        ? Card(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25.0)),
-                            child: Container(
-                              height: 55,
-                              width: 150,
-                              child: FlatButton.icon(
-                                icon: Icon(
-                                  Icons.exit_to_app,
-                                  color: Theme.of(context).primaryColor,
-                                ),
+                      elevation: 5,
+                      margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
+                      child: ListTile(
+                        //contentPadding: EdgeInsets.only(bottom: 10),
+                        //isThreeLine: true,
+                        leading: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: _getImage(snapshot.data[index]),
+                          backgroundColor: Theme.of(context).primaryColorLight,
+                        ),
+                        title: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _getTitle(snapshot.data[index]),
+                            style: Theme.of(context).textTheme.bodyText1,
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                        subtitle: _isSeller
+                            ? Text(
+                                "Pending transaction of \u20B9${formatter.format(_getTotalAmount(snapshot.data[index]))}",
+                                //"Pending transaction of \u20B9${formatter.format(123456)}",
+                                style: Theme.of(context).textTheme.bodyText2,
+                                textAlign: TextAlign.center,
+                                softWrap: true,
+                              )
+                            : Text(
+                                "Pending transaction of \u20B9${formatter.format(_getTotalAmount(snapshot.data[index]))}",
+                                //"Pending transaction of \u20B9${formatter.format(123456)}",
+                                style: Theme.of(context).textTheme.bodyText2,
+                                textAlign: TextAlign.start,
+                                softWrap: true,
+                              ),
+
+                        trailing: !_isSeller
+                            ? Card(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32.0),
-                                ),
-                                color: Colors.white,
-                                textColor: Theme.of(context).primaryColor,
-                                padding: EdgeInsets.all(8.0),
-                                onPressed: () {
-                                  _procedToCheckout(snapshot.data[index]);
-                                },
-                                label: Text(
-                                  "Checkout",
-                                  overflow: TextOverflow.fade,
-                                  style: TextStyle(
-                                    fontSize: 16.0,
+                                    borderRadius: BorderRadius.circular(25.0)),
+                                child: Container(
+                                  height: 55,
+                                  width: 150,
+                                  child: FlatButton.icon(
+                                    icon: Icon(
+                                      Icons.exit_to_app,
+                                      color: Colors.white,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(32.0),
+                                    ),
                                     color: Theme.of(context).primaryColor,
+                                    textColor: Colors.white,
+                                    padding: EdgeInsets.all(8.0),
+                                    onPressed: () {
+                                      _procedToCheckout(snapshot.data[index]);
+                                    },
+                                    label: Text(
+                                      "Checkout",
+                                      overflow: TextOverflow.fade,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText2
+                                          .apply(
+                                            color: Colors.white,
+                                          ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          )
-                        : SizedBox(),
-                  ),
-                );
-              },
-              itemCount: snapshot.data.length,
+                              )
+                            : SizedBox(),
+                      ),
+                    );
+                  },
+                  itemCount: snapshot.data.length,
+                ),
+              ),
             ),
           );
         },

@@ -6,6 +6,7 @@ import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/widgets/drop_down_widget.dart';
+import 'package:baazar/widgets/m_y_baazar_icons.dart';
 
 import 'package:geocoder/geocoder.dart';
 //import 'package:google_maps_webservice/places.dart';
@@ -22,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 //import 'package:intl/intl.dart';
 import 'package:location/location.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'google_maps_screen.dart';
@@ -55,6 +57,14 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   LatLng _selectedCoord;
   File _image;
   final picker = ImagePicker();
+  String errorBreed;
+  String errorPrice;
+  String errorQuantity;
+  String errorCategory;
+  String _photoText = "Change Photo";
+  bool _isPhotoError = false;
+  String errorRemainingQuantity;
+  bool _initialLoad = true;
 
   static const String kGoogleApiKey = "AIzaSyBuZTVFf0pDt_MgQedl5aNsOxu286k7Wmw";
   GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
@@ -62,54 +72,15 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   Future getImage() async {
     final pickedFile = await picker.getImage(source: ImageSource.camera);
 
-    setState(() {
-      _image = File(pickedFile.path);
-      _selectedObject.image = _image.path.split('/').last;
-    });
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+        _selectedObject.image = _image.path.split('/').last;
+        _photoText = "Change Photo";
+        _isPhotoError = false;
+      });
+    }
   }
-
-  // Future<void> _getLocation() async {
-  //   // show input autocomplete with selected mode
-  //   // then get the Prediction selected
-  //   Prediction p = await PlacesAutocomplete.show(
-  //     context: context,
-  //     apiKey: kGoogleApiKey,
-  //   );
-  //   print("here");
-  //   print(p);
-  //   displayPrediction(p);
-  // }
-
-  // Future<List<String>> getAutoCompleteResponse(String query) async {
-  //   var prs;
-
-  //   PlacesAutocompleteResponse placesAutocompleteResponse =
-  //       await _places.autocomplete(query);
-  //   prs = placesAutocompleteResponse.predictions
-  //       .map((prediction) => prediction.description)
-  //       .toList();
-  //   print('Predictions: ' + prs.toString());
-  //   return prs;
-  // }
-
-  // Future<Null> displayPrediction(Prediction p) async {
-  //   if (p != null) {
-  //     PlacesDetailsResponse detail =
-  //         await _places.getDetailsByPlaceId(p.placeId);
-
-  //     print("detail $detail");
-
-  //     var placeId = p.placeId;
-  //     double lat = detail.result.geometry.location.lat;
-  //     double lng = detail.result.geometry.location.lng;
-
-  //     print(p.description);
-  //     var address = await Geocoder.local.findAddressesFromQuery(p.description);
-  //     print("Address $address");
-  //     print(lat);
-  //     print(lng);
-  //   }
-  // }
 
   void _categoryHandler(String value) {
     print(value);
@@ -120,50 +91,6 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
       selectedCategory = _selectedObject.category;
     });
   }
-
-  // void _presentDatePicker() {
-  //   showDatePicker(
-  //     context: context,
-  //     initialDate: DateTime.now(),
-  //     firstDate: DateTime(2019),
-  //     lastDate: DateTime.now(),
-  //   ).then((pickedDate) {
-  //     if (pickedDate == null) {
-  //       return;
-  //     }
-  //     setState(() {
-  //       _selectedDate = pickedDate;
-  //     });
-  //   });
-  // }
-
-  // void _openGoogleMaps(BuildContext context) async {
-  //   var finalLocation = await Navigator.of(context).pushNamed(
-  //     MapSample.routeName,
-  //   );
-  //   var finalAddress = await _getLocationFromCoordinate(finalLocation);
-  //   setState(() {
-  //     //print("Inside finalLocation");
-  //     print(_selectedAddress);
-  //     _selectedCoord = finalLocation;
-  //     _selectedAddress = finalAddress.first;
-  //     _selectedObject.address = _selectedAddress.addressLine;
-  //     _selectedObject.state = _selectedAddress.adminArea;
-  //     _selectedObject.postalCode = _selectedAddress.postalCode.toString();
-  //     _selectedObject.city = _selectedAddress.subAdminArea.toString();
-  //     _selectedObject.latitude = _selectedCoord.latitude.toString();
-  //     _selectedObject.longitude = _selectedCoord.longitude.toString();
-  //   });
-  // }
-
-  // Future<List<Address>> _getLocationFromCoordinate(LatLng coords) async {
-  //   final coordinates = new Coordinates(coords.latitude, coords.longitude);
-  //   var addresses =
-  //       await Geocoder.local.findAddressesFromCoordinates(coordinates);
-  //   //print("Inside address");
-  //   //print(addresses);
-  //   return addresses;
-  // }
 
   _getCategoryList() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -186,69 +113,45 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   }
 
   Future<List<Category>> _loadCatAndUserType() async {
-    //print("Cateory List Start");
-    String jsonString = await _getCategoryList();
-    // print(jsonString);
-    this.isSeller = await _getUserType();
-    //print(this.isSeller);
-    this._userId = await _getUserId();
-    var jsonData = json.decode(jsonString);
-    List<Category> categoryList = [];
-    for (var category in jsonData) {
-      categoryList.add(
-        Category(
-          id: category["cat_id"],
-          name: category["category_name"],
-          imgPath: category["category_image"],
-        ),
-      );
+    if (_initialLoad) {
+      //print("Cateory List Start");
+      String jsonString = await _getCategoryList();
+      // print(jsonString);
+      this.isSeller = await _getUserType();
+      // if (isSeller && _selectedObject.image != null) {
+      //   _isPhotoError = false;
+      // }
+      //print(this.isSeller);
+      this._userId = await _getUserId();
+      var jsonData = json.decode(jsonString);
+      List<Category> categoryList = [];
+      for (var category in jsonData) {
+        categoryList.add(
+          Category(
+            id: category["cat_id"],
+            name: category["category_name"],
+            imgPath: category["category_image"],
+          ),
+        );
+      }
+      //print("Cateory List End");
+      this.catgeoryList = categoryList;
+      _initialLoad = false;
     }
-    //print("Cateory List End");
-    this.catgeoryList = categoryList;
-    return categoryList;
+
+    return this.catgeoryList;
   }
 
   void pickFile() async {
     File file = await FilePicker.getFile();
-    setState(() {
-      this.qualityCertificate = file;
-      _selectedObject.qualityCertificate =
-          this.qualityCertificate.path.split('/').last;
-    });
+    if (file != null) {
+      setState(() {
+        this.qualityCertificate = file;
+        _selectedObject.qualityCertificate =
+            this.qualityCertificate.path.split('/').last;
+      });
+    }
   }
-
-  // Future<void> _showMyDialog(
-  //     String title, String message, String buttonMessage) async {
-  //   return showDialog<void>(
-  //     context: context,
-  //     barrierDismissible: false, // user must tap button!
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         shape:
-  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
-  //         title: Text(title),
-  //         content: SingleChildScrollView(
-  //           child: ListBody(
-  //             children: <Widget>[
-  //               Text(message),
-  //             ],
-  //           ),
-  //         ),
-  //         actions: <Widget>[
-  //           FlatButton(
-  //             child: Text(buttonMessage),
-  //             shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(32.0)),
-  //             color: Theme.of(context).primaryColor,
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 
   Future<String> uploadData() async {
     print(qualityCertificate);
@@ -269,7 +172,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
             : null,
         "id": _selectedObject.id,
         "isSeller": isSeller,
-        "price": _priceController.text,
+        "price": num.parse(_priceController.text).toStringAsFixed(2),
         "breed": _breedController.text,
         "quantity": _quantityController.text,
         "remainingQty": _remainingQtyController.text,
@@ -296,32 +199,41 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   }
 
   void _submitData() async {
-    print("submiting");
-    print(_priceController.text);
-    print(_breedController.text);
-    print(_quantityController.text);
-    //print(_selectedAddress.addressLine);
-    print(selectedCategory);
-    print(_userId);
-    if (_priceController.text != null &&
-        _breedController.text != null &&
-        _quantityController.text != null &&
-        _userId != null &&
-        _remainingQtyController != null) {
-      print("got eveything");
+    if (_validator() && _userId != null) {
+      final ProgressDialog pr = ProgressDialog(context,
+          type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+      pr.style(
+        message:
+            AppLocalizations.of(context).translate('Updating Please Wait...'),
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+      );
+      await pr.show();
       String jsonResponse = await uploadData();
       var data = json.decode(jsonResponse);
+      pr.hide();
 
       if (data['response_code'] == 404) {
-        String text = "Sorry!!!";
-        String dialogMesage = "Product updation failed. Retry.....";
-        String buttonMessage = "Ok!!";
+        String text = AppLocalizations.of(context).translate("Sorry!!!");
+        String dialogMesage =
+            AppLocalizations.of(context).translate("Product update unsuccess");
+        String buttonMessage = AppLocalizations.of(context).translate("Ok!!");
         showMyDialog(context, text, dialogMesage, buttonMessage);
         Navigator.pop(context);
       } else if (data['response_code'] == 100) {
-        String text = "Congratulations!!!";
-        String dialogMesage = "Product updated successfully.";
-        String buttonMessage = "Done";
+        String text = AppLocalizations.of(context).translate("Congratulations");
+        String dialogMesage =
+            AppLocalizations.of(context).translate("Product update");
+        String buttonMessage = AppLocalizations.of(context).translate("Done");
 
         await showMyDialog(context, text, dialogMesage, buttonMessage);
         Navigator.pop(context);
@@ -331,33 +243,196 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
 
   List<String> getCategoryNameAsList(List<Category> catgeoryList) {
     List<String> catList = [];
-    print(this.catgeoryList);
+    //print(this.catgeoryList);
 
     for (Category category in this.catgeoryList) {
-      catList.add(category.name);
+      catList.add(AppLocalizations.of(context).translate(category.name));
     }
     return catList;
   }
 
+  bool _validator() {
+    if (_validateCategory() &&
+        _validatorBreed() &&
+        _validatorPhoto() &&
+        _validatorQuantity() &&
+        _validatorRemainingQuantity() &&
+        _validatorPrice()) {
+      print("success");
+      return true;
+    } else {
+      print("failed");
+      return false;
+    }
+  }
+
+  bool _validateCategory() {
+    if (selectedCategory == null) {
+      errorCategory =
+          AppLocalizations.of(context).translate("Category not selected");
+      return false;
+    }
+    errorCategory = null;
+    print("category success");
+    return true;
+  }
+
+  bool _validatorBreed() {
+    if (_breedController.text.isEmpty) {
+      errorBreed =
+          AppLocalizations.of(context).translate("Breed must be added");
+      return false;
+    }
+    if (_breedController.text.trim().length > 10) {
+      errorBreed = AppLocalizations.of(context)
+          .translate("Breed must be have less than 10 characters ");
+      return false;
+    }
+    print("breed success");
+    errorBreed = null;
+    return true;
+  }
+
+  bool _validatorQuantity() {
+    if (_quantityController.text.isEmpty) {
+      errorQuantity =
+          AppLocalizations.of(context).translate("Quantity must be added");
+      return false;
+    }
+
+    if (_isNumeric(_quantityController.text.trim()) == false) {
+      errorQuantity =
+          AppLocalizations.of(context).translate("Quantity must be a number");
+      return false;
+    }
+
+    if (int.tryParse(_quantityController.text.trim()) == null) {
+      errorQuantity =
+          AppLocalizations.of(context).translate("Remove decimal point");
+      return false;
+    }
+    if (int.parse(_quantityController.text.trim()) <= 0) {
+      errorQuantity = AppLocalizations.of(context).translate("Greater than 0");
+      return false;
+    }
+    print("quantity success");
+    errorQuantity = null;
+    return true;
+  }
+
+  bool _validatorRemainingQuantity() {
+    if (_remainingQtyController.text.isEmpty) {
+      errorRemainingQuantity = AppLocalizations.of(context)
+          .translate("Remaining Quantity must be added");
+      return false;
+    }
+
+    if (_isNumeric(_remainingQtyController.text.trim()) == false) {
+      errorRemainingQuantity = AppLocalizations.of(context)
+          .translate("Remaining Quantity must be a number");
+      return false;
+    }
+
+    if (int.tryParse(_remainingQtyController.text.trim()) == null) {
+      errorRemainingQuantity =
+          AppLocalizations.of(context).translate("Remove decimal point");
+      return false;
+    }
+    if (int.parse(_remainingQtyController.text.trim()) <= 0) {
+      errorRemainingQuantity =
+          AppLocalizations.of(context).translate("Greater than 0");
+      return false;
+    }
+    if (int.parse(_remainingQtyController.text.trim()) >
+        int.tryParse(_quantityController.text.trim())) {
+      errorRemainingQuantity = AppLocalizations.of(context)
+          .translate("Shoule be less than total quantity");
+      return false;
+    }
+    print("quantity success");
+    errorRemainingQuantity = null;
+    return true;
+  }
+
+  bool _validatorPrice() {
+    if (_priceController.text.isEmpty) {
+      errorPrice =
+          AppLocalizations.of(context).translate("Price must be added");
+      return false;
+    }
+    if (_isNumeric(_priceController.text.trim()) == false) {
+      errorPrice =
+          AppLocalizations.of(context).translate("Price must be a number");
+      return false;
+    }
+    // if (int.tryParse(_priceController.text.trim()) == null) {
+    //   errorPrice = "Remove decimal point";
+    //   return false;
+    // }
+    if (double.parse(_priceController.text.trim()) <= 0) {
+      errorPrice = AppLocalizations.of(context).translate("Greater than 0");
+      return false;
+    }
+    print("price success");
+    errorPrice = null;
+    return true;
+  }
+
+  bool _validatorPhoto() {
+    if (isSeller == false) {
+      _photoText = AppLocalizations.of(context).translate("Change Photo");
+      _isPhotoError = false;
+      return true;
+    }
+    if (_image == null && _selectedObject.image == null) {
+      _photoText = AppLocalizations.of(context).translate("Photo not added");
+      _isPhotoError = true;
+      return false;
+    }
+    _isPhotoError = false;
+    _photoText = AppLocalizations.of(context).translate("Change Photo");
+    return true;
+  }
+
+  bool _isNumeric(String str) {
+    if (str == null) {
+      return false;
+    }
+    return double.tryParse(str) != null;
+  }
+
+  @override
+  void initState() {
+    Future.delayed(Duration.zero, () {
+      var routeArgs =
+          ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
+      this._selectedObject = routeArgs['selected_object'];
+      //this.isSeller = await _getUserType();
+      print("selected " + _selectedObject.toString());
+      _breedController.text = _selectedObject.breed;
+      _quantityController.text = _selectedObject.quantity;
+      _priceController.text = _selectedObject.price_expected;
+      _remainingQtyController.text = _selectedObject.remainingQty;
+      selectedCategory = _selectedObject.category;
+    });
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
   @override
   Widget build(BuildContext context) {
-    var routeArgs =
-        ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
-    _selectedObject = routeArgs['selected_object'];
-    _breedController.text = _selectedObject.breed;
-    _quantityController.text = _selectedObject.quantity;
-    _priceController.text = _selectedObject.price_expected;
-    _remainingQtyController.text = _selectedObject.remainingQty;
+    //print("build");
     final data = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
-        ),
+        title: Text(AppLocalizations.of(context).translate('Update Product'),
+            style: Theme.of(context).textTheme.headline1.apply(
+                  color: Colors.white,
+                )),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
@@ -380,10 +455,15 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                 child: Column(
                   children: <Widget>[
                     CategoryDropDown(
-                        _selectedObject.category.name,
-                        getCategoryNameAsList(snapshot.data),
-                        _categoryHandler,
-                        "Category"),
+                      dropdownValue: _selectedObject.category.name,
+                      hintText: AppLocalizations.of(context)
+                          .translate("Drop Down Hint"),
+                      titleText:
+                          AppLocalizations.of(context).translate("Category"),
+                      dropDownItems: getCategoryNameAsList(snapshot.data),
+                      categoryHandler: _categoryHandler,
+                      errorText: errorCategory,
+                    ),
                     Row(
                       children: <Widget>[
                         Expanded(
@@ -400,8 +480,11 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                           Expanded(
                             child: ButtonWidget(
                               iconData: Icons.photo,
-                              text: 'Add Photo',
+                              text: _photoText,
                               handlerMethod: getImage,
+                              height: 55,
+                              width: 150,
+                              isError: _isPhotoError,
                             ),
                           ),
                         if (isSeller)
@@ -419,33 +502,36 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                       children: <Widget>[
                         Expanded(
                             child: TextInputCard(
-                          icon: Icons.fiber_pin,
+                          icon: MYBaazar.balance,
                           titype: TextInputType.number,
                           htext: 'Quantity',
                           mdata: data,
                           controller: _quantityController,
                           width: data.size.width * 0.9,
+                          errorText: errorQuantity,
                         )),
                         Expanded(
                             child: TextInputCard(
-                          icon: Icons.monetization_on,
+                          icon: MYBaazar.rupee_indian,
                           titype: TextInputType.number,
                           htext: 'Price',
                           mdata: data,
                           controller: _priceController,
                           width: data.size.width * 0.9,
+                          errorText: errorPrice,
                         )),
                       ],
                     ),
                     Row(
                       children: <Widget>[
                         TextInputCard(
-                          icon: Icons.line_weight,
+                          icon: MYBaazar.balance,
                           titype: TextInputType.number,
                           htext: "Remaining Quantity",
                           controller: _remainingQtyController,
                           mdata: data,
                           width: data.size.width * 0.9,
+                          errorText: errorRemainingQuantity,
                         ),
                       ],
                     ),
@@ -457,71 +543,20 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                             iconData: Icons.insert_drive_file,
                             text: 'Add Certificate',
                             handlerMethod: pickFile,
+                            height: 55,
+                            width: 150,
+                            isError: false,
                           )),
                           Expanded(
                             child: _selectedObject.quality_certificate == null
-                                ? Text("You didn't upload any certifcate")
+                                ? Text(
+                                    "You didn't upload any certifcate",
+                                    style: TextStyle(color: Colors.red),
+                                  )
                                 : Text(_selectedObject.qualityCertificate),
                           )
                         ],
                       ),
-                    // TextField(
-                    //   // onChanged: (query) async {
-                    //   //   await getAutoCompleteResponse(query);
-                    //   //   setState(() {});
-                    //   // },
-                    //   onTap: () async {
-                    //     //_openGoogleMaps(context);
-                    //     //show input autocomplete with selected mode
-                    //     //then get the Prediction selected
-
-                    //     print("onTap");
-                    //     Prediction p = await PlacesAutocomplete.show(
-                    //       context: context,
-                    //       apiKey: kGoogleApiKey,
-                    //       language: "en",
-                    //       mode: Mode.fullscreen,
-                    //       components: [Component(Component.country, "in")],
-                    //     );
-                    //     print("here");
-                    //     print(p);
-                    //     displayPrediction(p);
-                    //   },
-
-                    //   textInputAction: TextInputAction.search,
-                    //   decoration: InputDecoration(
-                    //     hintText: "Enter your location",
-                    //     border: InputBorder.none,
-                    //     contentPadding: EdgeInsets.only(left: 15.0, top: 15.0),
-                    //   ),
-                    // ),
-                    // Row(
-                    //   children: <Widget>[
-                    //     Expanded(
-                    //       child: ButtonWidget(
-                    //         iconData: Icons.search,
-                    //         text: "Enter Location",
-                    //         handlerMethod: () {
-                    //           _openGoogleMaps(context);
-                    //         },
-                    //       ),
-                    //     ),
-                    //     Expanded(
-                    //       child: Text(_selectedObject.address),
-                    //     ),
-                    //   ],
-                    // ),
-
-                    // SizedBox(
-                    //   height: 20.0,
-                    // ),
-
-                    // Container(
-                    //   height: data.size.height * 0.2,
-                    //   width: data.size.width * 0.9,
-                    //   color: primarycolor,
-                    //   child: Text('Put Map Here'),
-                    // ),
                     SizedBox(
                       height: 50.0,
                     ),
@@ -537,14 +572,14 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                         textColor: Colors.white,
                         padding: EdgeInsets.all(8.0),
                         onPressed: () {
-                          _submitData();
+                          setState(() {
+                            _submitData();
+                          });
                         },
-                        child: Text(
-                          AppLocalizations.of(context).translate("Post Offer"),
-                          style: TextStyle(
-                            fontSize: 18.0,
-                          ),
-                        ),
+                        child: Text("Update",
+                            style: Theme.of(context).textTheme.bodyText1.apply(
+                                  color: Colors.white,
+                                )),
                       ),
                     ),
                   ],
@@ -552,97 +587,6 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
               ),
             ),
           );
-
-          // return Card(
-          //   elevation: 5,
-          //   child: Container(
-          //     height: 400,
-          //     padding: EdgeInsets.all(10),
-          //     child: Column(
-          //       crossAxisAlignment: CrossAxisAlignment.end,
-          //       children: <Widget>[
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Breed')),
-          //           controller: _breedController,
-          //           onSubmitted: (_) => _submitData(),
-          //         ),
-          //         CategoryDropDown(dropDownValue,
-          //             getCategoryNameAsList(snapshot.data), _categoryHandler),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Quantity')),
-          //           controller: _quantityController,
-          //           keyboardType: TextInputType.number,
-          //           onSubmitted: (_) => _submitData(),
-          //         ),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Price')),
-          //           controller: _priceController,
-          //           keyboardType: TextInputType.number,
-          //           onSubmitted: (_) => _submitData(),
-          //         ),
-          //         RaisedButton(
-          //           child: Text(AppLocalizations.of(context)
-          //               .translate('Select Location')),
-          //           color: Theme.of(context).primaryColor,
-          //           textColor: Theme.of(context).textTheme.button.color,
-          //           onPressed: () {
-          //             _openGoogleMaps(context);
-          //           },
-          //         ),
-          //         Container(
-          //           height: 40,
-          //           child: Row(
-          //             children: <Widget>[
-          //               Expanded(
-          //                 child: Text(
-          //                   _selectedDate == null
-          //                       ? 'No Date Chosen!'
-          //                       : 'Picked Date ${DateFormat.yMd().format(_selectedDate)}',
-          //                 ),
-          //               ),
-          //               FlatButton(
-          //                 textColor: Theme.of(context).primaryColor,
-          //                 child: Text(
-          //                   AppLocalizations.of(context)
-          //                       .translate('Choose Date'),
-          //                   style: TextStyle(
-          //                     fontWeight: FontWeight.bold,
-          //                   ),
-          //                 ),
-          //                 onPressed: _presentDatePicker,
-          //               ),
-          //             ],
-          //           ),
-          //         ),
-          //         Row(
-          //           children: <Widget>[
-          //             if (isSeller)
-          //               RaisedButton(
-          //                 child: Text(AppLocalizations.of(context)
-          //                     .translate("Choose Quality Certificate")),
-          //                 onPressed: () {
-          //                   pickFile();
-          //                 },
-          //               ),
-          //             RaisedButton(
-          //               child:
-          //                   Text(AppLocalizations.of(context).translate("Add")),
-          //               onPressed: () {
-          //                 _submitData();
-          //               },
-          //             ),
-          //           ],
-          //         )
-          //       ],
-          //     ),
-          //   ),
-          // );
         },
       ),
     );

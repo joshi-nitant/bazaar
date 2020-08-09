@@ -13,28 +13,25 @@ import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
 import 'package:baazar/widgets/dialog_widget.dart';
+import 'package:baazar/widgets/m_y_baazar_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:baazar/screens/prod_req_update_screen.dart';
 
-Text normalText(String text) {
+Text normalText(BuildContext context, String text) {
   return Text(
     text,
-    style: TextStyle(
-      fontSize: 18.0,
-    ),
+    style: Theme.of(context).textTheme.bodyText2,
   );
 }
 
-Text largeText(String text) {
+Text largeText(BuildContext context, String text) {
   return Text(
     text,
-    style: TextStyle(
-      fontSize: 20.0,
-      fontWeight: FontWeight.bold,
-    ),
+    style: Theme.of(context).textTheme.bodyText1,
   );
 }
 
@@ -131,8 +128,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         category_id: u['category_id'],
         remainingQty: u['remaining_qty'],
         image: u['image'],
-        address: u['address'],
-        qualityCertificate: u['quality_certificate'],
+        //qualityCertificate: u['quality_certificate'],
         category: await _getCategory(u['category_id']),
       );
       ProductBid bid = ProductBid(
@@ -148,7 +144,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
       );
       productBid.add(bid);
     }
-    print(jsondata);
+    //print(jsondata);
     return productBid;
   }
 
@@ -230,6 +226,23 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
   }
 
   _deleteListItem(dynamic object) async {
+    final ProgressDialog pr = ProgressDialog(context,
+        type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+    pr.style(
+      message: 'Deleting Please Wait...',
+      borderRadius: 10.0,
+      backgroundColor: Colors.white,
+      progressWidget: CircularProgressIndicator(),
+      elevation: 10.0,
+      insetAnimCurve: Curves.easeInOut,
+      progress: 0.0,
+      maxProgress: 100.0,
+      progressTextStyle: TextStyle(
+          color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+      messageTextStyle: TextStyle(
+          color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+    );
+    await pr.show();
     //print(object.catgeory.name);
     //print(object.id);
     int id = -1;
@@ -252,6 +265,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
     );
     print(response.body);
     setState(() {});
+    pr.hide();
   }
 
   _acceptListItem(dynamic object) async {
@@ -279,21 +293,25 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
     return response.body;
   }
 
-  void _deleteItem(dynamic object) {
+  void _deleteItem(dynamic object) async {
     Alert(
       closeFunction: () {
         null;
       },
       context: context,
-      type: AlertType.warning,
+      type: AlertType.error,
       title: "Are you sure you want to delete this offer?",
-      desc: "You won't be able to accept this later",
+      style: AlertStyle(titleStyle: Theme.of(context).textTheme.bodyText1),
+      //desc: "You won't be able to accept this later",
+      image: null,
       buttons: [
         DialogButton(
           color: Theme.of(context).primaryColor,
           child: Text(
             "No",
-            style: TextStyle(color: Colors.white, fontSize: 20),
+            style: Theme.of(context).textTheme.bodyText2.apply(
+                  color: Colors.white,
+                ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -301,11 +319,13 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
             color: Theme.of(context).primaryColor,
             child: Text(
               "Yes",
-              style: TextStyle(color: Colors.white, fontSize: 20),
+              style: Theme.of(context).textTheme.bodyText2.apply(
+                    color: Colors.white,
+                  ),
             ),
             onPressed: () {
-              _deleteListItem(object);
               Navigator.pop(context);
+              _deleteListItem(object);
             }),
       ],
     ).show();
@@ -316,17 +336,19 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
       closeFunction: () {
         null;
       },
+      style: AlertStyle(titleStyle: Theme.of(context).textTheme.bodyText1),
       context: context,
-      type: AlertType.warning,
+      type: AlertType.success,
       title: "Are you sure you want to accept this offer?",
-      desc:
-          "If yes than click on yes and you will be redirected to payment screen.",
+      desc: null,
       buttons: [
         DialogButton(
           color: Theme.of(context).primaryColor,
           child: Text(
             "No",
-            style: TextStyle(color: Colors.white, fontSize: 20),
+            style: Theme.of(context).textTheme.bodyText2.apply(
+                  color: Colors.white,
+                ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -334,13 +356,39 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
           color: Theme.of(context).primaryColor,
           child: Text(
             "Yes",
-            style: TextStyle(color: Colors.white, fontSize: 20),
+            style: Theme.of(context).textTheme.bodyText2.apply(
+                  color: Colors.white,
+                ),
           ),
           onPressed: () async {
             Navigator.pop(context);
+            final ProgressDialog pr = ProgressDialog(context,
+                type: ProgressDialogType.Normal,
+                isDismissible: true,
+                showLogs: true);
+            pr.style(
+              message: 'Accepting Offer...',
+              borderRadius: 10.0,
+              backgroundColor: Colors.white,
+              progressWidget: CircularProgressIndicator(),
+              elevation: 10.0,
+              insetAnimCurve: Curves.easeInOut,
+              progress: 0.0,
+              maxProgress: 100.0,
+              progressTextStyle: TextStyle(
+                  color: Colors.black,
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w400),
+              messageTextStyle: TextStyle(
+                  color: Colors.black,
+                  fontSize: 19.0,
+                  fontWeight: FontWeight.w600),
+            );
+            await pr.show();
             var response = await _acceptListItem(object);
             var data = json.decode(response);
-
+            pr.hide();
+            print(data);
             if (data['response_code'] == 404) {
               String text = "Sorry!!!";
               String dialogMesage = "Offer acceptance failed. Retry.....";
@@ -349,10 +397,17 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               //Navigator.pop(context);
             } else if (data['response_code'] == 407) {
               String text = "Sorry!!!";
-              String dialogMesage =
-                  "You do not have sufficient remaining quantity of ${object.reqId.category.name} left";
+              String dialogMessage = "";
+              if (_isProduct) {
+                dialogMessage =
+                    "You do not have sufficient remaining quantity of ${object.prodId.category.name} left";
+              } else {
+                dialogMessage =
+                    "You do not have sufficient remaining quantity of ${object.reqId.category.name} left";
+              }
+
               String buttonMessage = "Ok!!";
-              await showMyDialog(context, text, dialogMesage, buttonMessage);
+              await showMyDialog(context, text, dialogMessage, buttonMessage);
               //Navigator.pop(context);
             } else if (data['response_code'] == 405 ||
                 data['response_code'] == 406) {
@@ -365,8 +420,9 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               String text = "Congratulations!!!";
               String dialogMesage = "Offer Accepted";
               String buttonMessage = "Ok!!";
+
               await showMyDialog(context, text, dialogMesage, buttonMessage);
-              //Navigator.pop(context);
+              setState(() {});
             } else if (data['response_code'] == 101 && !_isSeller)
               //print(object);
               Navigator.of(context).pushNamed(
@@ -390,10 +446,10 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -411,7 +467,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
             return Container(
               child: Center(
                 child: Text(
-                  "There are no pending transactions.",
+                  "There are no new offers.",
                   style: TextStyle(
                       fontSize: 18 * MediaQuery.of(context).textScaleFactor),
                 ),
@@ -419,197 +475,199 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
             );
           }
           return Container(
-            height: 450,
-            child: ListView.builder(
-              itemBuilder: (ctx, index) {
-                return GestureDetector(
-                  onTap: () {
-                    // _updateScreen(snapshot.data[index]);
-                  },
-                  child: Container(
-                    width: data.size.width,
-                    height: 100.0,
-                    child: Card(
-                      child: Row(
-                        children: <Widget>[
-                          CircleAvatar(
-                            backgroundImage: _isSeller
-                                ? NetworkImage(
-                                    Utils.URL +
-                                        "images/" +
-                                        snapshot.data[index].prodId.category
-                                            .imgPath,
-                                  )
-                                : NetworkImage(
-                                    Utils.URL +
-                                        "images/" +
-                                        snapshot
-                                            .data[index].reqId.category.imgPath,
-                                  ),
-                            backgroundColor: Colors.white,
-                            radius: 38.0,
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                Text(
-                                  _isProduct
-                                      ? snapshot
-                                          .data[index].prodId.category.name
-                                      : snapshot
-                                          .data[index].reqId.category.name,
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 18.0 * curr,
-                                    fontWeight: FontWeight.bold,
+            height: data.size.height,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+              child: Card(
+                color: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0)),
+                child: ListView.builder(
+                  itemBuilder: (ctx, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        // _updateScreen(snapshot.data[index]);
+                      },
+                      child: Container(
+                        width: data.size.width,
+                        height: 100.0,
+                        child: Card(
+                          elevation: 5,
+                          margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
+                          child: Row(
+                            children: <Widget>[
+                              CircleAvatar(
+                                backgroundImage: _isSeller
+                                    ? NetworkImage(
+                                        Utils.URL +
+                                            "images/" +
+                                            snapshot.data[index].prodId.category
+                                                .imgPath,
+                                      )
+                                    : NetworkImage(
+                                        Utils.URL +
+                                            "images/" +
+                                            snapshot.data[index].reqId.category
+                                                .imgPath,
+                                      ),
+                                backgroundColor: Colors.white,
+                                radius: 30.0,
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: <Widget>[
+                                      Text(
+                                        _isProduct
+                                            ? "${snapshot.data[index].prodId.breed}" +
+                                                " | " +
+                                                "${snapshot.data[index].prodId.category.name}"
+                                            : "${snapshot.data[index].reqId.breed}" +
+                                                " | " +
+                                                "${snapshot.data[index].reqId.category.name}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1
+                                            .apply(
+                                              fontSizeDelta: -4,
+                                            ),
+                                      ),
+                                      _isSeller
+                                          ? Text(
+                                              "${snapshot.data[index].buyer.city},${snapshot.data[index].buyer.state}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2,
+                                            )
+                                          : Text(
+                                              "${snapshot.data[index].seller.city},${snapshot.data[index].seller.state}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2,
+                                            ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: <Widget>[
+                                          Column(
+                                            children: <Widget>[
+                                              Row(
+                                                children: <Widget>[
+                                                  Icon(
+                                                    Icons.gavel,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                  ),
+                                                  Text(
+                                                    "${snapshot.data[index].price.toString()}/QTL",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headline2,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          Column(
+                                            children: <Widget>[
+                                              Row(
+                                                children: <Widget>[
+                                                  Icon(
+                                                    MYBaazar.balance,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                  ),
+                                                  Text(
+                                                    "${snapshot.data[index].quantity.toString()}QTL",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headline2,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                _isSeller
-                                    ? Text(
-                                        "${snapshot.data[index].buyer.city},${snapshot.data[index].buyer.state}",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16.0,
-                                        ),
-                                      )
-                                    : Text(
-                                        "${snapshot.data[index].seller.city},${snapshot.data[index].seller.state}",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16.0,
-                                        ),
-                                      ),
-                                Row(
+                              ),
+                              Expanded(
+                                child: Column(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: <Widget>[
-                                    Column(
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
                                       children: <Widget>[
-                                        Row(
-                                          children: <Widget>[
-                                            Icon(
-                                              Icons.line_weight,
-                                              color: Theme.of(context)
-                                                  .primaryColor,
+                                        ClipOval(
+                                          child: Material(
+                                            color: Theme.of(context)
+                                                .primaryColor, // button color
+                                            child: InkWell(
+                                              splashColor:
+                                                  Colors.grey, // inkwell color
+                                              child: SizedBox(
+                                                  width: 50,
+                                                  height: 50,
+                                                  child: Icon(
+                                                    Icons.check,
+                                                    color: Colors.white,
+                                                  )),
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectItem(
+                                                      snapshot.data[index]);
+                                                });
+                                              },
                                             ),
-                                            Text(
-                                              snapshot.data[index].quantity
-                                                  .toString(),
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 14.0,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: <Widget>[
-                                        Row(
-                                          children: <Widget>[
-                                            Icon(
-                                              Icons.monetization_on,
-                                              color: Theme.of(context)
-                                                  .primaryColor,
+                                        ClipOval(
+                                          child: Material(
+                                            color: Theme.of(context)
+                                                .primaryColor, // button color
+                                            child: InkWell(
+                                              splashColor:
+                                                  Colors.grey, // inkwell color
+                                              child: SizedBox(
+                                                  width: 50,
+                                                  height: 50,
+                                                  child: Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                  )),
+                                              onTap: () {
+                                                _deleteItem(
+                                                    snapshot.data[index]);
+                                              },
                                             ),
-                                            Text(
-                                              snapshot.data[index].price
-                                                  .toString(),
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 14.0,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                _isSeller
-                                    ? Text(
-                                        snapshot.data[index].prodId.breed,
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14.0,
-                                        ),
-                                      )
-                                    : Text(
-                                        snapshot.data[index].reqId.breed,
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14.0,
-                                        ),
-                                      ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    ClipOval(
-                                      child: Material(
-                                        color: Theme.of(context)
-                                            .primaryColor, // button color
-                                        child: InkWell(
-                                          splashColor:
-                                              Colors.grey, // inkwell color
-                                          child: SizedBox(
-                                              width: 44,
-                                              height: 44,
-                                              child: Icon(
-                                                Icons.check,
-                                                color: Colors.white,
-                                              )),
-                                          onTap: () {
-                                            _selectItem(snapshot.data[index]);
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    ClipOval(
-                                      child: Material(
-                                        color: Theme.of(context)
-                                            .primaryColor, // button color
-                                        child: InkWell(
-                                          splashColor:
-                                              Colors.grey, // inkwell color
-                                          child: SizedBox(
-                                              width: 44,
-                                              height: 44,
-                                              child: Icon(
-                                                Icons.close,
-                                                color: Colors.white,
-                                              )),
-                                          onTap: () {
-                                            _deleteItem(snapshot.data[index]);
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25.0)),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25.0)),
-                    ),
-                  ),
-                );
-              },
-              itemCount: snapshot.data.length,
+                    );
+                  },
+                  itemCount: snapshot.data.length,
+                ),
+              ),
             ),
           );
         },

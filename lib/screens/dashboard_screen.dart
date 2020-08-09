@@ -16,7 +16,9 @@ import 'package:baazar/screens/transaction_histroy_scree.dart';
 import 'package:baazar/widgets/filter_dialog_widget.dart';
 import 'package:baazar/widgets/list_tile_widget.dart';
 import 'package:baazar/screens/singup_screen.dart';
+import 'package:baazar/widgets/m_y_baazar_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -46,7 +48,7 @@ class _DashboardState extends State<Dashboard> {
   Function breedHandler;
   bool _isInitialLoad = true;
 
-  List<String> kilometerList = ["50", "100", "150", "200", "300"];
+  List<String> kilometerList = ["None", "50", "100", "150", "200", "300"];
   @override
   void didChangeDependencies() {
     cusSearchBar = Text(
@@ -102,7 +104,7 @@ class _DashboardState extends State<Dashboard> {
             // longitude: u['longitude'],
             remainingQty: u['remaining_qty'],
             userId: u['user_id'],
-            buyer: _getUser(int.parse(u['user_id'])),
+            buyer: await _getUser(int.parse(u['user_id'])),
           );
           int currPrice = double.parse(requirement.price_expected).toInt();
           if (currPrice < minPrice) {
@@ -110,12 +112,12 @@ class _DashboardState extends State<Dashboard> {
           } else if (currPrice > maxPrice) {
             maxPrice = currPrice;
           }
-          cityList.add(requirement.buyer.city);
+          if (requirement.buyer != null) cityList.add(requirement.buyer.city);
           requirements.add(requirement);
         }
       }
       this.requirementList = requirements;
-      await _calculateDistanceRequirement(requirementList);
+      if (userId != null) await _calculateDistanceRequirement(requirementList);
       return this.requirementList;
     }
     return this.requirementFilterList;
@@ -147,9 +149,12 @@ class _DashboardState extends State<Dashboard> {
     );
 
     for (int i = 0; i < requirementList.length; i++) {
+      print(requirementList[i].buyer.latitude);
+      print(requirementList[i].buyer.longitude);
+
       LatLng endCordinate = LatLng(
-        double.parse(requirementList[i].buyer.latitude),
-        double.parse(requirementList[i].buyer.longitude),
+        double.tryParse(requirementList[i].buyer.latitude),
+        double.tryParse(requirementList[i].buyer.longitude),
       );
 
       requirementList[i].distance =
@@ -163,31 +168,35 @@ class _DashboardState extends State<Dashboard> {
   }
 
   _getUser(int id) async {
-    var response = await http.post(
-      Utils.URL + "getUser.php",
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(
-        <String, int>{
-          'id': id,
+    print(id);
+    if (id != null) {
+      var response = await http.post(
+        Utils.URL + "getUser.php",
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
         },
-      ),
-    );
-    print(response.body);
-    var jsondata = json.decode(response.body);
-    print(jsondata);
-    var userMap = jsondata[0];
-    User user = User(
-      id: userMap['user_id'],
-      latitude: userMap['latitude'],
-      longitude: userMap['longitude'],
-      address: userMap['address'],
-      state: userMap['state'],
-      city: userMap['city'],
-    );
+        body: jsonEncode(
+          <String, int>{
+            'id': id,
+          },
+        ),
+      );
+      print(response.body);
+      var jsondata = json.decode(response.body);
+      print(jsondata);
+      var userMap = jsondata[0];
+      User user = User(
+        id: userMap['user_id'],
+        latitude: userMap['latitude'],
+        longitude: userMap['longitude'],
+        address: userMap['address'],
+        state: userMap['state'],
+        city: userMap['city'],
+      );
 
-    return user;
+      return user;
+    }
+    return null;
   }
 
   Future<List<Product>> _getProducts() async {
@@ -225,8 +234,9 @@ class _DashboardState extends State<Dashboard> {
             userId: u['user_id'],
             seller: await _getUser(int.parse(u['user_id'])),
           );
-          cityList.add(product.seller.city);
-          print(product.price_expected);
+          print("Image = " + product.image);
+          if (product.seller != null) cityList.add(product.seller.city);
+
           int currPrice = double.parse(product.price_expected).toInt();
           if (currPrice < minPrice) {
             minPrice = currPrice;
@@ -238,7 +248,7 @@ class _DashboardState extends State<Dashboard> {
       }
 
       this.productList = products;
-      await _calculateDistanceProduct(productList);
+      if (userId != null) await _calculateDistanceProduct(productList);
       return this.productList;
     }
     return this.productFilterList;
@@ -250,9 +260,7 @@ class _DashboardState extends State<Dashboard> {
       //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
     } else {
       print('redirecting');
-      Navigator.of(context).pushNamed(ProdReqViewScreen.routeName).then(
-            (value) => Navigator.pop(context),
-          );
+      Navigator.of(context).pushNamed(ProdReqViewScreen.routeName);
     }
   }
 
@@ -262,9 +270,7 @@ class _DashboardState extends State<Dashboard> {
       //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
     } else {
       print('redirecting');
-      Navigator.of(context).pushNamed(OfferViewScreen.routeName).then(
-            (value) => Navigator.pop(context),
-          );
+      Navigator.of(context).pushNamed(OfferViewScreen.routeName);
     }
   }
 
@@ -274,9 +280,7 @@ class _DashboardState extends State<Dashboard> {
       //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
     } else {
       print('redirecting');
-      Navigator.of(context).pushNamed(CurrentTransaction.routeName).then(
-            (value) => Navigator.pop(context),
-          );
+      Navigator.of(context).pushNamed(CurrentTransaction.routeName);
     }
   }
 
@@ -286,9 +290,7 @@ class _DashboardState extends State<Dashboard> {
       //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
     } else {
       print('redirecting');
-      Navigator.of(context).pushNamed(TransactionHistory.routeName).then(
-            (value) => Navigator.pop(context),
-          );
+      Navigator.of(context).pushNamed(TransactionHistory.routeName);
     }
   }
 
@@ -301,19 +303,19 @@ class _DashboardState extends State<Dashboard> {
     }
   }
 
-  void _removeHadnler() {
-    if (this.userType == "buyer") {
-      this.productFilterList = this.productList;
-    } else {
-      this.requirementFilterList = this.requirementList;
-    }
+  void removeHandler() {
+    setState(() {
+      if (this.userType == "buyer") {
+        this.productFilterList = this.productList;
+      } else {
+        this.requirementFilterList = this.requirementList;
+      }
+    });
   }
 
-  void _filterHandler(
+  void applyHandler(
       String kilometer, List<String> breed, int startPrice, int endPrice) {
-    //this.cusIcon = Icon(Icons.search);
     print(kilometer);
-//print("Kilometer = " + kilometer);
     print("Breed = " + breed.toString());
     print("Start Price = " + startPrice.toString());
     print("End Price = " + endPrice.toString());
@@ -334,7 +336,7 @@ class _DashboardState extends State<Dashboard> {
               .where((product) => breed.contains(product.breed))
               .toList());
         }
-        if (kilometer != null) {
+        if (kilometer != "None") {
           int distance = int.parse(kilometer);
           productFilterList = productFilterList
               .where((product) => product.distance <= distance)
@@ -348,7 +350,7 @@ class _DashboardState extends State<Dashboard> {
             .toList();
       } else {
         requirementFilterList = this.requirementList;
-        if (kilometer != null) {
+        if (kilometer != "None") {
           int distance = int.parse(kilometer);
           requirementFilterList = (requirementFilterList
               .where((requirement) => requirement.distance <= distance)
@@ -369,58 +371,38 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
+  String getCity(dynamic object) {
+    if (userType != "seller") {
+      return object.seller.city;
+    } else {
+      return object.buyer.city;
+    }
+  }
+
+  String getPrice(dynamic object) {
+    return "Rs.${object.price_expected}/QTL";
+  }
+
   @override
   Widget build(BuildContext context) {
+    //SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
     var routeArgs =
         ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
+    var data = MediaQuery.of(context);
 
     category = routeArgs['category'];
     userType = routeArgs['userType'];
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: this.cusSearchBar,
-        actions: <Widget>[
-          IconButton(
-            onPressed: () {
-              setState(() {
-                if (this.cusIcon.icon == Icons.filter_list) {
-                  //this.cusIcon = Icon(Icons.close);
-                  this.cusSearchBar = Text(
-                    "Filter",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 25,
-                    ),
-                  );
-                  showFilterDialog(
-                      context: context,
-                      breedList: category.breed,
-                      //breedHandler: breedHandler,
-                      buttonMessage: "Apply",
-                      minPrice: minPrice,
-                      maxPrice: maxPrice,
-                      dropdownItems: kilometerList,
-                      // dropDownHandler: kiloHandler,
-                      buttonHandler: _filterHandler,
-                      title: "Filter");
-                }
-                // else {
-                //   this.cusIcon = Icon(Icons.search);
-                //   this.cusSearchBar = Text(
-                //     AppLocalizations.of(context).translate('app_title'),
-                //     style: TextStyle(
-                //       color: Colors.white,
-                //       fontSize: 25,
-                //     ),
-                //   );
-                // }
-              });
-            },
-            icon: cusIcon,
-          )
-        ],
+        title: Text(
+          AppLocalizations.of(context).translate('app_title'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+              ),
+        ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(
@@ -449,7 +431,7 @@ class _DashboardState extends State<Dashboard> {
               ),
             ),
             ListTileWidget(
-              Icons.insert_drive_file,
+              Icons.assignment,
               'Transaction History',
               _redirectToTransactionHistory,
             ),
@@ -459,7 +441,7 @@ class _DashboardState extends State<Dashboard> {
               _redirectToOfferScreeen,
             ),
             ListTileWidget(
-              Icons.monetization_on,
+              Icons.history,
               'Current Transaction',
               _redirectToCurrentTransaction,
             ),
@@ -468,38 +450,6 @@ class _DashboardState extends State<Dashboard> {
           ],
         ),
       ),
-      // drawer: Drawer(
-      //   child: ListView(
-      //     children: <Widget>[
-      //       UserAccountsDrawerHeader(
-      //         accountName: Text("Baazar"),
-      //         accountEmail: Text("baazar0@gmail.com"),
-      //         currentAccountPicture: CircleAvatar(
-      //           backgroundImage: NetworkImage("https://i.pravatar.cc/"),
-      //         ),
-      //       ),
-      //       ListTile(
-      //         title: Text("Register"),
-      //         // onTap: () {
-      //         //   Navigator.of(context).push(
-      //         //       MaterialPageRoute(builder: (context) => Registration()));
-      //         // },
-      //       ),
-      //       ListTile(
-      //         title: Text("Manage your items"),
-      //         onTap: () {
-      //           _redirectToManageScreeen();
-      //         },
-      //       ),
-      //       ListTile(
-      //         title: Text("Settings"),
-      //         onTap: () {
-      //           //
-      //         },
-      //       ),
-      //     ],
-      //   ),
-      // ),
       body: FutureBuilder(
           future: userType == "buyer" ? _getProducts() : _getRequirements(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -515,135 +465,237 @@ class _DashboardState extends State<Dashboard> {
               return Container(
                 child: Center(
                   child: Text(
-                    "There are no ${category.name} available.",
+                    AppLocalizations.of(context).translate("Dashboard Empty"),
                     style: TextStyle(
                         fontSize: 18 * MediaQuery.of(context).textScaleFactor),
                   ),
                 ),
               );
             }
-            return Padding(
-              padding: EdgeInsets.all(10),
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                color: Color(0xFF739b21),
-                child: Padding(
-                  padding: EdgeInsets.all(10),
-                  child: ListView.builder(
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Card(
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  height: data.size.height * 0.1,
+                  width: data.size.width,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) => Filter(
+                            breedList: category.breed,
+                            minPrice: minPrice,
+                            maxPrice: maxPrice,
+                            distanceList: kilometerList,
+                            applyHandler: applyHandler,
+                            removeHandler: removeHandler,
+                          ),
+                        );
+                      });
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Card(
+                        color: Theme.of(context).primaryColorLight,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        color: Colors.white,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            Align(
-                              alignment: AlignmentDirectional.centerStart,
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                    left: 10, top: 10, bottom: 10, right: 5),
-                                child: CircleAvatar(
-                                    backgroundImage: NetworkImage(
-                                        "${Utils.URL}images/${category.imgPath}")),
-                              ),
+                            borderRadius: BorderRadius.circular(20.0)),
+                        child: Container(
+                          width: data.size.width * 0.9,
+                          child: Padding(
+                            padding: const EdgeInsets.all(15.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.search,
+                                  color: Colors.white,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    AppLocalizations.of(context)
+                                        .translate("Search"),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyText1
+                                        .apply(
+                                          color: Colors.white,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                    //overflow: TextOverflow.clip,
+                                    //maxLines: 5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Align(
-                              alignment: AlignmentDirectional.center,
-                              child: Column(
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: data.size.height * 0.8,
+                  width: data.size.width,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      color: Theme.of(context).primaryColor,
+                      child: Padding(
+                        padding: EdgeInsets.all(10),
+                        child: ListView.builder(
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              color: Colors.white,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: <Widget>[
-                                  Padding(
-                                    padding: EdgeInsets.all(3),
-                                    child: Text(
-                                      snapshot.data[index].breed +
-                                          " |" +
-                                          "${AppLocalizations.of(context).translate(category.name)}",
+                                  Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                          left: 10,
+                                          top: 10,
+                                          bottom: 10,
+                                          right: 5),
+                                      child: CircleAvatar(
+                                          radius: 25,
+                                          backgroundImage: NetworkImage(
+                                              "${Utils.URL}images/${category.imgPath}")),
                                     ),
                                   ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: <Widget>[
-                                      Row(
-                                        children: <Widget>[
-                                          Icon(
-                                            Icons.attach_money,
-                                            color: Color(0xFF739b21),
-                                          ),
-                                          Padding(
+                                  Expanded(
+                                    child: Column(
+                                      children: <Widget>[
+                                        Padding(
+                                          padding: EdgeInsets.all(3),
+                                          child: Text(
+                                              snapshot.data[index].breed +
+                                                  " | " +
+                                                  "${AppLocalizations.of(context).translate(category.name)}" +
+                                                  " in " +
+                                                  getCity(snapshot.data[index]),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2,
+                                              textAlign: TextAlign.center),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: <Widget>[
+                                            Row(
+                                              children: <Widget>[
+                                                Icon(
+                                                  Icons.gavel,
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                ),
+                                                Padding(
+                                                    padding: EdgeInsets.only(
+                                                        right: 3)),
+                                                Text(
+                                                  getPrice(
+                                                      snapshot.data[index]),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headline2
+                                                      .apply(
+                                                        color: Colors.black,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                            Padding(
                                               padding:
-                                                  EdgeInsets.only(right: 3)),
-                                          Text(snapshot
-                                              .data[index].price_expected)
-                                        ],
+                                                  EdgeInsets.only(right: 10),
+                                            ),
+                                            Row(
+                                              children: <Widget>[
+                                                Icon(
+                                                  MYBaazar.balance,
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                ),
+                                                Padding(
+                                                    padding: EdgeInsets.only(
+                                                        right: 3)),
+                                                Text(
+                                                  "${snapshot.data[index].quantity}QTL",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headline2
+                                                      .apply(
+                                                        color: Colors.black,
+                                                      ),
+                                                )
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: AlignmentDirectional.centerEnd,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: RaisedButton(
+                                        color: Color(0xFF739b21),
+                                        onPressed: () {
+                                          Navigator.of(context).pushNamed(
+                                            ProdReqDetail.routeName,
+                                            arguments: {
+                                              "object": snapshot.data[index]
+                                            },
+                                          ).then((value) => setState(() {}));
+                                        },
+                                        child: Text("Bid",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline2
+                                                .apply(
+                                                  color: Colors.white,
+                                                )),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(30.0),
+                                            side: BorderSide(
+                                                color: Color(0xFF739b21))),
                                       ),
-                                      Padding(
-                                        padding: EdgeInsets.only(right: 10),
-                                      ),
-                                      Row(
-                                        children: <Widget>[
-                                          Icon(
-                                            Icons.assessment,
-                                            color: Color(0xFF739b21),
-                                          ),
-                                          Padding(
-                                              padding:
-                                                  EdgeInsets.only(right: 3)),
-                                          Text(snapshot.data[index].quantity)
-                                        ],
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-                            Align(
-                              alignment: AlignmentDirectional.centerEnd,
-                              child: Padding(
-                                padding: EdgeInsets.all(8),
-                                child: RaisedButton(
-                                  color: Color(0xFF739b21),
-                                  onPressed: () {
-                                    Navigator.of(context).pushNamed(
-                                      ProdReqDetail.routeName,
-                                      arguments: {
-                                        "object": snapshot.data[index]
-                                      },
-                                    );
-                                  },
-                                  child: Text(
-                                    "Bid",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
-                                      side:
-                                          BorderSide(color: Color(0xFF739b21))),
-                                ),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             );
           }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _checkUserIsLoggedIn();
-        },
-        child: Icon(Icons.add),
-        backgroundColor: Colors.green,
+      floatingActionButton: Container(
+        height: 60,
+        width: 60,
+        child: FittedBox(
+          child: FloatingActionButton(
+            onPressed: () {
+              _checkUserIsLoggedIn();
+            },
+            child: Icon(Icons.add, size: 50),
+            backgroundColor: Theme.of(context).primaryColorLight,
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );

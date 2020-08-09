@@ -7,6 +7,7 @@ import 'package:baazar/models/category.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/widgets/footer_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -114,6 +115,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    //SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+
     final data = MediaQuery.of(context);
     var routeArgs =
         ModalRoute.of(context).settings.arguments as Map<String, String>;
@@ -123,10 +126,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -145,10 +147,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
             return Container(
               child: Center(
                 child: Text(
-                  "There are no category available.",
-                  style: TextStyle(
-                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
-                ),
+                    AppLocalizations.of(context).translate("No Category"),
+                    style: Theme.of(context).textTheme.headline1),
               ),
             );
           }

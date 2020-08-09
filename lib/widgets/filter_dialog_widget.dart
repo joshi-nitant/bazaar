@@ -1,37 +1,134 @@
-import 'package:bazaar/transaction_screen.dart';
+import 'dart:collection';
+
+import 'package:baazar/classes/app_localizations.dart';
+import 'package:baazar/models/breed.dart';
+import 'package:baazar/widgets/drop_down_widget.dart';
 import 'package:flutter/material.dart';
 
-Container buildBreedButton(String text) {
+Container buildBreedButton(BuildContext context, Breed breed,
+    Function buttonHandler, Color backgroundColor) {
   return Container(
     width: 75.0,
     child: RaisedButton(
-      color: primarycolor,
+      color: backgroundColor,
       child: Text(
-        text,
+        breed.breed,
         style: TextStyle(
-          color: Colors.white,
+          color: backgroundColor == Colors.white
+              ? Theme.of(context).primaryColor
+              : Colors.white,
         ),
       ),
-      onPressed: () {},
+      onPressed: () {
+        buttonHandler(breed);
+      },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
     ),
   );
 }
 
+Text normalText(String text) {
+  return Text(
+    text,
+    style: TextStyle(
+      fontSize: 18.0,
+    ),
+  );
+}
+
+Text largeText(String text) {
+  return Text(
+    text,
+    style: TextStyle(
+      fontSize: 20.0,
+      fontWeight: FontWeight.bold,
+    ),
+  );
+}
+
 class Filter extends StatefulWidget {
+  Function applyHandler;
+  Function removeHandler;
+  List<Breed> breedList;
+  List<String> distanceList;
+  int minPrice;
+  int maxPrice;
+
+  Filter({
+    this.breedList,
+    this.minPrice,
+    this.maxPrice,
+    this.distanceList,
+    this.applyHandler,
+    this.removeHandler,
+  });
+
   @override
   _FilterState createState() => _FilterState();
 }
 
-const Color primarycolor = Color(0xFF739b21);
-const Color lightprimary = Color(0xFFc4d5a1);
-
 class _FilterState extends State<Filter> {
-  RangeValues _values = RangeValues(1, 100);
-  RangeLabels _labels = RangeLabels('1', '100');
+  RangeValues _values;
+  RangeLabels _labels;
+  static final Color primarycolor = Color(0xFF739b21);
+  static final Color lightprimary = Color(0xFFc4d5a1);
+  String selectedDistance;
+  List<String> selectedBreed;
+  int selectedMinPrice;
+  int selectedMaxPrice;
+  Color color;
+  HashMap<Breed, Color> breedButtonColor;
+
+  List<String> getBreedListAsString() {
+    List<String> breedStringList = [];
+
+    for (Breed breed in widget.breedList) {
+      breedStringList.add(breed.breed);
+    }
+    return breedStringList;
+  }
+
+  @override
+  void didChangeDependencies() {
+    selectedBreed = [];
+    selectedDistance = widget.distanceList[0];
+    selectedMinPrice = widget.minPrice;
+    selectedMaxPrice = widget.maxPrice;
+    breedButtonColor = new HashMap();
+
+    widget.breedList.forEach((breed) {
+      breedButtonColor[breed] = Theme.of(context).primaryColor;
+    });
+    super.didChangeDependencies();
+  }
+
+  void setBreedList(Breed breed) {
+    if (breedButtonColor[breed] == Theme.of(context).primaryColor) {
+      setState(() {
+        this.selectedBreed.add(breed.breed);
+        breedButtonColor[breed] = Colors.white;
+      });
+    } else {
+      setState(() {
+        this.selectedBreed.remove(breed.breed);
+        breedButtonColor[breed] = Theme.of(context).primaryColor;
+      });
+    }
+  }
+
+  void setDistance(String distance) {
+    setState(() {
+      this.selectedDistance = distance;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    //print("building filter");
+    _values =
+        RangeValues(selectedMinPrice.toDouble(), selectedMaxPrice.toDouble());
+    _labels =
+        RangeLabels(selectedMinPrice.toString(), selectedMaxPrice.toString());
     final data = MediaQuery.of(context);
 
     return Dialog(
@@ -60,7 +157,8 @@ class _FilterState extends State<Filter> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32.0)),
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12.0, horizontal: 20.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -83,20 +181,12 @@ class _FilterState extends State<Filter> {
               ),
               Wrap(
                 spacing: 10.0,
-                children: <Widget>[
-                  buildBreedButton('9797'),
-                  buildBreedButton('9798'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                  buildBreedButton('9799'),
-                ],
+                children: widget.breedList
+                    .map<Widget>(
+                      (breed) => buildBreedButton(context, breed, setBreedList,
+                          breedButtonColor[breed]),
+                    )
+                    .toList(),
               ),
               Container(
                 width: data.size.width * 0.97,
@@ -105,7 +195,8 @@ class _FilterState extends State<Filter> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32.0)),
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12.0, horizontal: 20.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -129,14 +220,16 @@ class _FilterState extends State<Filter> {
               Padding(
                 padding: EdgeInsets.only(top: 35),
                 child: RangeSlider(
-                    min: 1,
-                    max: 100,
-                    divisions: 4,
+                    min: widget.minPrice.toDouble(),
+                    max: widget.maxPrice.toDouble(),
+                    divisions: 10,
                     labels: _labels,
                     activeColor: primarycolor,
                     values: _values,
                     onChanged: (RangeValues values) {
                       setState(() {
+                        this.selectedMinPrice = values.start.toInt();
+                        this.selectedMaxPrice = values.end.toInt();
                         _values = values;
                         _labels = RangeLabels('${values.start.toString()}\ Rs',
                             '${values.end.toString()}\Rs');
@@ -146,29 +239,40 @@ class _FilterState extends State<Filter> {
               Container(
                 width: data.size.width * 0.97,
                 //height: 65.0,
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32.0)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            'Select Region',
-                            style: TextStyle(
-                              color: primarycolor,
-                              fontSize: 17.0,
-                            ),
-                            textAlign: TextAlign.left,
-                            //overflow: TextOverflow.clip,
-                            //maxLines: 5,
-                          ),
-                        ),
-                      ],
+                // child: Card(
+                //   shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(32.0)),
+                //   child: Padding(
+                //     padding: const EdgeInsets.all(8.0),
+                //     child:
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                      child: CategoryDropDown(
+                        dropDownItems: widget.distanceList,
+                        dropdownValue: this.selectedDistance,
+                        categoryHandler: setDistance,
+                        titleText: AppLocalizations.of(context)
+                            .translate("Filter Km Drop"),
+                        errorText: null,
+                        hintText: AppLocalizations.of(context)
+                            .translate("Drop Down Hint"),
+                      ),
+                      // child: Text(
+                      //   'Select Region',
+                      //   style: TextStyle(
+                      //     color: primarycolor,
+                      //     fontSize: 17.0,
+                      //   ),
+                      //   textAlign: TextAlign.left,
+                      //   //overflow: TextOverflow.clip,
+                      //   //maxLines: 5,
+                      // ),
                     ),
-                  ),
+                  ],
+                  //   ),
+                  // ),
                 ),
               ),
               Row(
@@ -186,6 +290,11 @@ class _FilterState extends State<Filter> {
                         padding: EdgeInsets.all(8.0),
                         onPressed: () {
                           Navigator.of(context).pop();
+                          widget.applyHandler(
+                              this.selectedDistance,
+                              this.selectedBreed,
+                              this.selectedMinPrice,
+                              this.selectedMaxPrice);
                         },
                         child: largeText('Apply')),
                   ),
@@ -201,6 +310,7 @@ class _FilterState extends State<Filter> {
                         padding: EdgeInsets.all(8.0),
                         onPressed: () {
                           Navigator.of(context).pop();
+                          widget.removeHandler();
                         },
                         child: largeText('Remove')),
                   ),

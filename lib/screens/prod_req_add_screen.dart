@@ -30,6 +30,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 
 class ProdReqAdd extends StatefulWidget {
   static final String routeName = "/add";
@@ -58,13 +59,22 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   String _addressText = "Enter location";
   static const String kGoogleApiKey = Utils.API_KEY;
   GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
+  String errorBreed;
+  String errorPrice;
+  String errorQuantity;
+  String errorCategory;
+  String _photoText = "Add Photo";
+  bool _isPhotoError = false;
 
   Future getImage() async {
     final pickedFile = await picker.getImage(source: ImageSource.camera);
-
-    setState(() {
-      _image = File(pickedFile.path);
-    });
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+        _photoText = "Add Photo";
+        _isPhotoError = false;
+      });
+    }
   }
 
   Future<String> _getLocation() async {
@@ -79,18 +89,6 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     _addressText = await displayPrediction(p);
     return _addressText;
   }
-
-  // Future<List<String>> getAutoCompleteResponse(String query) async {
-  //   var prs;
-
-  //   PlacesAutocompleteResponse placesAutocompleteResponse =
-  //       await _places.autocomplete(query);
-  //   prs = placesAutocompleteResponse.predictions
-  //       .map((prediction) => prediction.description)
-  //       .toList();
-  //   print('Predictions: ' + prs.toString());
-  //   return prs;
-  // }
 
   Future<String> displayPrediction(Prediction p) async {
     if (p != null) {
@@ -211,39 +209,6 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     });
   }
 
-  // Future<void> _showMyDialog(
-  //     String title, String message, String buttonMessage) async {
-  //   return showDialog<void>(
-  //     context: context,
-  //     barrierDismissible: false, // user must tap button!
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         shape:
-  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
-  //         title: Text(title),
-  //         content: SingleChildScrollView(
-  //           child: ListBody(
-  //             children: <Widget>[
-  //               Text(message),
-  //             ],
-  //           ),
-  //         ),
-  //         actions: <Widget>[
-  //           FlatButton(
-  //             child: Text(buttonMessage),
-  //             shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(32.0)),
-  //             color: Theme.of(context).primaryColor,
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   Future<String> uploadData() async {
     String fileName;
     // if (isSeller) {
@@ -262,7 +227,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
               )
             : null,
         "isSeller": isSeller,
-        "price": _priceController.text,
+        "price": num.parse(_priceController.text.trim()).toStringAsFixed(2),
         "breed": _breedController.text,
         "quantity": _quantityController.text,
         "date": _selectedDate,
@@ -289,35 +254,159 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   }
 
   void _submitData() async {
-    print("submiting");
-    print(_priceController.text);
-    print(_breedController.text);
-    print(_quantityController.text);
-    print(selectedCategory);
-    print(_userId);
-    if (_priceController.text != null &&
-        _breedController.text != null &&
-        _quantityController.text != null &&
-        selectedCategory != null &&
-        _userId != null) {
-      if ((isSeller && _image != null) || !isSeller) {
-        String jsonResponse = await uploadData();
-        var data = json.decode(jsonResponse);
-
-        if (data['response_code'] == 404) {
-          String text = "Sorry!!!";
-          String dialogMesage = "Product insertion failed. Retry.....";
-          String buttonMessage = "Ok!!";
-          showMyDialog(context, text, dialogMesage, buttonMessage);
-        } else if (data['response_code'] == 100) {
-          String text = "Congratulations!!!";
-          String dialogMesage = "Product added successfully.";
-          String buttonMessage = "Done";
-          await showMyDialog(context, text, dialogMesage, buttonMessage);
-          Navigator.of(context).pop();
-        }
+    if (_validator() && _userId != null) {
+      //For normal dialog
+      final ProgressDialog pr = ProgressDialog(context,
+          type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+      pr.style(
+        message: 'Adding Please Wait...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+      );
+      await pr.show();
+      String jsonResponse = await uploadData();
+      var data = json.decode(jsonResponse);
+      print(data);
+      await pr.hide();
+      if (data['response_code'] == 404) {
+        String text = "Sorry!!!";
+        String dialogMesage = "Product insertion failed. Retry.....";
+        String buttonMessage = "Ok!!";
+        showMyDialog(context, text, dialogMesage, buttonMessage);
+      } else if (data['response_code'] == 100) {
+        String text = "Congratulations!!!";
+        String dialogMesage = "Product added successfully.";
+        String buttonMessage = "Done";
+        await showMyDialog(context, text, dialogMesage, buttonMessage);
+        Navigator.of(context).pop();
       }
     }
+  }
+
+  bool _validator() {
+    if (_validateCategory() &&
+        _validatorBreed() &&
+        _validatorPhoto() &&
+        _validatorQuantity() &&
+        _validatorPrice()) {
+      print("success");
+      return true;
+    } else {
+      print("failed");
+      return false;
+    }
+  }
+
+  bool _validateCategory() {
+    if (selectedCategory == null) {
+      errorCategory =
+          AppLocalizations.of(context).translate("Category not selected");
+      print("category failed");
+      return false;
+    }
+    errorCategory = null;
+    print("category success");
+    return true;
+  }
+
+  bool _validatorBreed() {
+    if (_breedController.text.isEmpty) {
+      errorBreed =
+          AppLocalizations.of(context).translate("Breed must be added");
+      return false;
+    }
+    if (_breedController.text.trim().length > 10) {
+      errorBreed = AppLocalizations.of(context)
+          .translate("Breed must be have less than 10 characters");
+      return false;
+    }
+    print("breed success");
+    errorBreed = null;
+    return true;
+  }
+
+  bool _validatorQuantity() {
+    if (_quantityController.text.isEmpty) {
+      errorQuantity =
+          AppLocalizations.of(context).translate("Quantity must be added");
+      return false;
+    }
+
+    if (_isNumeric(_quantityController.text.trim()) == false) {
+      errorQuantity =
+          AppLocalizations.of(context).translate("Quantity must be a number");
+      return false;
+    }
+
+    if (int.tryParse(_quantityController.text.trim()) == null) {
+      errorQuantity =
+          AppLocalizations.of(context).translate("Remove decimal point");
+      return false;
+    }
+    if (int.parse(_quantityController.text.trim()) <= 0) {
+      errorQuantity = AppLocalizations.of(context).translate("Greater than 0");
+      return false;
+    }
+    print("quantity success");
+    errorQuantity = null;
+    return true;
+  }
+
+  bool _validatorPrice() {
+    if (_priceController.text.isEmpty) {
+      errorPrice =
+          AppLocalizations.of(context).translate("Price must be added");
+      return false;
+    }
+    if (_isNumeric(_priceController.text.trim()) == false) {
+      errorPrice =
+          AppLocalizations.of(context).translate("Price must be a number");
+      return false;
+    }
+    // if (double.tryParse(_priceController.text.trim()) <
+    //     double.tryParse(_priceController.text.trim()).ceil()) {
+    //   errorPrice = "Remove decimal point";
+    //   return false;
+    // }
+    if (double.tryParse(_priceController.text.trim()) <= 0) {
+      errorPrice = AppLocalizations.of(context).translate("Greater than 0 ");
+      return false;
+    }
+    print("price success");
+    errorPrice = null;
+    return true;
+  }
+
+  bool _validatorPhoto() {
+    if (isSeller == false) {
+      _photoText = AppLocalizations.of(context).translate("Add Photo");
+      _isPhotoError = false;
+      return true;
+    }
+    if (_image == null) {
+      _photoText = AppLocalizations.of(context).translate("Photo not added");
+      _isPhotoError = true;
+      return false;
+    }
+    _isPhotoError = false;
+    _photoText = AppLocalizations.of(context).translate("Add photo");
+    return true;
+  }
+
+  bool _isNumeric(String str) {
+    if (str == null) {
+      return false;
+    }
+    return double.tryParse(str) != null;
   }
 
   List<String> getCategoryNameAsList(List<Category> catgeoryList) {
@@ -325,7 +414,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     print(this.catgeoryList);
 
     for (Category category in this.catgeoryList) {
-      catList.add(category.name);
+      catList.add(AppLocalizations.of(context).translate(category.name));
     }
     return catList;
   }
@@ -340,15 +429,14 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   @override
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
-        ),
+        title: Text(AppLocalizations.of(context).translate('Product Details'),
+            style: Theme.of(context).textTheme.headline1.apply(
+                  color: Colors.white,
+                  letterSpacingDelta: -5.0,
+                )),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
@@ -370,122 +458,119 @@ class _ProdReqAddState extends State<ProdReqAdd> {
               child: Container(
                 child: Column(
                   children: <Widget>[
-                    CategoryDropDown(
-                        dropDownValue,
-                        getCategoryNameAsList(snapshot.data),
-                        _categoryHandler,
-                        "Category"),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CategoryDropDown(
+                        categoryHandler: _categoryHandler,
+                        dropDownItems: getCategoryNameAsList(snapshot.data),
+                        dropdownValue: dropDownValue,
+                        errorText: errorCategory,
+                        titleText:
+                            AppLocalizations.of(context).translate("Category"),
+                        hintText: AppLocalizations.of(context)
+                            .translate("Drop Down Hint"),
+                      ),
+                    ),
                     Row(
                       children: <Widget>[
                         Expanded(
-                          child: TextInputCard(
-                            icon: Icons.fiber_pin,
-                            titype: TextInputType.number,
-                            htext: 'Breed',
-                            mdata: data,
-                            controller: _breedController,
-                            width: data.size.width * 0.9,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: TextInputCard(
+                              icon: Icons.fiber_pin,
+                              titype: TextInputType.number,
+                              htext: AppLocalizations.of(context)
+                                  .translate('Breed'),
+                              mdata: data,
+                              controller: _breedController,
+                              width: data.size.width * 0.9,
+                              errorText: errorBreed,
+                            ),
                           ),
                         ),
                         if (isSeller)
                           Expanded(
-                            child: ButtonWidget(
-                              iconData: Icons.photo,
-                              text: 'Add Photo',
-                              handlerMethod: getImage,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ButtonWidget(
+                                iconData: Icons.photo,
+                                text: _photoText,
+                                handlerMethod: getImage,
+                                height: 55,
+                                width: 150,
+                                isError: _isPhotoError,
+                              ),
                             ),
                           ),
                         if (isSeller)
-                          CircleAvatar(
-                            backgroundImage: _image == null
-                                ? AssetImage('assests/images/logo.png')
-                                : FileImage(File(_image.path)),
-                            backgroundColor: Colors.white,
-                            radius: 25.0,
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: CircleAvatar(
+                              backgroundImage: _image == null
+                                  ? AssetImage('assests/images/logo.png')
+                                  : FileImage(File(_image.path)),
+                              backgroundColor: Colors.white,
+                              radius: 35.0,
+                            ),
                           ),
                       ],
                     ),
                     Row(
                       children: <Widget>[
                         Expanded(
-                            child: TextInputCard(
-                          icon: Icons.fiber_pin,
-                          titype: TextInputType.number,
-                          htext: 'Quantity',
-                          mdata: data,
-                          controller: _quantityController,
-                          width: data.size.width * 0.9,
+                            child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextInputCard(
+                            icon: Icons.fiber_pin,
+                            titype: TextInputType.number,
+                            htext: AppLocalizations.of(context)
+                                .translate('Quantity'),
+                            mdata: data,
+                            controller: _quantityController,
+                            width: data.size.width * 0.9,
+                            errorText: errorQuantity,
+                          ),
                         )),
                         Expanded(
-                            child: TextInputCard(
-                          icon: Icons.monetization_on,
-                          titype: TextInputType.number,
-                          htext: 'Price',
-                          mdata: data,
-                          controller: _priceController,
-                          width: data.size.width * 0.9,
+                            child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextInputCard(
+                            icon: Icons.monetization_on,
+                            titype: TextInputType.number,
+                            htext:
+                                AppLocalizations.of(context).translate('Price'),
+                            mdata: data,
+                            controller: _priceController,
+                            width: data.size.width * 0.9,
+                            errorText: errorPrice,
+                          ),
                         )),
                       ],
                     ),
-                    // Row(
-                    //   children: <Widget>[
-                    //     Expanded(child: prefix.buildButton(context, Icons.insert_drive_file, 'Add Certificate')),
-                    //     Expanded(child: Text('Certificate Name'))
-                    //   ],
-                    // ),
-
-                    // Container(
-                    //   width: data.size.width * 0.9,
-                    //   //height: data.size.height * 0.1,
-                    //   child: Card(
-                    //     shape: RoundedRectangleBorder(
-                    //         borderRadius: BorderRadius.circular(32.0)),
-                    //     child: FlatButton.icon(
-                    //       icon: Icon(Icons.location_on),
-                    //       shape: RoundedRectangleBorder(
-                    //         borderRadius: BorderRadius.circular(32.0),
-                    //       ),
-                    //       color: Colors.white,
-                    //       textColor: Theme.of(context).primaryColor,
-                    //       padding: EdgeInsets.all(8.0),
-                    //       onPressed: _clickHandler,
-                    //       label: Text(
-                    //         _addressText,
-                    //         textAlign: TextAlign.justify,
-                    //         overflow: TextOverflow.ellipsis,
-                    //         style: TextStyle(
-                    //           fontSize: 14.0,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-
-                    SizedBox(
-                      height: 20.0,
-                    ),
-
-                    SizedBox(
-                      height: 50.0,
-                    ),
-                    Container(
-                      height: 55,
-                      width: 170,
-                      child: FlatButton(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32.0),
-                            side: BorderSide(
-                                color: Theme.of(context).primaryColor)),
-                        color: Theme.of(context).primaryColor,
-                        textColor: Colors.white,
-                        padding: EdgeInsets.all(8.0),
-                        onPressed: () {
-                          _submitData();
-                        },
-                        child: Text(
-                          AppLocalizations.of(context).translate("Post Offer"),
-                          style: TextStyle(
-                            fontSize: 18.0,
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Container(
+                        height: 55,
+                        width: 200,
+                        child: FlatButton(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(32.0),
+                              side: BorderSide(
+                                  color: Theme.of(context).primaryColor)),
+                          color: Theme.of(context).primaryColor,
+                          textColor: Colors.white,
+                          padding: EdgeInsets.all(8.0),
+                          onPressed: () {
+                            setState(() {
+                              _submitData();
+                            });
+                          },
+                          child: Text(
+                            AppLocalizations.of(context)
+                                .translate("Post Offer"),
+                            style: Theme.of(context).textTheme.bodyText1.apply(
+                                  color: Colors.white,
+                                ),
                           ),
                         ),
                       ),
@@ -499,4 +584,10 @@ class _ProdReqAddState extends State<ProdReqAdd> {
       ),
     );
   }
+
+  // @override
+  // void deactivate() {
+  //   FocusScope.of(context).unfocus();
+  //   super.deactivate();
+  // }
 }

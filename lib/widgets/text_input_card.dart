@@ -7,6 +7,8 @@ class TextInputCard extends StatefulWidget {
   MediaQueryData mdata;
   TextEditingController controller;
   double width;
+  String errorText;
+
   TextInputCard({
     this.icon,
     this.titype,
@@ -14,6 +16,7 @@ class TextInputCard extends StatefulWidget {
     this.mdata,
     this.controller,
     @required this.width,
+    this.errorText,
   });
 
   @override
@@ -21,6 +24,7 @@ class TextInputCard extends StatefulWidget {
 }
 
 class _TextInputCardState extends State<TextInputCard> {
+  FocusNode _focusNode = new FocusNode();
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -30,14 +34,35 @@ class _TextInputCardState extends State<TextInputCard> {
         width: this.widget.width,
         child: ListTile(
           title: TextFormField(
+            //maxLines: 2,
+            textInputAction: TextInputAction.next,
+            focusNode: _focusNode,
             controller: widget.controller,
             keyboardType: widget.titype,
+
+            onChanged: (text) {},
+            //maxLines: 2,
+            //autocorrect: true,
             decoration: InputDecoration(
-              hintText: widget.htext,
-              //hintStyle: TextStyle(color: Theme.of(context).primaryColor),
+              labelText: widget.htext,
+              hintMaxLines: 2,
+              errorText: widget.errorText,
+              hintStyle: Theme.of(context).textTheme.bodyText2.apply(
+                    color: Theme.of(context).primaryColor,
+                  ),
+              labelStyle: Theme.of(context).textTheme.bodyText2.apply(
+                    color: Theme.of(context).primaryColor,
+                  ),
               contentPadding: EdgeInsets.all(12),
               focusedBorder: InputBorder.none,
               enabledBorder: InputBorder.none,
+              errorMaxLines: 2,
+              // errorStyle: Theme.of(context).textTheme.headline2.apply(
+              //       fontSizeDelta: -4,
+              //       color: Colors.red,
+
+              //     ),
+              helperMaxLines: 2,
               prefixIcon: Icon(
                 widget.icon,
                 color: Theme.of(context).primaryColor,
@@ -46,6 +71,7 @@ class _TextInputCardState extends State<TextInputCard> {
             // style: TextStyle(
             //   color: Theme.of(context).primaryColor,
             // ),
+            onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
           ),
         ),
       ),

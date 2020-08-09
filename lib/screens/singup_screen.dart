@@ -18,6 +18,7 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_otp/flutter_otp.dart';
 import 'package:otp/otp.dart';
@@ -41,6 +42,17 @@ class _SingUpScreenState extends State<SingUpScreen> {
   LatLng _selectedCoord;
   var finalLocation;
   var _selectedAddress;
+  String errorUsername;
+  String errorContactNumber;
+  String errorAddress;
+  String errorPanCard;
+  bool _isOtpRight;
+
+  @override
+  void didChangeDependencies() {
+    errorPanCard = AppLocalizations.of(context).translate("Name of the file");
+    super.didChangeDependencies();
+  }
 
   Future<bool> _checkUserType() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -62,16 +74,92 @@ class _SingUpScreenState extends State<SingUpScreen> {
     });
   }
 
+  bool _validator() {
+    if (_validateUsername() &&
+        _validateContactNumber() &&
+        _validateAddress() &&
+        _validatePanCard()) {
+      print("here");
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool _validateUsername() {
+    if (_usernameController == null) {
+      errorUsername = "Username is required";
+      return false;
+    }
+
+    if (_usernameController.text.trim().length < 3) {
+      errorUsername = "Username must be more than 3 characters";
+      return false;
+    }
+    if (_usernameController.text.trim().length > 30) {
+      errorUsername = "Username must be less than 30 characters";
+      return false;
+    }
+    errorUsername = null;
+    return true;
+  }
+
+  bool _validateAddress() {
+    if (_selectedAddress == null) {
+      errorAddress = "Address is required";
+      return false;
+    }
+    errorAddress = null;
+    return true;
+  }
+
+  bool _validatePanCard() {
+    if (_panCard == null) {
+      errorPanCard = "PanCard is required";
+      return false;
+    }
+    errorPanCard = null;
+    return true;
+  }
+
+  bool _validateContactNumber() {
+    if (_contactNumberController == null) {
+      errorContactNumber = "Contact Number is required";
+      return false;
+    }
+
+    if (_contactNumberController.text.trim().length != 10) {
+      errorContactNumber = "Contact Number must be of 10 digits";
+      return false;
+    }
+
+    if (_isNumeric(_contactNumberController.text.trim()) == false) {
+      errorContactNumber = "Contact Number must contain only digits";
+      return false;
+    }
+    errorContactNumber = null;
+    return true;
+  }
+
+  bool _isNumeric(String str) {
+    if (str == null) {
+      return false;
+    }
+    return double.tryParse(str) != null;
+  }
+
   Future<String> _getLocation() async {
     // show input autocomplete with selected mode
     // then get the Prediction selected
-    Prediction p = await PlacesAutocomplete.show(
-        context: context,
-        apiKey: kGoogleApiKey,
-        mode: Mode.overlay, // Mode.fullscreen
-        language: "en",
-        components: [new Component(Component.country, "in")]);
-    await displayPrediction(p);
+    try {
+      Prediction p = await PlacesAutocomplete.show(
+          context: context,
+          apiKey: kGoogleApiKey,
+          mode: Mode.overlay, // Mode.fullscreen
+          language: "en",
+          components: [new Component(Component.country, "in")]);
+      await displayPrediction(p);
+    } catch (e) {}
     return _addressText;
   }
 
@@ -103,9 +191,9 @@ class _SingUpScreenState extends State<SingUpScreen> {
     FormData formData = FormData.fromMap({
       "panCard":
           await MultipartFile.fromFile(_panCard.path, filename: panCardName),
-      "username": _usernameController.text,
-      "address": _selectedAddress.addressLine,
-      "contact_number": _contactNumberController.text,
+      "username": _usernameController.text.trim(),
+      "address": _selectedAddress.addressLine.toString().trim(),
+      "contact_number": _contactNumberController.text.trim(),
       "isSeller": isSeller,
       "state": _selectedAddress.adminArea,
       "pincode": _selectedAddress.postalCode,
@@ -125,82 +213,140 @@ class _SingUpScreenState extends State<SingUpScreen> {
   }
 
   Future<void> _clickHandler() async {
-    var address = await _getLocation();
-    setState(() {
-      _addressText = address;
-    });
+    try {
+      var address = await _getLocation();
+      setState(() {
+        errorAddress = null;
+        _addressText = address;
+      });
+    } catch (e) {}
   }
 
-  Future<void> showOtpDialog(bool isSeller) async {
-    // var code = OTP.generateTOTPCodeString(
-    //     'JBSWY3DPEHPK3PXP', DateTime.now().millisecondsSinceEpoch);
-    // print(code);
-    FlutterOtp otp = FlutterOtp();
-    otp.sendOtp(_contactNumberController.text);
+  void checkOtp(FlutterOtp otp, String enteredOtp) {
+    if (enteredOtp == "") {
+      setState(() {
+        this._isOtpRight = false;
+      });
+      return;
+    }
+    print("here");
+    if (otp.resultChecker(int.tryParse(enteredOtp))) {
+      setState(() {
+        this._isOtpRight = true;
+      });
+    } else {
+      setState(() {
+        this._isOtpRight = false;
+      });
+    }
+  }
 
-    String enteredOtp;
+  Future<bool> showOtpDialog(bool isSeller) async {
+    try {
+      FlutterOtp otp = FlutterOtp();
+      otp.sendOtp(_contactNumberController.text);
+      String enteredOtp = "";
 
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
-          title: Text("Otp is sent to ${_contactNumberController.text}"),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                TextField(
-                    maxLength: 4,
-                    keyboardType: TextInputType.number,
-                    onChanged: (val) {
-                      enteredOtp = val;
-                    })
-              ],
+      return showDialog<bool>(
+        context: context,
+        barrierDismissible: false, // user must tap button!
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32.0)),
+            title: Text(
+              "Otp is sent to ${_contactNumberController.text}",
+              style: Theme.of(context).textTheme.bodyText1.apply(
+                    color: Theme.of(context).primaryColor,
+                  ),
             ),
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: Text("Verify"),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32.0)),
-              color: Theme.of(context).primaryColor,
-              onPressed: () {
-                if (otp.resultChecker(int.parse(enteredOtp))) {
-                  Navigator.pop(context);
-                  _submitData(isSeller);
-                } else {
-                  print("failed");
-                  Navigator.pop(context);
-                  showMyDialog(context, "OTP Verification failed",
-                      "OTP verification failed please retry.", "OK");
-                }
-              },
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  TextField(
+                      maxLength: 4,
+                      keyboardType: TextInputType.number,
+                      onChanged: (val) {
+                        enteredOtp = val;
+                      })
+                ],
+              ),
             ),
-          ],
-        );
-      },
-    );
+            actions: <Widget>[
+              Container(
+                height: 50,
+                width: 100,
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32.0)),
+                  child: FlatButton(
+                    child: Text("Verify",
+                        style: Theme.of(context).textTheme.bodyText2.apply(
+                              color: Colors.white,
+                            )),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32.0)),
+                    color: Theme.of(context).primaryColor,
+                    onPressed: () async {
+                      await checkOtp(otp, enteredOtp);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {}
+    return false;
   }
 
   void _submitData(bool isSeller) async {
-    if (_panCard != null &&
-        _usernameController != null &&
-        _contactNumberController != null &&
-        _addressController != null &&
-        _panCard != null) {
-      String jsonString = await _uploadData(isSeller);
-      var jsonData = json.decode(jsonString);
-      int userId = jsonData["user_id"];
+    if (_validator()) {
+      await showOtpDialog(isSeller);
+      if (this._isOtpRight) {
+        final ProgressDialog pr = ProgressDialog(context,
+            type: ProgressDialogType.Normal,
+            isDismissible: true,
+            showLogs: true);
+        pr.style(
+          message: 'Singing Up Please Wait...',
+          borderRadius: 10.0,
+          backgroundColor: Colors.white,
+          progressWidget: CircularProgressIndicator(),
+          elevation: 10.0,
+          insetAnimCurve: Curves.easeInOut,
+          progress: 0.0,
+          maxProgress: 100.0,
+          progressTextStyle: TextStyle(
+              color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+          messageTextStyle: TextStyle(
+              color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+        );
+        await pr.show();
+        String jsonString = await _uploadData(isSeller);
+        var jsonData = json.decode(jsonString);
+        pr.hide();
+        int userId = jsonData["user_id"];
 
-      if (userId != -1) {
-        _storeUserId(userId);
-        // /Navigator.of(context).pop();
-        Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
+        if (userId != -1) {
+          _storeUserId(userId);
+          String text = "Congratulations!!!";
+          String dialogMesage = "Registration successfull.";
+          String buttonMessage = "Ok!!";
+          await showMyDialog(context, text, dialogMesage, buttonMessage);
+          Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
+        } else {
+          String text = "Sorry!!!";
+          String dialogMesage = "Singup insertion failed.";
+          String buttonMessage = "Ok!!";
+
+          showMyDialog(context, text, dialogMesage, buttonMessage);
+        }
       } else {
         String text = "Sorry!!!";
-        String dialogMesage = "Singup insertion failed.";
+        String dialogMesage = "Otp verification failed.";
         String buttonMessage = "Ok!!";
 
         showMyDialog(context, text, dialogMesage, buttonMessage);
@@ -220,10 +366,10 @@ class _SingUpScreenState extends State<SingUpScreen> {
       appBar: AppBar(
         title: Text(
           AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -264,6 +410,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
                           mdata: data,
                           controller: _usernameController,
                           width: data.size.width * 0.9,
+                          errorText: errorUsername,
                         ),
                         TextInputCard(
                           icon: Icons.phone,
@@ -272,8 +419,8 @@ class _SingUpScreenState extends State<SingUpScreen> {
                           mdata: data,
                           controller: _contactNumberController,
                           width: data.size.width * 0.9,
+                          errorText: errorContactNumber,
                         ),
-
                         GestureDetector(
                           onTap: _clickHandler,
                           child: Wrap(
@@ -284,7 +431,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
                                 child: Container(
                                   width: data.size.width * 0.9,
                                   child: Padding(
-                                    padding: const EdgeInsets.all(15.0),
+                                    padding: const EdgeInsets.all(22.0),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -295,12 +442,20 @@ class _SingUpScreenState extends State<SingUpScreen> {
                                         ),
                                         Expanded(
                                           child: Text(
-                                            _addressText,
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .primaryColor,
-                                              fontSize: 17.0,
-                                            ),
+                                            errorAddress == null
+                                                ? _addressText
+                                                : errorAddress,
+
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText2
+                                                .apply(
+                                                  color: errorAddress == null
+                                                      ? Theme.of(context)
+                                                          .primaryColor
+                                                      : Colors.red,
+                                                ),
+
                                             textAlign: TextAlign.center,
                                             //overflow: TextOverflow.clip,
                                             //maxLines: 5,
@@ -314,39 +469,9 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             ],
                           ),
                         ),
-
                         SizedBox(
                           height: 10.0,
                         ),
-                        // Container(
-                        //   width: data.size.width * 0.9,
-                        //   //height: data.size.height * 0.1,
-                        //   child: Card(
-                        //     shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(32.0)),
-                        //     child: FlatButton.icon(
-                        //       icon: Icon(Icons.location_on),
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(32.0),
-                        //       ),
-                        //       color: Colors.white,
-                        //       textColor: Theme.of(context).primaryColor,
-                        //       padding: EdgeInsets.all(8.0),
-                        //       onPressed: _clickHandler,
-                        //       label: Text(
-                        //         _addressText,
-                        //         textAlign: TextAlign.justify,
-                        //         overflow: TextOverflow.ellipsis,
-                        //         style: TextStyle(
-                        //           fontSize: 14.0,
-                        //         ),
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
-                        // SizedBox(
-                        //   height: 10.0,
-                        // ),
                         Row(
                           children: <Widget>[
                             Expanded(
@@ -355,6 +480,9 @@ class _SingUpScreenState extends State<SingUpScreen> {
                                 text: AppLocalizations.of(context)
                                     .translate('Pan Card'),
                                 handlerMethod: pickPanCard,
+                                height: 55,
+                                width: 150,
+                                isError: errorPanCard == null,
                               ),
                             ),
                             SizedBox(
@@ -363,15 +491,17 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             Expanded(
                               child: Text(
                                 _panCard == null
-                                    ? AppLocalizations.of(context)
-                                        .translate('Name of the file')
+                                    ? errorPanCard
                                     : _panCard.path.split('/').last,
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
                               ),
                             ),
                           ],
                         ),
                         SizedBox(
-                          height: 40.0,
+                          height: 20.0,
                         ),
                         Container(
                           height: 55,
@@ -387,7 +517,9 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             textColor: Colors.white,
                             padding: EdgeInsets.all(8.0),
                             onPressed: () {
-                              showOtpDialog(snapshot.data);
+                              setState(() {
+                                _submitData(snapshot.data);
+                              });
                             },
                             child: Text(
                               AppLocalizations.of(context).translate("Sign Up"),
@@ -397,32 +529,6 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             ),
                           ),
                         ),
-                        // SizedBox(
-                        //   height: 10.0,
-                        // ),
-                        // Text(
-                        //   'Already Registerd??',
-                        //   style: TextStyle(
-                        //     fontSize: 19.0,
-                        //     color: primarycolor,
-                        //     fontWeight: FontWeight.w700,
-                        //   ),
-                        // ),
-                        // SizedBox(
-                        //   height: 10.0,
-                        // ),
-                        // InkWell(
-                        //   child: Text(
-                        //     'Login',
-                        //     style: TextStyle(
-                        //         color: primarycolor,
-                        //         fontWeight: FontWeight.w700,
-                        //         fontSize: 19.0,
-                        //         decoration: TextDecoration.underline),
-                        //   ),
-                        //   onTap: () => Navigator.push(context,
-                        //       MaterialPageRoute(builder: (context) => login())),
-                        // ),
                       ],
                     ),
                   ),

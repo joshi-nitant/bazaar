@@ -7,13 +7,16 @@ import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
+import 'package:baazar/screens/image_detail_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
+import 'package:baazar/widgets/m_y_baazar_icons.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:search_map_place/search_map_place.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baazar/widgets/text_input_card.dart';
@@ -47,6 +50,86 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   User _currentUser;
   User _ownerUser;
   int _costPerKm = 10;
+  String errorPrice;
+  String errorQuantity;
+  bool _initialLoad = true;
+
+  bool _validator() {
+    if (_validatorQuantity() && _validatorPrice()) {
+      print("success");
+      return true;
+    } else {
+      print("failed");
+      return false;
+    }
+  }
+
+  bool _validatorQuantity() {
+    if (_quantityBidController.text.isEmpty) {
+      errorQuantity = "Quantity must be added";
+      return false;
+    }
+
+    if (_isNumeric(_quantityBidController.text.trim()) == false) {
+      errorQuantity = "Quantity must be a number";
+      return false;
+    }
+
+    if (int.tryParse(_quantityBidController.text.trim()) == null) {
+      errorQuantity = "Remove decimal point";
+      return false;
+    }
+    if (int.parse(_quantityBidController.text.trim()) <= 0) {
+      errorQuantity = "Must be Greater than 0";
+      return false;
+    }
+
+    if (isProduct) {
+      if (int.parse(_quantityBidController.text.trim()) >
+          int.parse(product.remainingQty)) {
+        errorQuantity = "More than available quantity";
+        return false;
+      }
+    } else if (!isProduct) {
+      if (int.parse(_quantityBidController.text.trim()) >
+          int.parse(requirement.remainingQty)) {
+        errorQuantity = "More than available quantity";
+        return false;
+      }
+    }
+    print("quantity success");
+    errorQuantity = null;
+    return true;
+  }
+
+  bool _validatorPrice() {
+    if (_priceBidController.text.isEmpty) {
+      errorPrice = "Price must be added";
+      return false;
+    }
+    if (_isNumeric(_priceBidController.text.trim()) == false) {
+      errorPrice = "Price must be a number";
+      return false;
+    }
+    if (int.tryParse(_priceBidController.text.trim()) == null) {
+      errorPrice = "Remove decimal point";
+      return false;
+    }
+    if (int.parse(_priceBidController.text.trim()) <= 0) {
+      errorPrice = "Must be Greater than 0 ";
+      return false;
+    }
+    print("price success");
+    errorPrice = null;
+    return true;
+  }
+
+  bool _isNumeric(String str) {
+    if (str == null) {
+      return false;
+    }
+    return double.tryParse(str) != null;
+  }
 
   _getCategoryList() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -97,65 +180,68 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   }
 
   Future<Category> _loadCatAndUserType() async {
-    var routeArgs =
-        ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
-    Object _detailObject = routeArgs['object'];
+    if (_initialLoad) {
+      var routeArgs =
+          ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
+      Object _detailObject = routeArgs['object'];
 
-    if (_detailObject is Product) {
-      product = _detailObject;
-      isProduct = true;
-    } else {
-      requirement = _detailObject;
-      isProduct = false;
-    }
-
-    this.isSeller = await _getUserType();
-    this.userId = await _getUserId();
-    if (this.userId != null) {
-      this._currentUser = await _getUser(this.userId);
-
-      if (isProduct) {
-        this._ownerUser = await _getUser(int.parse(product.userId));
+      if (_detailObject is Product) {
+        product = _detailObject;
+        isProduct = true;
       } else {
-        this._ownerUser = await _getUser(int.parse(requirement.userId));
+        requirement = _detailObject;
+        isProduct = false;
       }
 
-      LatLng startCoordinate = LatLng(
-        double.parse(_currentUser.latitude),
-        double.parse(_currentUser.longitude),
-      );
-      LatLng endCoordinate = LatLng(
-        double.parse(_ownerUser.latitude),
-        double.parse(_ownerUser.longitude),
-      );
-      double distance = await _getDistance(startCoordinate, endCoordinate);
-      distance = distance / 1000;
-      _deliveryAmount = (distance * _costPerKm).toInt();
-    }
-    String jsonString = await _getCategoryList();
-    var jsonData = json.decode(jsonString);
-    List<Category> categoryList = [];
-    for (var category in jsonData) {
-      categoryList.add(
-        Category(
-          id: category["cat_id"],
-          name: category["category_name"],
-          imgPath: category["category_image"],
-        ),
-      );
+      this.isSeller = await _getUserType();
+      this.userId = await _getUserId();
+      if (this.userId != null) {
+        this._currentUser = await _getUser(this.userId);
+
+        if (isProduct) {
+          this._ownerUser = await _getUser(int.parse(product.userId));
+        } else {
+          this._ownerUser = await _getUser(int.parse(requirement.userId));
+        }
+
+        LatLng startCoordinate = LatLng(
+          double.parse(_currentUser.latitude),
+          double.parse(_currentUser.longitude),
+        );
+        LatLng endCoordinate = LatLng(
+          double.parse(_ownerUser.latitude),
+          double.parse(_ownerUser.longitude),
+        );
+        double distance = await _getDistance(startCoordinate, endCoordinate);
+        distance = distance / 1000;
+        _deliveryAmount = (distance * _costPerKm).toInt();
+      }
+      String jsonString = await _getCategoryList();
+      var jsonData = json.decode(jsonString);
+      List<Category> categoryList = [];
+      for (var category in jsonData) {
+        categoryList.add(
+          Category(
+            id: category["cat_id"],
+            name: category["category_name"],
+            imgPath: category["category_image"],
+          ),
+        );
+      }
+
+      print(product);
+      if (_detailObject is Product) {
+        category = categoryList.firstWhere(
+            (element) => element.id == product.category_id,
+            orElse: () => null);
+      } else {
+        category = categoryList.firstWhere(
+            (element) => element.id == requirement.category_id,
+            orElse: () => null);
+      }
+      _initialLoad = false;
     }
 
-    print(product);
-    if (_detailObject is Product) {
-      category = categoryList.firstWhere(
-          (element) => element.id == product.category_id,
-          orElse: () => null);
-    } else {
-      category = categoryList.firstWhere(
-          (element) => element.id == requirement.category_id,
-          orElse: () => null);
-    }
-    //print(product.image);
     return category;
   }
 
@@ -213,8 +299,8 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   Future<String> _uploadData() async {
     FormData formData = FormData.fromMap({
       "isSeller": isSeller,
-      "price": _priceBidController.text,
-      "quantity": _quantityBidController.text,
+      "price": _priceBidController.text.trim(),
+      "quantity": _quantityBidController.text.trim(),
       "user_id": userId,
       "delivery_amount": _deliveryAmount,
       "id": isProduct ? product.id : requirement.id,
@@ -233,10 +319,28 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   }
 
   void _submitData() async {
-    print(_quantityBidController);
-    if (_quantityBidController != null && _priceBidController != null) {
+    if (_validator()) {
+      final ProgressDialog pr = ProgressDialog(context,
+          type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+      pr.style(
+        message: 'Sending offer...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+      );
+      await pr.show();
       String jsonResponse = await _uploadData();
       var data = json.decode(jsonResponse);
+      print(data);
+      pr.hide();
       if (data['response_code'] == 404) {
         String text = "Sorry!!!";
         String dialogMesage = "Offer request failed. Retry.....";
@@ -273,23 +377,38 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
         return AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
-          title: Text(title),
+          title: Text(title,
+              style: Theme.of(context).textTheme.bodyText1.apply(
+                    color: Theme.of(context).primaryColor,
+                  )),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text(message),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodyText2,
+                ),
               ],
             ),
           ),
           actions: <Widget>[
-            FlatButton(
-              child: Text(buttonMessage),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32.0)),
-              color: Theme.of(context).primaryColor,
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                FlatButton(
+                  child: Text(buttonMessage,
+                      style: Theme.of(context).textTheme.bodyText2.apply(
+                            color: Colors.white,
+                          )),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32.0)),
+                  color: Theme.of(context).primaryColor,
+                  onPressed: () {
+                    FocusManager.instance.primaryFocus.unfocus();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
             ),
           ],
         );
@@ -318,13 +437,10 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
-        ),
+        title: Text(AppLocalizations.of(context).translate('Trade Details'),
+            style: Theme.of(context).textTheme.headline1.apply(
+                  color: Colors.white,
+                )),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
@@ -343,8 +459,8 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                   children: <Widget>[
                     Container(
                       height: isSeller
-                          ? data.size.height * 0.2
-                          : data.size.height * 0.3,
+                          ? data.size.height * 0.15
+                          : data.size.height * 0.25,
                       width: data.size.width,
                       margin: EdgeInsets.all(data.size.width * 0.02),
                       child: Card(
@@ -355,23 +471,57 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 isSeller
-                                    ? CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                          Utils.URL +
-                                              "images/" +
-                                              category.imgPath,
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) {
+                                                return DetailScreen(
+                                                  tag: "qualityCertificate",
+                                                  url: Utils.URL +
+                                                      "images/" +
+                                                      category.imgPath,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                        child: CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                            Utils.URL +
+                                                "images/" +
+                                                category.imgPath,
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                          radius: data.size.height * 0.06,
                                         ),
-                                        backgroundColor: Colors.grey[200],
-                                        radius: data.size.height * 0.06,
                                       )
-                                    : CircleAvatar(
-                                        backgroundImage: NetworkImage(
-                                          Utils.URL +
-                                              "productImage/" +
-                                              product.image,
+                                    : GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) {
+                                                return DetailScreen(
+                                                  tag: "qualityCertificate",
+                                                  url: Utils.URL +
+                                                      "productImage/" +
+                                                      product.image,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                        child: CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                            Utils.URL +
+                                                "productImage/" +
+                                                product.image,
+                                          ),
+                                          backgroundColor: Colors.grey[200],
+                                          radius: data.size.height * 0.06,
                                         ),
-                                        backgroundColor: Colors.grey[200],
-                                        radius: data.size.height * 0.06,
                                       ),
                               ],
                             ),
@@ -428,28 +578,29 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                             context,
                                             TextDirection.rtl,
                                           ),
-                                    firstCardInnerRow(
-                                      "${_ownerUser.city},${_ownerUser.state}",
-                                      context,
-                                      TextDirection.rtl,
-                                    ),
-                                    if (isSeller == false)
+                                    if (this.userId != null)
+                                      firstCardInnerRow(
+                                        "${_ownerUser.city},${_ownerUser.state}",
+                                        context,
+                                        TextDirection.rtl,
+                                      ),
+                                    if (this.userId == null)
                                       firstCardInnerRow(
                                         this.userId == null
-                                            ? "Login Required"
+                                            ? "0"
                                             : _deliveryAmount.toString(),
                                         context,
                                         TextDirection.rtl,
                                       ),
                                     if (isSeller == false)
                                       firstCardInnerRow(
-                                        'xxxxxx',
+                                        '0',
                                         context,
                                         TextDirection.rtl,
                                       ),
                                     if (isSeller == false)
                                       firstCardInnerRow(
-                                        'xxxxxx',
+                                        '0',
                                         context,
                                         TextDirection.rtl,
                                       ),
@@ -479,7 +630,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                 Row(
                                   children: <Widget>[
                                     Icon(
-                                      Icons.line_weight,
+                                      MYBaazar.balance,
                                       color: Theme.of(context).primaryColor,
                                       size: 20.0,
                                     ),
@@ -525,7 +676,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                   child: Row(
                                     children: <Widget>[
                                       Icon(
-                                        Icons.monetization_on,
+                                        MYBaazar.rupee_indian,
                                         color: Theme.of(context).primaryColor,
                                         size: 20.0,
                                       ),
@@ -550,7 +701,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                 Row(
                                   children: <Widget>[
                                     Text(
-                                      'Offer',
+                                      'Offer/QTL',
                                       style: TextStyle(
                                         fontSize: curScaleFactor * 14,
                                         color: Colors.black,
@@ -567,7 +718,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                 Row(
                                   children: <Widget>[
                                     Icon(
-                                      Icons.line_weight,
+                                      MYBaazar.balance,
                                       color: Theme.of(context).primaryColor,
                                       size: 20.0,
                                     ),
@@ -609,22 +760,37 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                       ),
                     ),
                     if (isProduct && product.qualityCertificate != null)
-                      Container(
-                        height: data.size.height * 0.2,
-                        width: data.size.width * 0.9,
-                        margin: EdgeInsets.all(data.size.width * 0.02),
-                        child: FittedBox(
-                          fit: BoxFit.fitHeight,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
-                              "${Utils.URL}qualityCertificate/${product.qualityCertificate}",
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) {
+                                return DetailScreen(
+                                    tag: "qualityCertificate",
+                                    url:
+                                        "${Utils.URL}qualityCertificate/${product.qualityCertificate}");
+                              },
+                            ),
+                          );
+                        },
+                        child: Container(
+                          height: data.size.height * 0.2,
+                          width: data.size.width * 0.9,
+                          margin: EdgeInsets.all(data.size.width * 0.02),
+                          child: FittedBox(
+                            fit: BoxFit.fitHeight,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.network(
+                                "${Utils.URL}qualityCertificate/${product.qualityCertificate}",
+                              ),
                             ),
                           ),
                         ),
                       ),
                     Container(
-                      height: data.size.height * 0.2,
+                      height: data.size.height * 0.25,
                       width: data.size.width,
                       margin: EdgeInsets.all(data.size.width * 0.02),
                       child: Card(
@@ -642,23 +808,25 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                     Expanded(
                                       flex: 1,
                                       child: TextInputCard(
-                                        icon: Icons.ac_unit,
+                                        icon: MYBaazar.balance,
                                         titype: TextInputType.number,
                                         htext: "Quantity",
                                         mdata: data,
                                         controller: _quantityBidController,
                                         width: data.size.width * 0.3,
+                                        errorText: errorQuantity,
                                       ),
                                     ),
                                     Expanded(
                                       flex: 1,
                                       child: TextInputCard(
-                                        icon: Icons.ac_unit,
+                                        icon: MYBaazar.rupee_indian,
                                         titype: TextInputType.number,
                                         htext: "Price",
                                         mdata: data,
                                         controller: _priceBidController,
                                         width: data.size.width * 0.3,
+                                        errorText: errorPrice,
                                       ),
                                     ),
                                   ],
@@ -669,15 +837,30 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                 child: Container(
                                   width: data.size.width * 1,
                                   child: RaisedButton(
-                                    onPressed:
-                                        userId == null ? null : _submitData,
+                                    disabledColor:
+                                        Theme.of(context).primaryColorLight,
+                                    onPressed: userId == null
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _submitData();
+                                            });
+                                          },
                                     child: Text(
-                                      'Send Offer',
-                                      textAlign: TextAlign.center,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          color: Colors.black, fontSize: 14.0),
-                                    ),
+                                        userId == null
+                                            ? "Login Required"
+                                            : 'Send Offer',
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText2
+                                            .apply(
+                                              color: this.userId == null
+                                                  ? Colors.redAccent
+                                                  : Theme.of(context)
+                                                      .primaryColor,
+                                            )),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(12.0)),
@@ -698,129 +881,6 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                 ),
               ),
             );
-            // return Container(
-            //   child: Column(
-            //     children: <Widget>[
-            //       Row(
-            //         children: <Widget>[
-            //           isSeller
-            //               ? Padding(
-            //                   padding: const EdgeInsets.all(8.0),
-            //                   child: CircleAvatar(
-            //                     radius: 30.0,
-            //                     backgroundImage: NetworkImage(
-            //                       Utils.URL + "images/" + category.imgPath,
-            //                     ),
-            //                     backgroundColor: Colors.transparent,
-            //                   ),
-            //                 )
-            //               : Padding(
-            //                   padding: const EdgeInsets.all(8.0),
-            //                   child: CircleAvatar(
-            //                     radius: 30.0,
-            //                     backgroundImage: NetworkImage(
-            //                       Utils.URL + "images/" + product.image,
-            //                     ),
-            //                     backgroundColor: Colors.transparent,
-            //                   ),
-            //                 ),
-            //           Padding(
-            //             padding: const EdgeInsets.all(8.0),
-            //             child: Column(
-            //               children: <Widget>[
-            //                 Padding(
-            //                   padding: const EdgeInsets.all(8.0),
-            //                   child: Text(AppLocalizations.of(context)
-            //                       .translate(category.name)),
-            //                 ),
-            //                 Padding(
-            //                   padding: const EdgeInsets.all(8.0),
-            //                   child: Text(isProduct
-            //                       ? "City ${product.city}"
-            //                       : "City ${requirement.city}"),
-            //                 ),
-            //                 Column(
-            //                   children: <Widget>[
-            //                     Padding(
-            //                       padding: const EdgeInsets.all(8.0),
-            //                       child: Text(isProduct
-            //                           ? "State ${product.state}"
-            //                           : "State ${requirement.state}"),
-            //                     ),
-            //                   ],
-            //                 ),
-            //                 Column(
-            //                   children: <Widget>[
-            //                     Padding(
-            //                       padding: const EdgeInsets.all(8.0),
-            //                       child: Text("Delivery $_deliveryAmount"),
-            //                     ),
-            //                   ],
-            //                 ),
-            //               ],
-            //             ),
-            //           )
-            //         ],
-            //       ),
-            //       Row(
-            //         children: <Widget>[
-            //           Padding(
-            //             padding: const EdgeInsets.all(8.0),
-            //             child: Text(isProduct
-            //                 ? "Remaining ${product.remaining_qty}"
-            //                 : "Remaining ${requirement.remaining_qty}"),
-            //           ),
-            //           Padding(
-            //             padding: const EdgeInsets.all(8.0),
-            //             child: Text(isProduct
-            //                 ? "Total ${product.quantity}"
-            //                 : "Total ${requirement.quantity}"),
-            //           ),
-            //           Padding(
-            //             padding: const EdgeInsets.all(8.0),
-            //             child: Text(isProduct
-            //                 ? "Price ${product.price_expected}"
-            //                 : "Price ${requirement.price_expected}"),
-            //           ),
-            //         ],
-            //       ),
-            //       Row(
-            //         children: <Widget>[
-            //           Padding(
-            //             padding: const EdgeInsets.all(8.0),
-            //             child: Container(
-            //               width: 100,
-            //               child: TextField(
-            //                   keyboardType: TextInputType.number,
-            //                   controller: _priceBidController),
-            //             ),
-            //           ),
-            //           Padding(
-            //             padding: const EdgeInsets.all(8.0),
-            //             child: Container(
-            //               width: 100,
-            //               child: TextField(
-            //                 keyboardType: TextInputType.number,
-            //                 controller: _quantityBidController,
-            //               ),
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //       // RaisedButton(
-            //       //   onPressed: () {
-            //       //     _openGoogleMaps(context);
-            //       //   },
-            //       //   child: Text('Find address'),
-            //       // ),
-            //       //SearchMapPlaceWidget(apiKey: Utils.API_KEY),
-            //       RaisedButton(
-            //         child: Text('Send Offer'),
-            //         onPressed: userId == null ? null : _submitData,
-            //       ),
-            //     ],
-            //   ),
-            // );
           }),
     );
   }

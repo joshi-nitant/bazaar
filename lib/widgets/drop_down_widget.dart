@@ -1,6 +1,7 @@
 import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/models/category.dart';
-import 'package:dropdown_formfield/dropdown_formfield.dart';
+import 'package:baazar/widgets/drop_down_form_field.dart';
+
 import 'package:flutter/material.dart';
 
 class CategoryDropDown extends StatefulWidget {
@@ -8,13 +9,16 @@ class CategoryDropDown extends StatefulWidget {
   List<String> dropDownItems;
   Function categoryHandler;
   String titleText;
-
-  CategoryDropDown(
+  String errorText;
+  String hintText;
+  CategoryDropDown({
     this.dropdownValue,
     this.dropDownItems,
     this.categoryHandler,
     this.titleText,
-  );
+    this.errorText,
+    this.hintText,
+  });
   @override
   _CategoryDropDownState createState() => _CategoryDropDownState();
 }
@@ -35,24 +39,17 @@ class _CategoryDropDownState extends State<CategoryDropDown> {
   @override
   Widget build(BuildContext context) {
     final mdata = MediaQuery.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
-      child: DropDownFormField(
-        titleText: widget.titleText,
-        hintText: 'Please choose one',
-        value: widget.dropdownValue,
-        // onSaved: (value) {
-        //   setState(() {
-        //     _myActivity = value;
-        //   });
-        // },
-        onChanged: (value) {
-          widget.categoryHandler(value);
-        },
-        dataSource: getItemsAsMap(),
-        textField: 'display',
-        valueField: 'value',
-      ),
+    return DropDownFormField(
+      titleText: widget.titleText,
+      errorText: widget.errorText,
+      hintText: widget.hintText,
+      value: widget.dropdownValue,
+      onChanged: (value) {
+        widget.categoryHandler(value);
+      },
+      dataSource: getItemsAsMap(),
+      textField: 'display',
+      valueField: 'value',
     );
     //       child: DropdownButtonFormField<String>(
     //         decoration: InputDecoration(

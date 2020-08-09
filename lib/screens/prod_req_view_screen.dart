@@ -8,8 +8,10 @@ import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
+import 'package:baazar/widgets/m_y_baazar_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:baazar/screens/prod_req_update_screen.dart';
@@ -101,7 +103,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         },
       ),
     );
-
+    print(response.body);
     var jsondata = json.decode(response.body);
 
     List<Requirement> requirements = [];
@@ -155,6 +157,23 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
   }
 
   _deleteListItem(dynamic object) async {
+    final ProgressDialog pr = ProgressDialog(context,
+        type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+    pr.style(
+      message: 'Deleting...',
+      borderRadius: 10.0,
+      backgroundColor: Colors.white,
+      progressWidget: CircularProgressIndicator(),
+      elevation: 10.0,
+      insetAnimCurve: Curves.easeInOut,
+      progress: 0.0,
+      maxProgress: 100.0,
+      progressTextStyle: TextStyle(
+          color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+      messageTextStyle: TextStyle(
+          color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+    );
+    await pr.show();
     //print(object.catgeory.name);
     print(object.id);
     var response = await http.post(
@@ -169,6 +188,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         },
       ),
     );
+    pr.hide();
     print(response.body);
     setState(() {});
   }
@@ -179,15 +199,18 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         null;
       },
       context: context,
-      type: AlertType.warning,
+      type: AlertType.error,
       title: "Are you sure you want to delete?",
-      desc: "All the information about the product and its bid will be deleted",
+      style: AlertStyle(titleStyle: Theme.of(context).textTheme.bodyText1),
+      desc: null,
       buttons: [
         DialogButton(
           color: Theme.of(context).primaryColor,
           child: Text(
             "No",
-            style: TextStyle(color: Colors.white, fontSize: 20),
+            style: Theme.of(context).textTheme.bodyText2.apply(
+                  color: Colors.white,
+                ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -195,35 +218,40 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
             color: Theme.of(context).primaryColor,
             child: Text(
               "Yes",
-              style: TextStyle(color: Colors.white, fontSize: 20),
+              style: Theme.of(context).textTheme.bodyText2.apply(
+                    color: Colors.white,
+                  ),
             ),
             onPressed: () {
-              _deleteListItem(object);
               Navigator.pop(context);
+              _deleteListItem(object);
             }),
       ],
     ).show();
   }
 
-  void _updateScreen(dynamic object) {
-    Navigator.of(context).pushNamed(
+  void _updateScreen(dynamic object) async {
+    await Navigator.of(context).pushNamed(
       ProdReqUpdate.routeName,
       arguments: {
         'selected_object': object,
       },
+    ).then(
+      (value) => setState(() {}),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    var data = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          AppLocalizations.of(context).translate('Product List'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -249,7 +277,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
             );
           }
           return Container(
-            height: 450,
+            height: data.size.height,
             child: snapshot.data.length == 0
                 ? Column(
                     children: <Widget>[
@@ -268,79 +296,97 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                           )),
                     ],
                   )
-                : ListView.builder(
-                    itemBuilder: (ctx, index) {
-                      return GestureDetector(
-                        onTap: () {
-                          _updateScreen(snapshot.data[index]);
-                        },
-                        child: Card(
-                          elevation: 5,
-                          margin: EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 5,
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: _isProduct
-                                  ? NetworkImage(
-                                      Utils.URL +
-                                          "productImage/" +
-                                          snapshot.data[index].image,
-                                    )
-                                  : NetworkImage(
-                                      Utils.URL +
-                                          "images/" +
-                                          snapshot.data[index].category.imgPath,
+                : Padding(
+                    padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                    child: Card(
+                      color: Theme.of(context).primaryColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0)),
+                      child: ListView.builder(
+                        itemBuilder: (ctx, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              _updateScreen(snapshot.data[index]);
+                            },
+                            child: Card(
+                              elevation: 5,
+                              margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20.0)),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage: _isProduct
+                                      ? NetworkImage(
+                                          Utils.URL +
+                                              "productImage/" +
+                                              snapshot.data[index].image,
+                                        )
+                                      : NetworkImage(
+                                          Utils.URL +
+                                              "images/" +
+                                              snapshot
+                                                  .data[index].category.imgPath,
+                                        ),
+                                  radius: 30,
+                                ),
+                                title: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    snapshot.data[index].category.name,
+                                    style:
+                                        Theme.of(context).textTheme.bodyText1,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                subtitle: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: <Widget>[
+                                    Row(
+                                      children: <Widget>[
+                                        Icon(
+                                          MYBaazar.rupee_indian,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        Text(
+                                          "${snapshot.data[index].price_expected}/QTL",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText2,
+                                        ),
+                                      ],
                                     ),
-                              radius: 30,
-                            ),
-                            title: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                snapshot.data[index].category.name,
-                                style: Theme.of(context).textTheme.headline6,
-                                textAlign: TextAlign.center,
+                                    Row(
+                                      children: <Widget>[
+                                        Icon(
+                                          MYBaazar.balance,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        Text(
+                                          "${snapshot.data[index].quantity}QTL",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText2,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                trailing: IconButton(
+                                    icon: Icon(Icons.delete),
+                                    color: Theme.of(context).errorColor,
+                                    onPressed: () {
+                                      setState(() {
+                                        _deleteItem(snapshot.data[index]);
+                                      });
+                                    }),
                               ),
                             ),
-                            subtitle: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                Row(
-                                  children: <Widget>[
-                                    Icon(
-                                      Icons.attach_money,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                    Text(
-                                      "${snapshot.data[index].price_expected}",
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: <Widget>[
-                                    Icon(
-                                      Icons.line_weight,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                    Text(
-                                      "Quantity = ${snapshot.data[index].quantity}",
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            trailing: IconButton(
-                                icon: Icon(Icons.delete),
-                                color: Theme.of(context).errorColor,
-                                onPressed: () {
-                                  _deleteItem(snapshot.data[index]);
-                                }),
-                          ),
-                        ),
-                      );
-                    },
-                    itemCount: snapshot.data.length,
+                          );
+                        },
+                        itemCount: snapshot.data.length,
+                      ),
+                    ),
                   ),
           );
         },

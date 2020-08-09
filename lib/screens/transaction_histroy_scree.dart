@@ -28,6 +28,8 @@ class TransactionHistory extends StatefulWidget {
 class _TransactionHistoryState extends State<TransactionHistory> {
   //List<Transaction> _transactionList = [];
   bool _isSeller;
+  bool _isReqBid;
+
   int _userId;
   final _formatter = new NumberFormat("#,###");
   var _dateFormater = new DateFormat('dd-MM-yyyy hh:mm a');
@@ -87,75 +89,79 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     );
     print(response.body);
     var jsondata = json.decode(response.body);
+    if (jsondata.length != 0) {
+      if (jsondata['transaction_requirement'] != null) {
+        _isReqBid = true;
+        for (var u in jsondata['transaction_requirement']) {
+          Requirement requirement = Requirement(
+            id: u['req_id'],
+            quantity: u['quantity'],
+            price_expected: u['price_expected'],
+            breed: u['breed'],
+            category_id: u['category'],
+            remainingQty: u['remaining_qty'],
+            category: await _getCategory(u['category']),
+          );
+          RequirementBid bid = RequirementBid(
+            reqBidId: int.parse(u['req_bid_id']),
+            userId: int.parse(u['bid_user_id']),
+            reqId: requirement,
+            price: double.parse(u['bid_price']),
+            quantity: int.parse(u['bid_quantity']),
+            isAccepted: u['is_accepted'] == "1",
+          );
 
-    if (jsondata['transaction_requirement'] != null) {
-      for (var u in jsondata['transaction_requirement']) {
-        Requirement requirement = Requirement(
-          id: u['req_id'],
-          quantity: u['quantity'],
-          price_expected: u['price_expected'],
-          breed: u['breed'],
-          category_id: u['category'],
-          remainingQty: u['remaining_qty'],
-          category: await _getCategory(u['category']),
-        );
-        RequirementBid bid = RequirementBid(
-          reqBidId: int.parse(u['req_bid_id']),
-          userId: int.parse(u['bid_user_id']),
-          reqId: requirement,
-          price: double.parse(u['bid_price']),
-          quantity: int.parse(u['bid_quantity']),
-          isAccepted: u['is_accepted'] == "1",
-        );
+          Transaction transaction = Transaction(
+            transactionId: int.parse(u['transaction_id']),
+            isProdBidId: false,
+            buyerId: int.parse(u['buyer_id']),
+            sellerId: int.parse(u['seller_id']),
+            reqbidId: bid,
+            endDate: DateTime.parse(u['end_date']),
+            totalAmount: int.parse(u['total_amount']),
+          );
+          _pendingTransactions.add(transaction);
+        }
+      }
+      //print(_pendingTransactions.length);
+      if (jsondata['transaction_product'] != null) {
+        for (var u in jsondata['transaction_product']) {
+          _isReqBid = false;
+          Product product = Product(
+            id: u['prod_id'],
+            quantity: u['quantity'],
+            price_expected: u['price_expected'],
+            breed: u['breed'],
+            category_id: u['category_id'],
+            remainingQty: u['remaining_qty'],
+            image: u['image'],
+            address: u['address'],
+            qualityCertificate: u['quality_certificate'],
+            category: await _getCategory(u['category_id']),
+          );
+          ProductBid bid = ProductBid(
+            prodBidId: int.parse(u['prod_bid_id']),
+            userId: int.parse(u['bid_user_id']),
+            prodId: product,
+            price: double.parse(u['bid_price']),
+            quantity: int.parse(u['bid_quantity']),
+            isAccepted: u['is_accepted'] == "1",
+          );
+          Transaction transaction = Transaction(
+            transactionId: int.parse(u['transaction_id']),
+            isProdBidId: true,
+            buyerId: int.parse(u['buyer_id']),
+            sellerId: int.parse(u['seller_id']),
+            productBidId: bid,
+            endDate: DateTime.parse(u['end_date']),
+            totalAmount: int.parse(u['total_amount']),
+          );
 
-        Transaction transaction = Transaction(
-          transactionId: int.parse(u['transaction_id']),
-          isProdBidId: false,
-          buyerId: int.parse(u['buyer_id']),
-          sellerId: int.parse(u['seller_id']),
-          reqbidId: bid,
-          endDate: DateTime.parse(u['end_date']),
-          totalAmount: int.parse(u['total_amount']),
-        );
-        _pendingTransactions.add(transaction);
+          _pendingTransactions.add(transaction);
+        }
       }
     }
-    //print(_pendingTransactions.length);
-    if (jsondata['transaction_product'] != null) {
-      for (var u in jsondata['transaction_product']) {
-        Product product = Product(
-          id: u['prod_id'],
-          quantity: u['quantity'],
-          price_expected: u['price_expected'],
-          breed: u['breed'],
-          category_id: u['category_id'],
-          remainingQty: u['remaining_qty'],
-          image: u['image'],
-          address: u['address'],
-          qualityCertificate: u['quality_certificate'],
-          category: await _getCategory(u['category_id']),
-        );
-        ProductBid bid = ProductBid(
-          prodBidId: int.parse(u['prod_bid_id']),
-          userId: int.parse(u['bid_user_id']),
-          prodId: product,
-          price: double.parse(u['bid_price']),
-          quantity: int.parse(u['bid_quantity']),
-          isAccepted: u['is_accepted'] == "1",
-        );
-        Transaction transaction = Transaction(
-          transactionId: int.parse(u['transaction_id']),
-          isProdBidId: true,
-          buyerId: int.parse(u['buyer_id']),
-          sellerId: int.parse(u['seller_id']),
-          productBidId: bid,
-          endDate: DateTime.parse(u['end_date']),
-          totalAmount: int.parse(u['total_amount']),
-        );
 
-        _pendingTransactions.add(transaction);
-      }
-    }
     return _pendingTransactions;
   }
 
@@ -170,7 +176,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   String _getTitle(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (_isSeller) {
+    if (!_isReqBid) {
       return tn.productBidId.prodId.category.name;
     } else {
       return tn.reqbidId.reqId.category.name;
@@ -179,7 +185,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   String _getBreed(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (_isSeller) {
+    if (!_isReqBid) {
       return tn.productBidId.prodId.breed;
     } else {
       return tn.reqbidId.reqId.breed;
@@ -231,11 +237,11 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
+          AppLocalizations.of(context).translate('Transaction History'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5,
+              ),
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
@@ -249,78 +255,91 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               ),
             );
           }
+
+          if (snapshot.data.length == 0) {
+            return Container(
+              child: Center(
+                child: Text(
+                  "No transactions made yet",
+                  style: TextStyle(
+                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
+                ),
+              ),
+            );
+          }
           return Container(
-            child: ListView.builder(
-              itemBuilder: (ctx, index) {
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 5,
-                  margin: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 5,
-                  ),
-                  child: ListTile(
-                    //contentPadding: EdgeInsets.only(bottom: 10),
-                    //isThreeLine: true,
-                    leading: CircleAvatar(
-                      radius: 30.0,
-                      backgroundImage: _getImage(snapshot.data[index]),
-                      backgroundColor: Colors.transparent,
-                    ),
-                    title: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        _getTitle(snapshot.data[index]),
-                        style: Theme.of(context).textTheme.title,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    subtitle: Text(
-                      //"Pending transaction of \u20B9 ${_getTotalAmount(snapshot.data[index])}",
-                      "Transaction Date ${_dateFormater.format(snapshot.data[index].endDate)}",
-                      style: TextStyle(
-                        fontSize: 15 * curr,
-                      ),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                    ),
-                    trailing: Card(
-                      color: Colors.white,
+            width: MediaQuery.of(context).size.width,
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+              child: Card(
+                color: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0)),
+                child: ListView.builder(
+                  itemBuilder: (ctx, index) {
+                    return Card(
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25.0)),
-                      child: Container(
-                        height: 55,
-                        width: 120,
-                        color: Colors.white,
-                        child: RaisedButton(
-                          color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 5,
+                      margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
+                      child: ListTile(
+                        //contentPadding: EdgeInsets.only(bottom: 10),
+                        //isThreeLine: true,
+                        leading: CircleAvatar(
+                          radius: 30.0,
+                          backgroundImage: _getImage(snapshot.data[index]),
+                          backgroundColor: Colors.transparent,
+                        ),
+                        title: Padding(
+                          padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            //"\u20B930000000",
-                            "\u20B9${_formatter.format(snapshot.data[index].totalAmount)}",
-                            overflow: TextOverflow.fade,
-                            style: TextStyle(
-                              fontSize: 18.0,
+                            _getTitle(snapshot.data[index]),
+                            style: Theme.of(context).textTheme.bodyText1,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        subtitle: Text(
+                          //"Pending transaction of \u20B9 ${_getTotalAmount(snapshot.data[index])}",
+                          "Transaction Date ${_dateFormater.format(snapshot.data[index].endDate)}",
+                          style: Theme.of(context).textTheme.bodyText2,
+                          textAlign: TextAlign.center,
+                          softWrap: true,
+                        ),
+                        trailing: Container(
+                          height: 55,
+                          width: 120,
+                          child: Card(
+                            color: Theme.of(context).primaryColor,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25.0)),
+                            child: RaisedButton(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25.0)),
                               color: Theme.of(context).primaryColor,
+                              child: Text(
+                                //"\u20B930000000",
+                                "\u20B9${_formatter.format(snapshot.data[index].totalAmount)}",
+                                overflow: TextOverflow.fade,
+                                style:
+                                    Theme.of(context).textTheme.bodyText1.apply(
+                                          color: Colors.white,
+                                        ),
+                              ),
+                              onPressed: () {},
+                              textColor: Theme.of(context).primaryColor,
+                              padding: EdgeInsets.all(8.0),
+
+                              //label:
                             ),
                           ),
-                          onPressed: () {},
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32.0),
-                          ),
-
-                          textColor: Theme.of(context).primaryColor,
-                          padding: EdgeInsets.all(8.0),
-
-                          //label:
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
-              itemCount: snapshot.data.length,
+                    );
+                  },
+                  itemCount: snapshot.data.length,
+                ),
+              ),
             ),
           );
         },

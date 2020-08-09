@@ -4,6 +4,7 @@ import 'package:baazar/widgets/footer_widget.dart';
 import 'package:flutter/material.dart';
 
 import 'package:baazar/classes/app_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckUserScreen extends StatelessWidget {
@@ -23,15 +24,13 @@ class CheckUserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-          ),
-        ),
+        title: Text(AppLocalizations.of(context).translate('app_title'),
+            style: Theme.of(context).textTheme.headline1.apply(
+                  color: Colors.white,
+                )),
         iconTheme: IconThemeData(color: Colors.white),
       ),
       backgroundColor: Colors.white,
@@ -50,18 +49,20 @@ class CheckUserScreen extends StatelessWidget {
                   children: <Widget>[
                     Container(
                       child: Padding(
-                        padding: EdgeInsets.all(10),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 15, horizontal: 70),
                         child: Text(
-                          AppLocalizations.of(context).translate("who_r_u"),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 25,
-                          ),
-                        ),
+                            AppLocalizations.of(context).translate("who_r_u"),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyText1.apply(
+                                  color: Colors.white,
+                                  fontSizeDelta: 8,
+                                  fontWeightDelta: 1,
+                                )),
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                        color: Color(0xFF739b21),
+                        color: Theme.of(context).primaryColor,
                       ),
                     ),
                     Padding(padding: EdgeInsets.only(top: 20)),
@@ -75,21 +76,24 @@ class CheckUserScreen extends StatelessWidget {
                           },
                           child: Column(
                             children: <Widget>[
-                              Image.asset(
-                                ImagePath.rice,
-                                height: 150,
-                                width: 150,
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.asset(
+                                  ImagePath.seller,
+                                  height: 150,
+                                  width: 150,
+                                ),
                               ),
                               Text(
                                 AppLocalizations.of(context)
                                     .translate("seller"),
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .headline6
-                                        .color,
-                                    fontSize: 25),
-                              ),
+                                style:
+                                    Theme.of(context).textTheme.bodyText1.apply(
+                                          color: Theme.of(context).primaryColor,
+                                          fontSizeDelta: 4,
+                                          fontWeightDelta: 1,
+                                        ),
+                              )
                             ],
                           ),
                         ),
@@ -99,19 +103,22 @@ class CheckUserScreen extends StatelessWidget {
                           },
                           child: Column(
                             children: <Widget>[
-                              Image.asset(
-                                ImagePath.rice,
-                                height: 150,
-                                width: 150,
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.asset(
+                                  ImagePath.rice,
+                                  height: 150,
+                                  width: 150,
+                                ),
                               ),
                               Text(
                                 AppLocalizations.of(context).translate("buyer"),
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .headline6
-                                        .color,
-                                    fontSize: 25),
+                                style:
+                                    Theme.of(context).textTheme.bodyText1.apply(
+                                          color: Theme.of(context).primaryColor,
+                                          fontSizeDelta: 4,
+                                          fontWeightDelta: 1,
+                                        ),
                               ),
                             ],
                           ),

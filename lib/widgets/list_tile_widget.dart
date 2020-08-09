@@ -1,3 +1,4 @@
+import 'package:baazar/classes/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class ListTileWidget extends StatelessWidget {
@@ -22,8 +23,10 @@ class ListTileWidget extends StatelessWidget {
               color: Colors.white,
             ),
             title: Text(
-              text,
-              style: TextStyle(color: Colors.white),
+              AppLocalizations.of(context).translate(text),
+              style: Theme.of(context).textTheme.bodyText2.apply(
+                    color: Colors.white,
+                  ),
             ),
           )),
     );

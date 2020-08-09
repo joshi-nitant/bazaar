@@ -46,12 +46,32 @@ class _MyAppState extends State<MyApp> {
       title: 'Baazar',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-          primaryColor: Color(0xFF739b21),
-          accentColor: Color(0xFFc4d5a1),
+          primaryColor: Color(0xff85b02b),
+          accentColor: Color(0xff379b21),
+          primaryColorLight: Color(0xffc4d5a1),
+          brightness: Brightness.light,
+          fontFamily: 'Adam',
           textTheme: ThemeData.light().textTheme.copyWith(
-                headline6: TextStyle(
-                  color: Color(0xFF739b21),
-                ),
+                headline1: TextStyle(
+                    fontSize: 24.0,
+                    letterSpacing: 10.0,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Adam'),
+                bodyText1: TextStyle(
+                    fontSize: 22.0,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Adam'),
+                bodyText2: TextStyle(
+                    fontSize: 16.0,
+                    letterSpacing: 1.0,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Adam'),
+                headline2: TextStyle(
+                    fontSize: 14.0,
+                    letterSpacing: 2.0,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Adam'),
               ),
           appBarTheme: AppBarTheme(
             textTheme: ThemeData.light().textTheme.copyWith(),
