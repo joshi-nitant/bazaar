@@ -13,6 +13,7 @@ class ChooseLanguageScreen extends StatefulWidget {
 }
 
 class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
+  var appBar;
   void _changeLanguage(Language language) {
     Locale _locale;
     _locale = Locale(language.code, language.dialect);
@@ -22,15 +23,25 @@ class _ChooseLanguageScreenState extends State<ChooseLanguageScreen> {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+
+    appBar = AppBar(
+      title: Text(AppLocalizations.of(context).translate('app_title'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+              )),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('app_title'),
-            style: Theme.of(context).textTheme.headline1.apply(
-                  color: Colors.white,
-                )),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      body: ChooseLanguageWidget(changeLangHandler: _changeLanguage),
+      appBar: this.appBar,
+      body: Container(
+          width: width,
+          height: height,
+          child: ChooseLanguageWidget(changeLangHandler: _changeLanguage)),
       bottomSheet: FooterWidget(),
     );
   }

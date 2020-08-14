@@ -8,6 +8,7 @@ import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/requirement_bid.dart';
 import 'package:baazar/models/transaction.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
@@ -72,8 +73,12 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   Future<List<Transaction>> _getCompletedTransaction() async {
     List<Transaction> _pendingTransactions = [];
-    _isSeller = await _checkIsSeller();
     _userId = await _getUserId();
+
+    if (_userId == null) {
+      return _pendingTransactions;
+    }
+    _isSeller = await _checkIsSeller();
 
     var response = await http.post(
       Utils.URL + "transactionHistory.php",
@@ -176,7 +181,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   String _getTitle(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (!_isReqBid) {
+    if (tn.productBidId != null) {
       return tn.productBidId.prodId.category.name;
     } else {
       return tn.reqbidId.reqId.category.name;
@@ -185,7 +190,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   String _getBreed(dynamic transaction) {
     Transaction tn = transaction as Transaction;
-    if (!_isReqBid) {
+    if (tn.productBidId != null) {
       return tn.productBidId.prodId.breed;
     } else {
       return tn.reqbidId.reqId.breed;
@@ -230,21 +235,44 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     }
   }
 
+  String getDate(DateTime object) {
+    return DateFormat("dd-MM-yy").format(object);
+  }
+
+  String getTime(DateTime object) {
+    return DateFormat.jm().format(object);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final data = MediaQuery.of(context);
     final curr = MediaQuery.of(context).textScaleFactor;
+    final appBar = AppBar(
+      titleSpacing: 0,
+      title: Row(
+        children: <Widget>[
+          Icon(Icons.assignment),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              AppLocalizations.of(context).translate('Transaction History'),
+              style: Theme.of(context).textTheme.headline1.apply(
+                    color: Colors.white,
+                    letterSpacingDelta: -5,
+                  ),
+            ),
+          ),
+        ],
+      ),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('Transaction History'),
-          style: Theme.of(context).textTheme.headline1.apply(
-                color: Colors.white,
-                letterSpacingDelta: -5,
-              ),
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
+      appBar: appBar,
       body: FutureBuilder(
         future: _getCompletedTransaction(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -257,58 +285,59 @@ class _TransactionHistoryState extends State<TransactionHistory> {
           }
 
           if (snapshot.data.length == 0) {
-            return Container(
-              child: Center(
-                child: Text(
-                  "No transactions made yet",
-                  style: TextStyle(
-                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
-                ),
-              ),
-            );
+            return NoProduct("TRANSACTION HISTORY");
           }
           return Container(
-            width: MediaQuery.of(context).size.width,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-              child: Card(
-                color: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0)),
-                child: ListView.builder(
-                  itemBuilder: (ctx, index) {
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+            width: width,
+            height: height,
+            margin: EdgeInsets.all(5),
+            child: Card(
+              color: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0)),
+              child: ListView.builder(
+                itemBuilder: (ctx, index) {
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 5,
+                    margin: EdgeInsets.all(8),
+                    child: ListTile(
+                      //contentPadding: EdgeInsets.only(bottom: 10),
+                      //isThreeLine: true,
+                      leading: CircleAvatar(
+                        radius: 30.0,
+                        backgroundImage: _getImage(snapshot.data[index]),
+                        backgroundColor: Colors.transparent,
                       ),
-                      elevation: 5,
-                      margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
-                      child: ListTile(
-                        //contentPadding: EdgeInsets.only(bottom: 10),
-                        //isThreeLine: true,
-                        leading: CircleAvatar(
-                          radius: 30.0,
-                          backgroundImage: _getImage(snapshot.data[index]),
-                          backgroundColor: Colors.transparent,
-                        ),
-                        title: Padding(
+                      title: Container(
+                        width: width * 0.7,
+                        child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             _getTitle(snapshot.data[index]),
                             style: Theme.of(context).textTheme.bodyText1,
-                            textAlign: TextAlign.center,
+                            textAlign: TextAlign.start,
                           ),
                         ),
-                        subtitle: Text(
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
                           //"Pending transaction of \u20B9 ${_getTotalAmount(snapshot.data[index])}",
-                          "Transaction Date ${_dateFormater.format(snapshot.data[index].endDate)}",
-                          style: Theme.of(context).textTheme.bodyText2,
-                          textAlign: TextAlign.center,
+
+                          "Date\n${getDate(snapshot.data[index].endDate)}\nTime\n${getTime(snapshot.data[index].endDate)}",
+                          style: Theme.of(context).textTheme.headline2,
+                          textAlign: TextAlign.start,
                           softWrap: true,
                         ),
-                        trailing: Container(
-                          height: 55,
-                          width: 120,
+                      ),
+
+                      trailing: Container(
+                        height: 55,
+                        width: width * 0.3,
+                        child: FittedBox(
                           child: Card(
                             color: Theme.of(context).primaryColor,
                             shape: RoundedRectangleBorder(
@@ -318,7 +347,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                                   borderRadius: BorderRadius.circular(25.0)),
                               color: Theme.of(context).primaryColor,
                               child: Text(
-                                //"\u20B930000000",
+                                //"\u20B9300000000",
                                 "\u20B9${_formatter.format(snapshot.data[index].totalAmount)}",
                                 overflow: TextOverflow.fade,
                                 style:
@@ -335,10 +364,10 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                           ),
                         ),
                       ),
-                    );
-                  },
-                  itemCount: snapshot.data.length,
-                ),
+                    ),
+                  );
+                },
+                itemCount: snapshot.data.length,
               ),
             ),
           );

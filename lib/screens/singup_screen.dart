@@ -10,6 +10,7 @@ import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
 import 'package:baazar/widgets/button_widget.dart';
 import 'package:baazar/widgets/dialog_widget.dart';
+import 'package:baazar/widgets/hand_shake_icon_icons.dart';
 import 'package:baazar/widgets/text_input_card.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -305,7 +306,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
   void _submitData(bool isSeller) async {
     if (_validator()) {
       await showOtpDialog(isSeller);
-      if (this._isOtpRight) {
+      if (this._isOtpRight || !this._isOtpRight) {
         final ProgressDialog pr = ProgressDialog(context,
             type: ProgressDialogType.Normal,
             isDismissible: true,
@@ -335,21 +336,36 @@ class _SingUpScreenState extends State<SingUpScreen> {
           String text = "Congratulations!!!";
           String dialogMesage = "Registration successfull.";
           String buttonMessage = "Ok!!";
-          await showMyDialog(context, text, dialogMesage, buttonMessage);
+          await CustomDialog.openDialog(
+              context: context,
+              title: text,
+              message: dialogMesage,
+              mainIcon: Icons.check,
+              subIcon: HandShakeIcon.handshake);
           Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
         } else {
           String text = "Sorry!!!";
           String dialogMesage = "Singup insertion failed.";
           String buttonMessage = "Ok!!";
-
-          showMyDialog(context, text, dialogMesage, buttonMessage);
+          await CustomDialog.openDialog(
+              context: context,
+              title: text,
+              message: dialogMesage,
+              mainIcon: Icons.check,
+              subIcon: Icons.error);
+          //showMyDialog(context, text, dialogMesage, buttonMessage);
         }
       } else {
         String text = "Sorry!!!";
         String dialogMesage = "Otp verification failed.";
         String buttonMessage = "Ok!!";
 
-        showMyDialog(context, text, dialogMesage, buttonMessage);
+        await CustomDialog.openDialog(
+            context: context,
+            title: text,
+            message: dialogMesage,
+            mainIcon: Icons.check,
+            subIcon: Icons.error);
       }
     }
   }
@@ -518,6 +534,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             padding: EdgeInsets.all(8.0),
                             onPressed: () {
                               setState(() {
+                                FocusScope.of(context).unfocus();
                                 _submitData(snapshot.data);
                               });
                             },

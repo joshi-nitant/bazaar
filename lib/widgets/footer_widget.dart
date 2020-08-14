@@ -13,8 +13,8 @@ class FooterWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Image.asset(
             ImagePath.logo,
-            height: 60,
-            width: 60,
+            height: 45,
+            width: 45,
           ),
         ),
         Text(AppLocalizations.of(context).translate('app_title'),

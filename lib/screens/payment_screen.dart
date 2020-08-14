@@ -10,6 +10,7 @@ import 'package:baazar/models/requirement_bid.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/widgets/dialog_widget.dart';
+import 'package:baazar/widgets/hand_shake_icon_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
@@ -92,8 +93,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     print(data);
     Navigator.of(context).pop();
     if (data == "101") {
-      showMyDialog(context, "Payment Succefull",
-          "Congratulations your payment is successfull", "Ok");
+      String text = "Payment Successfull";
+      String dialogMessage = "Congratulations your payment is successfull";
+
+      await CustomDialog.openDialog(
+          context: context,
+          title: text,
+          message: dialogMessage,
+          mainIcon: Icons.check,
+          subIcon: HandShakeIcon.handshake);
     }
   }
 
@@ -395,7 +403,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     Container(
                       margin: EdgeInsets.only(bottom: 8.0),
                       width: data.size.width,
-                      height: data.size.height * 0.25,
+                      height: data.size.height * 0.30,
                       child: Card(
                         color: Colors.grey[200],
                         child: Column(

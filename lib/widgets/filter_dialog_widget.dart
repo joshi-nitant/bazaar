@@ -135,7 +135,7 @@ class _FilterState extends State<Filter> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       child: Container(
         width: data.size.width,
-        height: data.size.height * 0.73,
+        height: data.size.height * 0.8,
         child: Card(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
@@ -143,13 +143,10 @@ class _FilterState extends State<Filter> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              Text(
-                'FILTER',
-                style: TextStyle(
-                    color: primarycolor,
-                    fontSize: 22.0,
-                    fontWeight: FontWeight.bold),
-              ),
+              Text('FILTER',
+                  style: Theme.of(context).textTheme.bodyText1.apply(
+                        color: Colors.white,
+                      )),
               Container(
                 width: data.size.width * 0.97,
                 //height: 65.0,
@@ -165,10 +162,9 @@ class _FilterState extends State<Filter> {
                         Expanded(
                           child: Text(
                             'Select Breed',
-                            style: TextStyle(
-                              color: primarycolor,
-                              fontSize: 17.0,
-                            ),
+                            style: Theme.of(context).textTheme.bodyText2.apply(
+                                  color: Theme.of(context).primaryColor,
+                                ),
                             textAlign: TextAlign.left,
                             //overflow: TextOverflow.clip,
                             //maxLines: 5,
@@ -203,10 +199,9 @@ class _FilterState extends State<Filter> {
                         Expanded(
                           child: Text(
                             'Price Range',
-                            style: TextStyle(
-                              color: primarycolor,
-                              fontSize: 17.0,
-                            ),
+                            style: Theme.of(context).textTheme.bodyText2.apply(
+                                  color: Theme.of(context).primaryColor,
+                                ),
                             textAlign: TextAlign.left,
                             //overflow: TextOverflow.clip,
                             //maxLines: 5,
@@ -279,7 +274,7 @@ class _FilterState extends State<Filter> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   Container(
-                    height: 50,
+                    height: 40,
                     width: 100,
                     child: FlatButton(
                         shape: RoundedRectangleBorder(
@@ -299,7 +294,7 @@ class _FilterState extends State<Filter> {
                         child: largeText('Apply')),
                   ),
                   Container(
-                    height: 50,
+                    height: 40,
                     width: 100,
                     child: FlatButton(
                         shape: RoundedRectangleBorder(

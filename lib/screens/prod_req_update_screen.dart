@@ -6,6 +6,7 @@ import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/widgets/drop_down_widget.dart';
+import 'package:baazar/widgets/hand_shake_icon_icons.dart';
 import 'package:baazar/widgets/m_y_baazar_icons.dart';
 
 import 'package:geocoder/geocoder.dart';
@@ -227,7 +228,12 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
         String dialogMesage =
             AppLocalizations.of(context).translate("Product update unsuccess");
         String buttonMessage = AppLocalizations.of(context).translate("Ok!!");
-        showMyDialog(context, text, dialogMesage, buttonMessage);
+        await CustomDialog.openDialog(
+            context: context,
+            title: text,
+            message: dialogMesage,
+            mainIcon: Icons.check,
+            subIcon: Icons.error);
         Navigator.pop(context);
       } else if (data['response_code'] == 100) {
         String text = AppLocalizations.of(context).translate("Congratulations");
@@ -235,7 +241,12 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
             AppLocalizations.of(context).translate("Product update");
         String buttonMessage = AppLocalizations.of(context).translate("Done");
 
-        await showMyDialog(context, text, dialogMesage, buttonMessage);
+        await CustomDialog.openDialog(
+            context: context,
+            title: text,
+            message: dialogMesage,
+            mainIcon: Icons.check,
+            subIcon: HandShakeIcon.handshake);
         Navigator.pop(context);
       }
     }
@@ -427,14 +438,20 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   Widget build(BuildContext context) {
     //print("build");
     final data = MediaQuery.of(context);
+    var appBar = AppBar(
+      title: Text(AppLocalizations.of(context).translate('Update Product'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+              )),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('Update Product'),
-            style: Theme.of(context).textTheme.headline1.apply(
-                  color: Colors.white,
-                )),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
+      appBar: appBar,
       body: FutureBuilder(
         future: _loadCatAndUserType(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -476,8 +493,13 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                             width: data.size.width * 0.9,
                           ),
                         ),
+                      ],
+                    ),
+                    Row(
+                      children: <Widget>[
                         if (isSeller)
-                          Expanded(
+                          Container(
+                            width: width * 0.7,
                             child: ButtonWidget(
                               iconData: Icons.photo,
                               text: _photoText,
@@ -494,7 +516,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                                     "${Utils.URL}productImage/${_selectedObject.image}")
                                 : FileImage(File(_image.path)),
                             backgroundColor: Colors.white,
-                            radius: 25.0,
+                            radius: 40.0,
                           ),
                       ],
                     ),
@@ -558,7 +580,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                         ],
                       ),
                     SizedBox(
-                      height: 50.0,
+                      height: 25.0,
                     ),
                     Container(
                       height: 55,
@@ -573,6 +595,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                         padding: EdgeInsets.all(8.0),
                         onPressed: () {
                           setState(() {
+                            FocusScope.of(context).unfocus();
                             _submitData();
                           });
                         },

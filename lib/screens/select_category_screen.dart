@@ -5,6 +5,7 @@ import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/breed.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
+import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/widgets/footer_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -144,13 +145,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             );
           }
           if (snapshot.data.length == 0) {
-            return Container(
-              child: Center(
-                child: Text(
-                    AppLocalizations.of(context).translate("No Category"),
-                    style: Theme.of(context).textTheme.headline1),
-              ),
-            );
+            return NoProduct("CATEGORY ERROR");
           }
           return SafeArea(
             child: Container(
@@ -191,17 +186,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                 category.imgPath,
                                           ),
                                           backgroundColor: Colors.white,
-                                          radius: 55.0,
+                                          radius: 42.0,
                                         ),
                                       ),
                                       Text(
-                                        AppLocalizations.of(context)
-                                            .translate(category.name),
-                                        style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
-                                          fontSize: 20.0,
-                                        ),
-                                      ),
+                                          AppLocalizations.of(context)
+                                              .translate(category.name),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyText1
+                                              .apply(
+                                                color: Theme.of(context)
+                                                    .primaryColor,
+                                              )),
                                       SizedBox(height: 15.0),
                                     ],
                                   ),

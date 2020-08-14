@@ -25,7 +25,7 @@ class _ButtonWidgetState extends State<ButtonWidget> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       child: Container(
         height: widget.height == -1 ? 55 : widget.height.toDouble(),
-        width: widget.width == -1 ? 150 : widget.width.toDouble(),
+        width: widget.width == -1 ? 170 : widget.width.toDouble(),
         child: FlatButton.icon(
           icon: Icon(
             widget.iconData,
@@ -35,14 +35,18 @@ class _ButtonWidgetState extends State<ButtonWidget> {
             borderRadius: BorderRadius.circular(32.0),
           ),
           color: Colors.white,
-          textColor: widget.isError ? Colors.red : Colors.black,
+
+          //textColor: widget.isError ? Colors.red : Colors.black,
           padding: EdgeInsets.all(8.0),
           onPressed: widget.handlerMethod,
           label: Text(
             widget.text,
-            overflow: TextOverflow.fade,
+
+            //overflow: TextOverflow.fade,
             style: Theme.of(context).textTheme.bodyText2.apply(
-                  color: Theme.of(context).primaryColor,
+                  color: widget.isError
+                      ? Colors.red
+                      : Theme.of(context).primaryColor,
                 ),
           ),
         ),

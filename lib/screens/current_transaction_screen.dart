@@ -8,6 +8,7 @@ import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/requirement_bid.dart';
 import 'package:baazar/models/transaction.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
@@ -70,8 +71,11 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
 
   Future<List<Transaction>> _getPendingTransaction() async {
     List<Transaction> _pendingTransactions = [];
-    _isSeller = await _checkIsSeller();
     _userId = await _getUserId();
+    if (_userId == null) {
+      return _pendingTransactions;
+    }
+    _isSeller = await _checkIsSeller();
 
     var response = await http.post(
       Utils.URL + "getPendingTransactions.php",
@@ -87,6 +91,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
     );
     print(response.body);
     var jsondata = json.decode(response.body);
+    print(jsondata.length);
     if (jsondata.length == 0) {
       return _pendingTransactions;
     }
@@ -104,6 +109,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
           category: await _getCategory(u['category']),
           userId: u['user_id'],
         );
+        print(requirement);
         RequirementBid bid = RequirementBid(
           reqBidId: int.parse(u['req_bid_id']),
           userId: int.parse(u['bid_user_id']),
@@ -112,7 +118,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
           quantity: int.parse(u['bid_quantity']),
           isAccepted: u['is_accepted'] == "1",
         );
-
+        print(bid);
         Transaction transaction = Transaction(
           transactionId: int.parse(u['transaction_id']),
           isProdBidId: false,
@@ -120,10 +126,11 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
           sellerId: int.parse(u['seller_id']),
           reqbidId: bid,
         );
+        print(transaction);
         _pendingTransactions.add(transaction);
       }
     }
-    //print(_pendingTransactions.length);
+    print(_pendingTransactions.length);
     if (jsondata['transaction_product'] != null) {
       _isProduct = true;
       for (var u in jsondata['transaction_product']) {
@@ -159,6 +166,7 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
         _pendingTransactions.add(transaction);
       }
     }
+    print(_pendingTransactions.length);
     return _pendingTransactions;
   }
 
@@ -229,19 +237,34 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
 
   @override
   Widget build(BuildContext context) {
+    final data = MediaQuery.of(context);
     final curr = MediaQuery.of(context).textScaleFactor;
+    final appBar = AppBar(
+      titleSpacing: 0,
+      title: Row(
+        children: <Widget>[
+          Icon(Icons.history),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              AppLocalizations.of(context).translate('Current Transaction'),
+              style: Theme.of(context).textTheme.headline1.apply(
+                    color: Colors.white,
+                    letterSpacingDelta: -5,
+                  ),
+            ),
+          ),
+        ],
+      ),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: Theme.of(context).textTheme.headline1.apply(
-                color: Colors.white,
-                letterSpacingDelta: -5,
-              ),
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
+      appBar: appBar,
       body: FutureBuilder(
         future: _getPendingTransaction(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -253,41 +276,36 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
             );
           }
           if (snapshot.data.length == 0) {
-            return Container(
-              child: Center(
-                child: Text(
-                  "There are no pending transactions.",
-                  style: TextStyle(
-                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
-                ),
-              ),
-            );
+            return NoProduct("CURRENT TRANSACTION");
           }
           return Container(
-            height: MediaQuery.of(context).size.height,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-              child: Card(
-                color: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0)),
-                child: ListView.builder(
-                  itemBuilder: (ctx, index) {
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+            height: height,
+            width: width,
+            margin: EdgeInsets.all(5.0),
+            child: Card(
+              color: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0)),
+              child: ListView.builder(
+                itemBuilder: (ctx, index) {
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 5,
+                    margin: EdgeInsets.all(8.0),
+                    child: ListTile(
+                      //contentPadding: EdgeInsets.only(bottom: 10),
+                      //isThreeLine: true,
+                      leading: CircleAvatar(
+                        radius: 30,
+                        backgroundImage: _getImage(snapshot.data[index]),
+                        backgroundColor: Theme.of(context).primaryColorLight,
                       ),
-                      elevation: 5,
-                      margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
-                      child: ListTile(
-                        //contentPadding: EdgeInsets.only(bottom: 10),
-                        //isThreeLine: true,
-                        leading: CircleAvatar(
-                          radius: 30,
-                          backgroundImage: _getImage(snapshot.data[index]),
-                          backgroundColor: Theme.of(context).primaryColorLight,
-                        ),
-                        title: Padding(
+
+                      title: Container(
+                        width: width * 0.7,
+                        child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             _getTitle(snapshot.data[index]),
@@ -295,29 +313,39 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
                             textAlign: TextAlign.start,
                           ),
                         ),
-                        subtitle: _isSeller
-                            ? Text(
-                                "Pending transaction of \u20B9${formatter.format(_getTotalAmount(snapshot.data[index]))}",
-                                //"Pending transaction of \u20B9${formatter.format(123456)}",
-                                style: Theme.of(context).textTheme.bodyText2,
-                                textAlign: TextAlign.center,
-                                softWrap: true,
-                              )
-                            : Text(
+                      ),
+                      subtitle: _isSeller
+                          ? Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Text(
                                 "Pending transaction of \u20B9${formatter.format(_getTotalAmount(snapshot.data[index]))}",
                                 //"Pending transaction of \u20B9${formatter.format(123456)}",
                                 style: Theme.of(context).textTheme.bodyText2,
                                 textAlign: TextAlign.start,
                                 softWrap: true,
                               ),
+                            )
+                          : Container(
+                              width: 0.2,
+                              child: Text(
+                                "Pending transaction of \u20B9${formatter.format(_getTotalAmount(snapshot.data[index]))}",
+                                //"Pending transaction of \u20B9${formatter.format(123456)}",
+                                style: Theme.of(context).textTheme.bodyText2,
+                                textAlign: TextAlign.start,
+                                softWrap: true,
+                              ),
+                            ),
 
-                        trailing: !_isSeller
-                            ? Card(
+                      trailing: !_isSeller
+                          ? Container(
+                              width: width * 0.3,
+                              child: Card(
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(25.0)),
                                 child: Container(
                                   height: 55,
-                                  width: 150,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.2,
                                   child: FlatButton.icon(
                                     icon: Icon(
                                       Icons.exit_to_app,
@@ -332,25 +360,27 @@ class _CurrentTransactionState extends State<CurrentTransaction> {
                                     onPressed: () {
                                       _procedToCheckout(snapshot.data[index]);
                                     },
-                                    label: Text(
-                                      "Checkout",
-                                      overflow: TextOverflow.fade,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText2
-                                          .apply(
-                                            color: Colors.white,
-                                          ),
+                                    label: FittedBox(
+                                      child: Text(
+                                        "Pay",
+                                        overflow: TextOverflow.fade,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline2
+                                            .apply(
+                                              color: Colors.white,
+                                            ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              )
-                            : SizedBox(),
-                      ),
-                    );
-                  },
-                  itemCount: snapshot.data.length,
-                ),
+                              ),
+                            )
+                          : SizedBox(),
+                    ),
+                  );
+                },
+                itemCount: snapshot.data.length,
               ),
             ),
           );

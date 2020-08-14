@@ -6,6 +6,7 @@ import 'package:baazar/models/category.dart';
 import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
 import 'package:baazar/widgets/m_y_baazar_icons.dart';
@@ -66,7 +67,11 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
     );
     print(response.body);
     var jsondata = json.decode(response.body);
+
     List<Product> products = [];
+    if (jsondata == "404") {
+      return products;
+    }
     for (var u in jsondata) {
       Product product = Product(
         id: u['prod_id'],
@@ -103,10 +108,13 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
         },
       ),
     );
-    print(response.body);
-    var jsondata = json.decode(response.body);
 
+    var jsondata = json.decode(response.body);
+    print(jsondata);
     List<Requirement> requirements = [];
+    if (jsondata == "404") {
+      return requirements;
+    }
     for (var u in jsondata) {
       Requirement requirement = Requirement(
         id: u['req_id'],
@@ -125,6 +133,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
       );
       requirements.add(requirement);
     }
+
     return requirements;
   }
 
@@ -140,10 +149,14 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
   }
 
   Future<List<dynamic>> _getList() async {
+    _userId = await _getUserId();
+    if (_userId == null) {
+      return [];
+    }
     _isSeller = await _checkIsSeller();
     print(_isSeller);
     _isProduct = _isSeller;
-    _userId = await _getUserId();
+
     print(_userId);
     List<dynamic> objectList;
 
@@ -201,7 +214,10 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
       context: context,
       type: AlertType.error,
       title: "Are you sure you want to delete?",
-      style: AlertStyle(titleStyle: Theme.of(context).textTheme.bodyText1),
+      style: AlertStyle(
+        titleStyle: Theme.of(context).textTheme.bodyText1,
+        isCloseButton: false,
+      ),
       desc: null,
       buttons: [
         DialogButton(
@@ -212,6 +228,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                   color: Colors.white,
                 ),
           ),
+          radius: BorderRadius.circular(15),
           onPressed: () => Navigator.pop(context),
         ),
         DialogButton(
@@ -222,6 +239,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                     color: Colors.white,
                   ),
             ),
+            radius: BorderRadius.circular(15),
             onPressed: () {
               Navigator.pop(context);
               _deleteListItem(object);
@@ -243,18 +261,34 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var data = MediaQuery.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('Product List'),
-          style: Theme.of(context).textTheme.headline1.apply(
-                color: Colors.white,
-                letterSpacingDelta: -5,
-              ),
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
+    final appBar = AppBar(
+      titleSpacing: 0,
+      title: Row(
+        children: <Widget>[
+          Icon(Icons.list),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              AppLocalizations.of(context).translate('Requirement List'),
+              style: Theme.of(context).textTheme.headline1.apply(
+                    color: Colors.white,
+                    letterSpacingDelta: -5,
+                  ),
+            ),
+          ),
+        ],
       ),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
+    var data = MediaQuery.of(context);
+
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      appBar: appBar,
       body: FutureBuilder(
         future: _getList(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -266,128 +300,114 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
             );
           }
           if (snapshot.data.length == 0) {
-            return Container(
-              child: Center(
-                child: Text(
-                  "There are no products added so far.",
-                  style: TextStyle(
-                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
-                ),
-              ),
-            );
+            return NoProduct("REQUIREMENT LIST");
           }
+
           return Container(
-            height: data.size.height,
-            child: snapshot.data.length == 0
-                ? Column(
-                    children: <Widget>[
-                      Text(
-                        'Nothing added yet!',
-                        style: Theme.of(context).textTheme.headline6,
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Container(
-                          height: 200,
-                          child: Image.asset(
-                            'assests/images/logo.png',
-                            fit: BoxFit.cover,
-                          )),
-                    ],
-                  )
-                : Padding(
-                    padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+            height: height,
+            width: width,
+            margin: EdgeInsets.all(5.0),
+            child: Card(
+              color: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0)),
+              child: ListView.builder(
+                itemBuilder: (ctx, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      _updateScreen(snapshot.data[index]);
+                    },
                     child: Card(
-                      color: Theme.of(context).primaryColor,
+                      elevation: 5,
+                      margin: EdgeInsets.all(8.0),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.0)),
-                      child: ListView.builder(
-                        itemBuilder: (ctx, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              _updateScreen(snapshot.data[index]);
-                            },
-                            child: Card(
-                              elevation: 5,
-                              margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20.0)),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundImage: _isProduct
-                                      ? NetworkImage(
-                                          Utils.URL +
-                                              "productImage/" +
-                                              snapshot.data[index].image,
-                                        )
-                                      : NetworkImage(
-                                          Utils.URL +
-                                              "images/" +
-                                              snapshot
-                                                  .data[index].category.imgPath,
-                                        ),
-                                  radius: 30,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: _isProduct
+                              ? NetworkImage(
+                                  Utils.URL +
+                                      "productImage/" +
+                                      snapshot.data[index].image,
+                                )
+                              : NetworkImage(
+                                  Utils.URL +
+                                      "images/" +
+                                      snapshot.data[index].category.imgPath,
                                 ),
-                                title: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    snapshot.data[index].category.name,
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                subtitle: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
+                          radius: 30,
+                        ),
+                        title: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            snapshot.data[index].category.name,
+                            style:
+                                Theme.of(context).textTheme.bodyText1.apply(),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        subtitle: FittedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.only(right: 16.0),
+                                child: Row(
                                   children: <Widget>[
-                                    Row(
-                                      children: <Widget>[
-                                        Icon(
-                                          MYBaazar.rupee_indian,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                        Text(
-                                          "${snapshot.data[index].price_expected}/QTL",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText2,
-                                        ),
-                                      ],
+                                    Icon(
+                                      MYBaazar.rupee_indian,
+                                      color: Theme.of(context).primaryColor,
                                     ),
-                                    Row(
-                                      children: <Widget>[
-                                        Icon(
-                                          MYBaazar.balance,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                        Text(
-                                          "${snapshot.data[index].quantity}QTL",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText2,
-                                        ),
-                                      ],
+                                    Text(
+                                      "${snapshot.data[index].price_expected}/QTL",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1
+                                          .apply(
+                                            fontSizeDelta: 2,
+                                          ),
                                     ),
                                   ],
                                 ),
-                                trailing: IconButton(
-                                    icon: Icon(Icons.delete),
-                                    color: Theme.of(context).errorColor,
-                                    onPressed: () {
-                                      setState(() {
-                                        _deleteItem(snapshot.data[index]);
-                                      });
-                                    }),
                               ),
-                            ),
-                          );
-                        },
-                        itemCount: snapshot.data.length,
+                              FittedBox(
+                                child: Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      MYBaazar.balance,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    Text(
+                                      "${snapshot.data[index].quantity}QTL",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1
+                                          .apply(
+                                            fontSizeDelta: 2,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        trailing: IconButton(
+                            iconSize: 35,
+                            icon: Icon(Icons.delete),
+                            color: Theme.of(context).errorColor,
+                            onPressed: () {
+                              setState(() {
+                                _deleteItem(snapshot.data[index]);
+                              });
+                            }),
                       ),
                     ),
-                  ),
+                  );
+                },
+                itemCount: snapshot.data.length,
+              ),
+            ),
           );
         },
       ),

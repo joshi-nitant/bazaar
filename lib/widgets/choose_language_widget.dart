@@ -33,45 +33,57 @@ class ChooseLanguageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: languageList.map((lang) {
-              return GestureDetector(
-                onTap: () {
-                  changeLangHandler(lang);
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      height: 130,
-                      child: Image.asset(
-                        lang.path,
-                        fit: BoxFit.fill,
+    return Container(
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: languageList.map((lang) {
+                return GestureDetector(
+                  onTap: () {
+                    changeLangHandler(lang);
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Container(
+                        height: 100,
+                        child: Image.asset(
+                          lang.path,
+                          fit: BoxFit.fill,
+                        ),
                       ),
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(top: 5),
-                      child: Text(
-                        lang.name,
-                        style: Theme.of(context).textTheme.bodyText1.apply(
-                              color: Theme.of(context).primaryColor,
-                            ),
-                      ),
-                    )
-                  ],
-                ),
-              );
-            }).toList(),
+                      Container(
+                        margin: EdgeInsets.only(top: 5),
+                        child: Text(
+                          lang.name,
+                          style: lang.name == "ENGLISH"
+                              ? Theme.of(context).textTheme.bodyText1.apply(
+                                    fontSizeFactor:
+                                        MediaQuery.of(context).textScaleFactor,
+                                    color: Theme.of(context).primaryColor,
+                                    fontSizeDelta: -1,
+                                  )
+                              : Theme.of(context).textTheme.bodyText1.apply(
+                                    fontSizeFactor:
+                                        MediaQuery.of(context).textScaleFactor,
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeightDelta: -2,
+                                  ),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
           ),
-        ),
-        // Container(
-        //   child: FooterWidget(),
-        // ),
-      ],
+          // Container(
+          //   child: FooterWidget(),
+          // ),
+        ],
+      ),
     );
   }
 }

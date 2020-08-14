@@ -15,7 +15,7 @@ class ListTileWidget extends StatelessWidget {
       color: Theme.of(context).primaryColor,
       child: Container(
           height: 55,
-          width: 150,
+          width: MediaQuery.of(context).size.width * 0.2,
           child: ListTile(
             onTap: controller,
             leading: Icon(
@@ -24,8 +24,9 @@ class ListTileWidget extends StatelessWidget {
             ),
             title: Text(
               AppLocalizations.of(context).translate(text),
-              style: Theme.of(context).textTheme.bodyText2.apply(
+              style: Theme.of(context).textTheme.headline2.apply(
                     color: Colors.white,
+                    fontSizeFactor: MediaQuery.of(context).textScaleFactor,
                   ),
             ),
           )),

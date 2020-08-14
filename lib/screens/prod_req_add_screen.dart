@@ -6,6 +6,7 @@ import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/category.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/widgets/drop_down_widget.dart';
+import 'package:baazar/widgets/hand_shake_icon_icons.dart';
 
 import 'package:geocoder/geocoder.dart';
 //import 'package:google_maps_webservice/places.dart';
@@ -281,13 +282,22 @@ class _ProdReqAddState extends State<ProdReqAdd> {
         String text = "Sorry!!!";
         String dialogMesage = "Product insertion failed. Retry.....";
         String buttonMessage = "Ok!!";
-        showMyDialog(context, text, dialogMesage, buttonMessage);
+        await CustomDialog.openDialog(
+            context: context,
+            title: text,
+            message: dialogMesage,
+            mainIcon: Icons.check,
+            subIcon: Icons.error);
       } else if (data['response_code'] == 100) {
         String text = "Congratulations!!!";
         String dialogMesage = "Product added successfully.";
         String buttonMessage = "Done";
-        await showMyDialog(context, text, dialogMesage, buttonMessage);
-        Navigator.of(context).pop();
+        await CustomDialog.openDialog(
+            context: context,
+            title: text,
+            message: dialogMesage,
+            mainIcon: Icons.check,
+            subIcon: HandShakeIcon.handshake);
       }
     }
   }
@@ -378,7 +388,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     //   return false;
     // }
     if (double.tryParse(_priceController.text.trim()) <= 0) {
-      errorPrice = AppLocalizations.of(context).translate("Greater than 0 ");
+      errorPrice = AppLocalizations.of(context).translate("Greater than 0");
       return false;
     }
     print("price success");
@@ -398,7 +408,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
       return false;
     }
     _isPhotoError = false;
-    _photoText = AppLocalizations.of(context).translate("Add photo");
+    _photoText = AppLocalizations.of(context).translate("Add Photo");
     return true;
   }
 
@@ -429,16 +439,20 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   @override
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
-
+    var appBar = AppBar(
+      title: Text(AppLocalizations.of(context).translate('Product Details'),
+          style: Theme.of(context).textTheme.headline1.apply(
+                color: Colors.white,
+                letterSpacingDelta: -5.0,
+              )),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).translate('Product Details'),
-            style: Theme.of(context).textTheme.headline1.apply(
-                  color: Colors.white,
-                  letterSpacingDelta: -5.0,
-                )),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
+      appBar: appBar,
       body: FutureBuilder(
         future: _loadCatAndUserType(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -456,10 +470,13 @@ class _ProdReqAddState extends State<ProdReqAdd> {
             padding: const EdgeInsets.all(4.0),
             child: SingleChildScrollView(
               child: Container(
+                height: height,
+                width: width,
                 child: Column(
                   children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 8.0),
                       child: CategoryDropDown(
                         categoryHandler: _categoryHandler,
                         dropDownItems: getCategoryNameAsList(snapshot.data),
@@ -471,11 +488,14 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                             .translate("Drop Down Hint"),
                       ),
                     ),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                    Container(
+                      width: width,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
                             child: TextInputCard(
                               icon: Icons.fiber_pin,
                               titype: TextInputType.number,
@@ -487,11 +507,17 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                               errorText: errorBreed,
                             ),
                           ),
-                        ),
-                        if (isSeller)
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: width,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          if (isSeller)
+                            Container(
+                              width: width * 0.5,
                               child: ButtonWidget(
                                 iconData: Icons.photo,
                                 text: _photoText,
@@ -501,25 +527,25 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                                 isError: _isPhotoError,
                               ),
                             ),
-                          ),
-                        if (isSeller)
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: CircleAvatar(
-                              backgroundImage: _image == null
-                                  ? AssetImage('assests/images/logo.png')
-                                  : FileImage(File(_image.path)),
-                              backgroundColor: Colors.white,
-                              radius: 35.0,
-                            ),
-                          ),
-                      ],
+                          if (isSeller)
+                            Container(
+                              width: width * 0.4,
+                              child: FittedBox(
+                                child: CircleAvatar(
+                                  backgroundImage: _image == null
+                                      ? AssetImage('assests/images/logo.png')
+                                      : FileImage(File(_image.path)),
+                                  backgroundColor: Colors.white,
+                                  radius: 40.0,
+                                ),
+                              ),
+                            )
+                        ],
+                      ),
                     ),
                     Row(
                       children: <Widget>[
                         Expanded(
-                            child: Padding(
-                          padding: const EdgeInsets.all(8.0),
                           child: TextInputCard(
                             icon: Icons.fiber_pin,
                             titype: TextInputType.number,
@@ -530,10 +556,8 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                             width: data.size.width * 0.9,
                             errorText: errorQuantity,
                           ),
-                        )),
+                        ),
                         Expanded(
-                            child: Padding(
-                          padding: const EdgeInsets.all(8.0),
                           child: TextInputCard(
                             icon: Icons.monetization_on,
                             titype: TextInputType.number,
@@ -544,11 +568,11 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                             width: data.size.width * 0.9,
                             errorText: errorPrice,
                           ),
-                        )),
+                        ),
                       ],
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(18.0),
                       child: Container(
                         height: 55,
                         width: 200,
@@ -562,6 +586,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                           padding: EdgeInsets.all(8.0),
                           onPressed: () {
                             setState(() {
+                              FocusScope.of(context).unfocus();
                               _submitData();
                             });
                           },

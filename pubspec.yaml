@@ -52,6 +52,7 @@ dependencies:
   razorpay_flutter: 1.1.0
   cached_network_image: ^2.2.0+1
   progress_dialog: ^1.2.4
+  page_transition: "^1.1.6"
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -99,6 +100,10 @@ flutter:
     - family:  MYBaazar
       fonts:
         - asset: assests/images/MYBaazar.ttf
+
+    - family:  HandShakeIcon
+      fonts:     
+        - asset: assests/images/HandShakeIcon.ttf
          
           
   #   - family: Trajan Pro

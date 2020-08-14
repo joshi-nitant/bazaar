@@ -17,6 +17,7 @@ class CheckUserScreen extends StatelessWidget {
 
   void loadCategory(BuildContext context, String userType) {
     _saveToPreference(userType);
+
     Navigator.of(context).pushNamed(CategoryScreen.routeName, arguments: {
       'userType': userType,
     });
@@ -50,13 +51,15 @@ class CheckUserScreen extends StatelessWidget {
                     Container(
                       child: Padding(
                         padding:
-                            EdgeInsets.symmetric(vertical: 15, horizontal: 70),
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 30),
                         child: Text(
                             AppLocalizations.of(context).translate("who_r_u"),
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyText1.apply(
                                   color: Colors.white,
-                                  fontSizeDelta: 8,
+                                  fontSizeFactor:
+                                      MediaQuery.of(context).textScaleFactor,
+                                  fontSizeDelta: 4,
                                   fontWeightDelta: 1,
                                 )),
                       ),
@@ -90,6 +93,8 @@ class CheckUserScreen extends StatelessWidget {
                                 style:
                                     Theme.of(context).textTheme.bodyText1.apply(
                                           color: Theme.of(context).primaryColor,
+                                          fontSizeFactor: MediaQuery.of(context)
+                                              .textScaleFactor,
                                           fontSizeDelta: 4,
                                           fontWeightDelta: 1,
                                         ),
@@ -116,6 +121,8 @@ class CheckUserScreen extends StatelessWidget {
                                 style:
                                     Theme.of(context).textTheme.bodyText1.apply(
                                           color: Theme.of(context).primaryColor,
+                                          fontSizeFactor: MediaQuery.of(context)
+                                              .textScaleFactor,
                                           fontSizeDelta: 4,
                                           fontWeightDelta: 1,
                                         ),

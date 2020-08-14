@@ -9,10 +9,12 @@ import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/requirement_bid.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
 import 'package:baazar/widgets/dialog_widget.dart';
+import 'package:baazar/widgets/hand_shake_icon_icons.dart';
 import 'package:baazar/widgets/m_y_baazar_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -209,10 +211,14 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
   }
 
   Future<List<dynamic>> _getOfferList() async {
+    _userId = await _getUserId();
+    if (_userId == null) {
+      return [];
+    }
     _isSeller = await _checkIsSeller();
     print(_isSeller);
     _isProduct = _isSeller;
-    _userId = await _getUserId();
+
     print(_userId);
     List<dynamic> objectList;
 
@@ -298,10 +304,14 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
       closeFunction: () {
         null;
       },
+
       context: context,
       type: AlertType.error,
       title: "Are you sure you want to delete this offer?",
-      style: AlertStyle(titleStyle: Theme.of(context).textTheme.bodyText1),
+      style: AlertStyle(
+        titleStyle: Theme.of(context).textTheme.bodyText1,
+        isCloseButton: false,
+      ),
       //desc: "You won't be able to accept this later",
       image: null,
       buttons: [
@@ -313,6 +323,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                   color: Colors.white,
                 ),
           ),
+          radius: BorderRadius.circular(15),
           onPressed: () => Navigator.pop(context),
         ),
         DialogButton(
@@ -323,6 +334,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                     color: Colors.white,
                   ),
             ),
+            radius: BorderRadius.circular(15),
             onPressed: () {
               Navigator.pop(context);
               _deleteListItem(object);
@@ -336,7 +348,9 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
       closeFunction: () {
         null;
       },
-      style: AlertStyle(titleStyle: Theme.of(context).textTheme.bodyText1),
+      style: AlertStyle(
+          titleStyle: Theme.of(context).textTheme.bodyText1,
+          isCloseButton: false),
       context: context,
       type: AlertType.success,
       title: "Are you sure you want to accept this offer?",
@@ -351,6 +365,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                 ),
           ),
           onPressed: () => Navigator.pop(context),
+          radius: BorderRadius.circular(15),
         ),
         DialogButton(
           color: Theme.of(context).primaryColor,
@@ -360,6 +375,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                   color: Colors.white,
                 ),
           ),
+          radius: BorderRadius.circular(15),
           onPressed: () async {
             Navigator.pop(context);
             final ProgressDialog pr = ProgressDialog(context,
@@ -393,7 +409,12 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               String text = "Sorry!!!";
               String dialogMesage = "Offer acceptance failed. Retry.....";
               String buttonMessage = "Ok!!";
-              await showMyDialog(context, text, dialogMesage, buttonMessage);
+              await CustomDialog.openDialog(
+                  context: context,
+                  title: text,
+                  message: dialogMesage,
+                  mainIcon: Icons.check,
+                  subIcon: Icons.error);
               //Navigator.pop(context);
             } else if (data['response_code'] == 407) {
               String text = "Sorry!!!";
@@ -407,21 +428,36 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               }
 
               String buttonMessage = "Ok!!";
-              await showMyDialog(context, text, dialogMessage, buttonMessage);
+              await CustomDialog.openDialog(
+                  context: context,
+                  title: text,
+                  message: dialogMessage,
+                  mainIcon: Icons.check,
+                  subIcon: Icons.error);
               //Navigator.pop(context);
             } else if (data['response_code'] == 405 ||
                 data['response_code'] == 406) {
               String text = "Sorry!!!";
               String dialogMesage = "The seller is out of stock";
               String buttonMessage = "Ok!!";
-              await showMyDialog(context, text, dialogMesage, buttonMessage);
+              await CustomDialog.openDialog(
+                  context: context,
+                  title: text,
+                  message: dialogMesage,
+                  mainIcon: Icons.check,
+                  subIcon: Icons.error);
               //Navigator.pop(context);
             } else if (data['response_code'] == 101 && _isSeller) {
               String text = "Congratulations!!!";
               String dialogMesage = "Offer Accepted";
               String buttonMessage = "Ok!!";
 
-              await showMyDialog(context, text, dialogMesage, buttonMessage);
+              await CustomDialog.openDialog(
+                  context: context,
+                  title: text,
+                  message: dialogMesage,
+                  mainIcon: Icons.check,
+                  subIcon: HandShakeIcon.handshake);
               setState(() {});
             } else if (data['response_code'] == 101 && !_isSeller)
               //print(object);
@@ -442,17 +478,32 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
     final curr = MediaQuery.of(context).textScaleFactor;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: Theme.of(context).textTheme.headline1.apply(
-                color: Colors.white,
-                letterSpacingDelta: -5,
-              ),
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
+    final appBar = AppBar(
+      titleSpacing: 0,
+      title: Row(
+        children: <Widget>[
+          Icon(Icons.people),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              AppLocalizations.of(context).translate('Manage Offer'),
+              style: Theme.of(context).textTheme.headline1.apply(
+                    color: Colors.white,
+                    letterSpacingDelta: -5,
+                  ),
+            ),
+          ),
+        ],
       ),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      appBar: appBar,
       body: FutureBuilder(
         future: _getOfferList(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -464,115 +515,110 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
             );
           }
           if (snapshot.data.length == 0) {
-            return Container(
-              child: Center(
-                child: Text(
-                  "There are no new offers.",
-                  style: TextStyle(
-                      fontSize: 18 * MediaQuery.of(context).textScaleFactor),
-                ),
-              ),
-            );
+            return NoProduct("OFFER REQUEST");
           }
           return Container(
-            height: data.size.height,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-              child: Card(
-                color: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0)),
-                child: ListView.builder(
-                  itemBuilder: (ctx, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        // _updateScreen(snapshot.data[index]);
-                      },
-                      child: Container(
-                        width: data.size.width,
-                        height: 100.0,
-                        child: Card(
-                          elevation: 5,
-                          margin: EdgeInsets.fromLTRB(8, 10, 8, 0),
-                          child: Row(
-                            children: <Widget>[
-                              CircleAvatar(
-                                backgroundImage: _isSeller
-                                    ? NetworkImage(
-                                        Utils.URL +
-                                            "images/" +
-                                            snapshot.data[index].prodId.category
-                                                .imgPath,
-                                      )
-                                    : NetworkImage(
-                                        Utils.URL +
-                                            "images/" +
-                                            snapshot.data[index].reqId.category
-                                                .imgPath,
-                                      ),
-                                backgroundColor: Colors.white,
-                                radius: 30.0,
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: <Widget>[
-                                      Text(
-                                        _isProduct
-                                            ? "${snapshot.data[index].prodId.breed}" +
-                                                " | " +
-                                                "${snapshot.data[index].prodId.category.name}"
-                                            : "${snapshot.data[index].reqId.breed}" +
-                                                " | " +
-                                                "${snapshot.data[index].reqId.category.name}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText1
-                                            .apply(
-                                              fontSizeDelta: -4,
-                                            ),
-                                      ),
-                                      _isSeller
-                                          ? Text(
-                                              "${snapshot.data[index].buyer.city},${snapshot.data[index].buyer.state}",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText2,
-                                            )
-                                          : Text(
-                                              "${snapshot.data[index].seller.city},${snapshot.data[index].seller.state}",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText2,
-                                            ),
-                                      Row(
+            height: height,
+            width: width,
+            margin: EdgeInsets.all(5.0),
+            child: Card(
+              color: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0)),
+              child: ListView.builder(
+                itemBuilder: (ctx, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      // _updateScreen(snapshot.data[index]);
+                    },
+                    child: Container(
+                      width: data.size.width,
+                      child: Card(
+                        elevation: 5,
+                        margin: EdgeInsets.all(8.0),
+                        child: Row(
+                          children: <Widget>[
+                            CircleAvatar(
+                              backgroundImage: _isSeller
+                                  ? NetworkImage(
+                                      Utils.URL +
+                                          "images/" +
+                                          snapshot.data[index].prodId.category
+                                              .imgPath,
+                                    )
+                                  : NetworkImage(
+                                      Utils.URL +
+                                          "images/" +
+                                          snapshot.data[index].reqId.category
+                                              .imgPath,
+                                    ),
+                              backgroundColor: Colors.white,
+                              radius: 30.0,
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    Text(
+                                      _isProduct
+                                          ? "${snapshot.data[index].prodId.breed}" +
+                                              " | " +
+                                              "${snapshot.data[index].prodId.category.name}"
+                                          : "${snapshot.data[index].reqId.breed}" +
+                                              " | " +
+                                              "${snapshot.data[index].reqId.category.name}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyText1
+                                          .apply(
+                                            fontSizeDelta: -4,
+                                          ),
+                                    ),
+                                    _isSeller
+                                        ? Text(
+                                            "${snapshot.data[index].buyer.city},${snapshot.data[index].buyer.state}",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText2,
+                                          )
+                                        : Text(
+                                            "${snapshot.data[index].seller.city},${snapshot.data[index].seller.state}",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText2,
+                                          ),
+                                    FittedBox(
+                                      child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceEvenly,
                                         children: <Widget>[
-                                          Column(
-                                            children: <Widget>[
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(
-                                                    Icons.gavel,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                  ),
-                                                  Text(
-                                                    "${snapshot.data[index].price.toString()}/QTL",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .headline2,
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 8.0),
+                                            child: Column(
+                                              children: <Widget>[
+                                                Row(
+                                                  children: <Widget>[
+                                                    Icon(
+                                                      Icons.gavel,
+                                                      color: Theme.of(context)
+                                                          .primaryColor,
+                                                    ),
+                                                    Text(
+                                                      "${snapshot.data[index].price.toString()}/QTL",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .headline2,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                           Column(
                                             children: <Widget>[
@@ -595,39 +641,45 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    Row(
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  FittedBox(
+                                    child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceEvenly,
                                       children: <Widget>[
-                                        ClipOval(
-                                          child: Material(
-                                            color: Theme.of(context)
-                                                .primaryColor, // button color
-                                            child: InkWell(
-                                              splashColor:
-                                                  Colors.grey, // inkwell color
-                                              child: SizedBox(
-                                                  width: 50,
-                                                  height: 50,
-                                                  child: Icon(
-                                                    Icons.check,
-                                                    color: Colors.white,
-                                                  )),
-                                              onTap: () {
-                                                setState(() {
-                                                  _selectItem(
-                                                      snapshot.data[index]);
-                                                });
-                                              },
+                                        Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: ClipOval(
+                                            child: Material(
+                                              color: Theme.of(context)
+                                                  .primaryColor, // button color
+                                              child: InkWell(
+                                                splashColor: Colors
+                                                    .grey, // inkwell color
+                                                child: SizedBox(
+                                                    width: 50,
+                                                    height: 50,
+                                                    child: Icon(
+                                                      Icons.check,
+                                                      color: Colors.white,
+                                                      size: 40,
+                                                    )),
+                                                onTap: () {
+                                                  setState(() {
+                                                    _selectItem(
+                                                        snapshot.data[index]);
+                                                  });
+                                                },
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -644,6 +696,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                                                   child: Icon(
                                                     Icons.close,
                                                     color: Colors.white,
+                                                    size: 40,
                                                   )),
                                               onTap: () {
                                                 _deleteItem(
@@ -654,19 +707,19 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25.0)),
+                            ),
+                          ],
                         ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0)),
                       ),
-                    );
-                  },
-                  itemCount: snapshot.data.length,
-                ),
+                    ),
+                  );
+                },
+                itemCount: snapshot.data.length,
               ),
             ),
           );

@@ -58,7 +58,7 @@ class _TextInputCardState extends State<TextInputCard> {
               enabledBorder: InputBorder.none,
               errorMaxLines: 2,
               // errorStyle: Theme.of(context).textTheme.headline2.apply(
-              //       fontSizeDelta: -4,
+              //       fontSizeDelta: -5,
               //       color: Colors.red,
 
               //     ),

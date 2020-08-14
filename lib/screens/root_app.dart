@@ -13,6 +13,7 @@ import 'package:baazar/screens/transaction_histroy_scree.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:page_transition/page_transition.dart';
 
 import '../classes/app_localizations.dart';
 import 'package:baazar/screens/select_language_screen.dart';
@@ -46,15 +47,18 @@ class _MyAppState extends State<MyApp> {
       title: 'Baazar',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-          primaryColor: Color(0xff85b02b),
-          accentColor: Color(0xff379b21),
+          // Color("0xff85b02b");
+          //156, 205, 50
+          //Color.fromRGBO(140, 185, 45, 1)
+          primaryColor: Colors.lightGreen[600],
+          accentColor: Color(0xff739b21),
           primaryColorLight: Color(0xffc4d5a1),
           brightness: Brightness.light,
           fontFamily: 'Adam',
           textTheme: ThemeData.light().textTheme.copyWith(
                 headline1: TextStyle(
                     fontSize: 24.0,
-                    letterSpacing: 10.0,
+                    letterSpacing: 7.0,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Adam'),
                 bodyText1: TextStyle(
@@ -63,12 +67,12 @@ class _MyAppState extends State<MyApp> {
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Adam'),
                 bodyText2: TextStyle(
-                    fontSize: 16.0,
+                    fontSize: 18.0,
                     letterSpacing: 1.0,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Adam'),
                 headline2: TextStyle(
-                    fontSize: 14.0,
+                    fontSize: 16.0,
                     letterSpacing: 2.0,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Adam'),
@@ -108,7 +112,16 @@ class _MyAppState extends State<MyApp> {
         // from the list (English, in this case).
         return supportedLocales.first;
       },
-
+      // onGenerateRoute: (settings) {
+      //   switch (settings.name) {
+      //     case '/second':
+      //       return PageTransition(
+      //           child: SecondPage(), type: PageTransitionType.scale);
+      //       break;
+      //     default:
+      //       return null;
+      //   }
+      // },
       routes: {
         CategoryScreen.routeName: (ctx) => CategoryScreen(),
         Dashboard.routeName: (ctx) => Dashboard(),

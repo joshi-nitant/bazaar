@@ -8,6 +8,7 @@ import 'package:baazar/models/product.dart';
 import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/current_transaction_screen.dart';
+import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/screens/manage_offer_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
@@ -47,6 +48,7 @@ class _DashboardState extends State<Dashboard> {
   Function kiloHandler;
   Function breedHandler;
   bool _isInitialLoad = true;
+  var appBar;
 
   List<String> kilometerList = ["None", "50", "100", "150", "200", "300"];
   @override
@@ -89,6 +91,7 @@ class _DashboardState extends State<Dashboard> {
       );
 
       var jsondata = json.decode(response.body);
+      print(jsondata);
       List<Requirement> requirements = [];
       if (jsondata != 404) {
         for (var u in jsondata) {
@@ -215,6 +218,7 @@ class _DashboardState extends State<Dashboard> {
         ),
       );
       var jsondata = json.decode(response.body);
+      print(jsondata);
       List<Product> products = [];
       if (jsondata != 404) {
         for (var u in jsondata) {
@@ -255,43 +259,19 @@ class _DashboardState extends State<Dashboard> {
   }
 
   void _redirectToManageScreeen() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
-    } else {
-      print('redirecting');
-      Navigator.of(context).pushNamed(ProdReqViewScreen.routeName);
-    }
+    Navigator.of(context).pushNamed(ProdReqViewScreen.routeName);
   }
 
   void _redirectToOfferScreeen() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
-    } else {
-      print('redirecting');
-      Navigator.of(context).pushNamed(OfferViewScreen.routeName);
-    }
+    Navigator.of(context).pushNamed(OfferViewScreen.routeName);
   }
 
   void _redirectToCurrentTransaction() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
-    } else {
-      print('redirecting');
-      Navigator.of(context).pushNamed(CurrentTransaction.routeName);
-    }
+    Navigator.of(context).pushNamed(CurrentTransaction.routeName);
   }
 
   void _redirectToTransactionHistory() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      //Navigator.of(context).pushNamed(ProdRedUpdate.routeName);
-    } else {
-      print('redirecting');
-      Navigator.of(context).pushNamed(TransactionHistory.routeName);
-    }
+    Navigator.of(context).pushNamed(TransactionHistory.routeName);
   }
 
   void _checkUserIsLoggedIn() async {
@@ -390,63 +370,107 @@ class _DashboardState extends State<Dashboard> {
         ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
     var data = MediaQuery.of(context);
 
+    appBar = AppBar(
+      title: Text(
+        AppLocalizations.of(context).translate('app_title'),
+        style: Theme.of(context).textTheme.headline1.apply(
+              color: Colors.white,
+            ),
+      ),
+      iconTheme: IconThemeData(color: Colors.white),
+    );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
+
     category = routeArgs['category'];
     userType = routeArgs['userType'];
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomPadding: false,
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context).translate('app_title'),
-          style: Theme.of(context).textTheme.headline1.apply(
-                color: Colors.white,
-              ),
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
+      appBar: appBar,
       drawer: Drawer(
         // Add a ListView to the drawer. This ensures the user can scroll
         // through the options in the drawer if there isn't enough vertical
         // space to fit everything.
-        child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
+        child: Column(
           children: <Widget>[
-            DrawerHeader(
-              child: Container(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      backgroundImage: AssetImage('assests/images/logo.png'),
-                      radius: 45.0,
+            Container(
+              height: height * 0.8,
+              child: ListView(
+                // Important: Remove any padding from the ListView.
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                children: <Widget>[
+                  DrawerHeader(
+                    child: Container(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          CircleAvatar(
+                            backgroundColor: Colors.white,
+                            backgroundImage:
+                                AssetImage('assests/images/logo.png'),
+                            radius: 45.0,
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                    ),
+                  ),
+                  ListTileWidget(
+                    Icons.assignment,
+                    'Transaction History',
+                    _redirectToTransactionHistory,
+                  ),
+                  ListTileWidget(
+                    Icons.people,
+                    'Manage Request',
+                    _redirectToOfferScreeen,
+                  ),
+                  ListTileWidget(
+                    Icons.history,
+                    'Current Transaction',
+                    _redirectToCurrentTransaction,
+                  ),
+                  ListTileWidget(
+                      Icons.list, 'Requirement List', _redirectToManageScreeen),
+                ],
+              ),
+            ),
+            Flexible(
+              flex: 1,
+              child: Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 18.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      CircleAvatar(
+                        backgroundImage: AssetImage('assests/images/logo.png'),
+                        backgroundColor: Colors.white,
+                        radius: 25.0,
+                      ),
+                      SizedBox(
+                        width: 17.0,
+                      ),
+                      Text(
+                        AppLocalizations.of(context).translate('app_title'),
+                        style: Theme.of(context).textTheme.headline1.apply(
+                              color: Theme.of(context).primaryColor,
+                            ),
+                      )
+                    ],
+                  ),
                 ),
               ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-              ),
             ),
-            ListTileWidget(
-              Icons.assignment,
-              'Transaction History',
-              _redirectToTransactionHistory,
-            ),
-            ListTileWidget(
-              Icons.people,
-              'Manage Request',
-              _redirectToOfferScreeen,
-            ),
-            ListTileWidget(
-              Icons.history,
-              'Current Transaction',
-              _redirectToCurrentTransaction,
-            ),
-            ListTileWidget(
-                Icons.list, 'Requirement List', _redirectToManageScreeen),
           ],
         ),
       ),
@@ -463,63 +487,55 @@ class _DashboardState extends State<Dashboard> {
 
             if (snapshot.data.length == 0) {
               return Container(
-                child: Center(
-                  child: Text(
-                    AppLocalizations.of(context).translate("Dashboard Empty"),
-                    style: TextStyle(
-                        fontSize: 18 * MediaQuery.of(context).textScaleFactor),
-                  ),
-                ),
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  height: data.size.height * 0.1,
-                  width: data.size.width,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) => Filter(
-                            breedList: category.breed,
-                            minPrice: minPrice,
-                            maxPrice: maxPrice,
-                            distanceList: kilometerList,
-                            applyHandler: applyHandler,
-                            removeHandler: removeHandler,
-                          ),
-                        );
-                      });
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.all(10),
-                      child: Card(
-                        color: Theme.of(context).primaryColorLight,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0)),
-                        child: Container(
-                          width: data.size.width * 0.9,
+                width: width,
+                height: height,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Container(
+                      height: height * 0.1,
+                      width: data.size.width,
+                      margin: EdgeInsets.all(5.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) => Filter(
+                                breedList: category.breed,
+                                minPrice: minPrice,
+                                maxPrice: maxPrice,
+                                distanceList: kilometerList,
+                                applyHandler: applyHandler,
+                                removeHandler: removeHandler,
+                              ),
+                            );
+                          });
+                        },
+                        child: Card(
+                          color: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.0)),
                           child: Padding(
-                            padding: const EdgeInsets.all(15.0),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10.0, vertical: 5.0),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 Icon(
-                                  Icons.search,
+                                  Icons.filter_list,
                                   color: Colors.white,
                                 ),
                                 Expanded(
                                   child: Text(
                                     AppLocalizations.of(context)
-                                        .translate("Search"),
+                                        .translate("Filter"),
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyText1
                                         .apply(
                                           color: Colors.white,
+                                          fontSizeFactor: data.textScaleFactor,
                                         ),
                                     textAlign: TextAlign.center,
                                     //overflow: TextOverflow.clip,
@@ -532,26 +548,90 @@ class _DashboardState extends State<Dashboard> {
                         ),
                       ),
                     ),
-                  ),
+                    NoProduct("DASHBOARD ERROR"),
+                  ],
                 ),
-                Container(
-                  height: data.size.height * 0.8,
-                  width: data.size.width,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+              );
+            }
+            return Container(
+              width: width,
+              height: height,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                    height: height * 0.1,
+                    width: data.size.width,
+                    margin: EdgeInsets.all(5.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) => Filter(
+                              breedList: category.breed,
+                              minPrice: minPrice,
+                              maxPrice: maxPrice,
+                              distanceList: kilometerList,
+                              applyHandler: applyHandler,
+                              removeHandler: removeHandler,
+                            ),
+                          );
+                        });
+                      },
+                      child: Card(
+                        color: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0)),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 5.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Icon(
+                                Icons.filter_list,
+                                color: Colors.white,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  AppLocalizations.of(context)
+                                      .translate("Filter"),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .apply(
+                                        color: Colors.white,
+                                        fontSizeFactor: data.textScaleFactor,
+                                      ),
+                                  textAlign: TextAlign.center,
+                                  //overflow: TextOverflow.clip,
+                                  //maxLines: 5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: height * 0.77,
+                    width: width,
+                    margin: EdgeInsets.all(5.0),
                     child: Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       color: Theme.of(context).primaryColor,
                       child: Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(8),
                         child: ListView.builder(
                           itemCount: snapshot.data.length,
                           itemBuilder: (BuildContext context, int index) {
                             return Card(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               color: Colors.white,
                               child: Row(
@@ -577,68 +657,86 @@ class _DashboardState extends State<Dashboard> {
                                         Padding(
                                           padding: EdgeInsets.all(3),
                                           child: Text(
-                                              snapshot.data[index].breed +
-                                                  " | " +
-                                                  "${AppLocalizations.of(context).translate(category.name)}" +
-                                                  " in " +
-                                                  getCity(snapshot.data[index]),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyText2,
-                                              textAlign: TextAlign.center),
+                                            snapshot.data[index].breed +
+                                                " | " +
+                                                "${AppLocalizations.of(context).translate(category.name)}" +
+                                                " in " +
+                                                getCity(snapshot.data[index]),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyText2
+                                                .apply(
+                                                  fontSizeFactor:
+                                                      MediaQuery.of(context)
+                                                          .textScaleFactor,
+                                                ),
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: <Widget>[
-                                            Row(
-                                              children: <Widget>[
-                                                Icon(
-                                                  Icons.gavel,
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
-                                                ),
-                                                Padding(
-                                                    padding: EdgeInsets.only(
-                                                        right: 3)),
-                                                Text(
-                                                  getPrice(
-                                                      snapshot.data[index]),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headline2
-                                                      .apply(
-                                                        color: Colors.black,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  EdgeInsets.only(right: 10),
-                                            ),
-                                            Row(
-                                              children: <Widget>[
-                                                Icon(
-                                                  MYBaazar.balance,
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
-                                                ),
-                                                Padding(
-                                                    padding: EdgeInsets.only(
-                                                        right: 3)),
-                                                Text(
-                                                  "${snapshot.data[index].quantity}QTL",
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headline2
-                                                      .apply(
-                                                        color: Colors.black,
-                                                      ),
-                                                )
-                                              ],
-                                            ),
-                                          ],
+                                        FittedBox(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: <Widget>[
+                                              Row(
+                                                children: <Widget>[
+                                                  Icon(
+                                                    Icons.gavel,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                  ),
+                                                  Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: 3)),
+                                                  Text(
+                                                    getPrice(
+                                                        snapshot.data[index]),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyText1
+                                                        .apply(
+                                                          color: Colors.black,
+                                                          fontSizeFactor:
+                                                              MediaQuery.of(
+                                                                      context)
+                                                                  .textScaleFactor,
+                                                          fontSizeDelta: -2,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    EdgeInsets.only(right: 10),
+                                              ),
+                                              Row(
+                                                children: <Widget>[
+                                                  Icon(
+                                                    MYBaazar.balance,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                  ),
+                                                  Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: 3)),
+                                                  Text(
+                                                    "${snapshot.data[index].quantity}QTL",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyText1
+                                                        .apply(
+                                                          color: Colors.black,
+                                                          fontSizeFactor:
+                                                              MediaQuery.of(
+                                                                      context)
+                                                                  .textScaleFactor,
+                                                          fontSizeDelta: -2,
+                                                        ),
+                                                  )
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -646,9 +744,9 @@ class _DashboardState extends State<Dashboard> {
                                   Align(
                                     alignment: AlignmentDirectional.centerEnd,
                                     child: Padding(
-                                      padding: EdgeInsets.all(8),
+                                      padding: EdgeInsets.all(3),
                                       child: RaisedButton(
-                                        color: Color(0xFF739b21),
+                                        color: Theme.of(context).primaryColor,
                                         onPressed: () {
                                           Navigator.of(context).pushNamed(
                                             ProdReqDetail.routeName,
@@ -680,13 +778,13 @@ class _DashboardState extends State<Dashboard> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           }),
       floatingActionButton: Container(
-        height: 60,
-        width: 60,
+        height: height * 0.1,
+        width: width,
         child: FittedBox(
           child: FloatingActionButton(
             onPressed: () {

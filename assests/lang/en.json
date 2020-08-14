@@ -34,7 +34,7 @@
     "Greater than 0": "Greater than 0",
     "Price must be added": "Price must be added",
     "Price must be a number": "Price must be a number",
-    "Photo not added": "Photo not added",
+    "Photo not added": "Not Added",
 
     "Remaining Quantity must be a number": "Remaining Quantity must be a number",
     "Remaining Quantity must be added": "Remaining Quantity must be added",
@@ -81,6 +81,13 @@
     "Post Offer": "POST OFFER",
     "Checkout": "Checkout",
 
+    "DASHBOARD ERROR": "ERROR: NO PRODUCT EXISTS.",
+    "CATEGORY ERROR": "ERROR: NO CATEGORY EXISTS YET. RETRY AGAIN.",
+    "TRANSACTION HISTORY": "NO TRANSACTION MADE YET.",
+    "OFFER REQUEST": "NO NEW OFFERS.",
+    "CURRENT TRANSACTION": "NO PENDING TRANSACTIONS.",
+    "REQUIREMENT LIST": "NOTHING ADDED YET.",
+
     "Congratulations": "Congratulations!!!",
     "Product added": "Product added successfully",
     "Product unsuccess": "Unable to add product. Retry....",
@@ -95,6 +102,8 @@
     "OK": "OK",
     "Done": "Done",
     "Updating Please Wait...": "Updating Please Wait..."
+
+
 
 
 }
