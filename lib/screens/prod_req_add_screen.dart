@@ -549,7 +549,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                       children: <Widget>[
                         Expanded(
                           child: TextInputCard(
-                            icon: Icons.fiber_pin,
+                            icon: MYBaazar.balance,
                             titype: TextInputType.number,
                             htext: AppLocalizations.of(context)
                                 .translate('Quantity'),
