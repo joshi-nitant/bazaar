@@ -16,8 +16,8 @@ class CustomDialog extends StatefulWidget {
         context: context,
         builder: (context) {
           Future.delayed(Duration(seconds: 2), () {
-            Navigator.of(context).pop(true);
             FocusScope.of(context).unfocus();
+            Navigator.of(context).pop(true);
           });
           return CustomDialog(
             title: title,

@@ -39,15 +39,18 @@ class _ButtonWidgetState extends State<ButtonWidget> {
           //textColor: widget.isError ? Colors.red : Colors.black,
           padding: EdgeInsets.all(8.0),
           onPressed: widget.handlerMethod,
-          label: Text(
-            widget.text,
+          label: FittedBox(
+            child: Text(
+              widget.text,
 
-            //overflow: TextOverflow.fade,
-            style: Theme.of(context).textTheme.bodyText2.apply(
-                  color: widget.isError
-                      ? Colors.red
-                      : Theme.of(context).primaryColor,
-                ),
+              //overflow: TextOverflow.fade,
+              style: Theme.of(context).textTheme.bodyText2.apply(
+                    color: widget.isError
+                        ? Colors.red
+                        : Theme.of(context).primaryColor,
+                    fontSizeDelta: -2,
+                  ),
+            ),
           ),
         ),
       ),

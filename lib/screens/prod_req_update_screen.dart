@@ -240,14 +240,13 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
         String dialogMesage =
             AppLocalizations.of(context).translate("Product update");
         String buttonMessage = AppLocalizations.of(context).translate("Done");
-
+        Navigator.pop(context);
         await CustomDialog.openDialog(
             context: context,
             title: text,
             message: dialogMesage,
             mainIcon: Icons.check,
             subIcon: HandShakeIcon.handshake);
-        Navigator.pop(context);
       }
     }
   }
@@ -566,7 +565,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                             text: 'Add Certificate',
                             handlerMethod: pickFile,
                             height: 55,
-                            width: 150,
+                            width: 170,
                             isError: false,
                           )),
                           Expanded(

@@ -292,6 +292,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
         String text = "Congratulations!!!";
         String dialogMesage = "Product added successfully.";
         String buttonMessage = "Done";
+        Navigator.of(context).pop();
         await CustomDialog.openDialog(
             context: context,
             title: text,
@@ -491,7 +492,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                     Container(
                       width: width,
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
                           Padding(
                             padding:

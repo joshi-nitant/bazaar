@@ -63,6 +63,7 @@ class ChooseLanguageWidget extends StatelessWidget {
                                     fontSizeFactor:
                                         MediaQuery.of(context).textScaleFactor,
                                     color: Theme.of(context).primaryColor,
+                                    fontWeightDelta: 2,
                                     fontSizeDelta: -1,
                                   )
                               : Theme.of(context).textTheme.bodyText1.apply(

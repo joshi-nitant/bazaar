@@ -395,6 +395,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
         String text = "Congratulations!!!";
         String dialogMesage = "Offer sent successfully.";
         String buttonMessage = "Done";
+        Navigator.of(context).pop();
         CustomDialog.openDialog(
                 context: context,
                 title: text,
@@ -403,7 +404,6 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                 subIcon: HandShakeIcon.handshake)
             .then((value) => () {
                   FocusManager.instance.primaryFocus.unfocus();
-                  Navigator.of(context).pop();
                 });
         //Navigator.pop(context);
       }

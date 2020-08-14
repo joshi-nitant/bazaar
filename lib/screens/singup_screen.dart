@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/user.dart';
+import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
@@ -159,7 +160,27 @@ class _SingUpScreenState extends State<SingUpScreen> {
           mode: Mode.overlay, // Mode.fullscreen
           language: "en",
           components: [new Component(Component.country, "in")]);
+
+      final ProgressDialog pr = ProgressDialog(context,
+          type: ProgressDialogType.Normal, isDismissible: true, showLogs: true);
+      pr.style(
+        message: 'Adding Address...',
+        borderRadius: 10.0,
+        backgroundColor: Colors.white,
+        progressWidget: CircularProgressIndicator(),
+        elevation: 10.0,
+        insetAnimCurve: Curves.easeInOut,
+        progress: 0.0,
+        maxProgress: 100.0,
+        progressTextStyle: TextStyle(
+            color: Colors.black, fontSize: 13.0, fontWeight: FontWeight.w400),
+        messageTextStyle: TextStyle(
+            color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
+      );
+      await pr.show();
+
       await displayPrediction(p);
+      pr.hide();
     } catch (e) {}
     return _addressText;
   }
@@ -230,7 +251,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
       });
       return;
     }
-    print("here");
+
     if (otp.resultChecker(int.tryParse(enteredOtp))) {
       setState(() {
         this._isOtpRight = true;
@@ -306,7 +327,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
   void _submitData(bool isSeller) async {
     if (_validator()) {
       await showOtpDialog(isSeller);
-      if (this._isOtpRight || !this._isOtpRight) {
+      if (this._isOtpRight) {
         final ProgressDialog pr = ProgressDialog(context,
             type: ProgressDialogType.Normal,
             isDismissible: true,
@@ -342,6 +363,8 @@ class _SingUpScreenState extends State<SingUpScreen> {
               message: dialogMesage,
               mainIcon: Icons.check,
               subIcon: HandShakeIcon.handshake);
+          print("here");
+          Navigator.of(context).pop();
           Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
         } else {
           String text = "Sorry!!!";
