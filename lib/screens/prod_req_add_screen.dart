@@ -538,7 +538,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                                       ? AssetImage('assests/images/logo.png')
                                       : FileImage(File(_image.path)),
                                   backgroundColor: Colors.white,
-                                  radius: 40.0,
+                                  radius: 35.0,
                                 ),
                               ),
                             )

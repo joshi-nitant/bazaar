@@ -515,7 +515,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                                     "${Utils.URL}productImage/${_selectedObject.image}")
                                 : FileImage(File(_image.path)),
                             backgroundColor: Colors.white,
-                            radius: 40.0,
+                            radius: 35.0,
                           ),
                       ],
                     ),
