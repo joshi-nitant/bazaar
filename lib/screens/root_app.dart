@@ -57,7 +57,7 @@ class _MyAppState extends State<MyApp> {
           fontFamily: 'Adam',
           textTheme: ThemeData.light().textTheme.copyWith(
                 headline1: TextStyle(
-                    fontSize: 24.0,
+                    fontSize: 20.0,
                     letterSpacing: 7.0,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Adam'),
