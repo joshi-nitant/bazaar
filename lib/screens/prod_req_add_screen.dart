@@ -7,6 +7,7 @@ import 'package:baazar/models/category.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/widgets/drop_down_widget.dart';
 import 'package:baazar/widgets/hand_shake_icon_icons.dart';
+import 'package:baazar/widgets/m_y_baazar_icons.dart';
 
 import 'package:geocoder/geocoder.dart';
 //import 'package:google_maps_webservice/places.dart';
@@ -560,7 +561,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                         ),
                         Expanded(
                           child: TextInputCard(
-                            icon: Icons.monetization_on,
+                            icon: MYBaazar.rupee_indian,
                             titype: TextInputType.number,
                             htext:
                                 AppLocalizations.of(context).translate('Price'),

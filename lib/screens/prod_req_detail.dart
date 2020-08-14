@@ -91,13 +91,13 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     if (isProduct) {
       if (int.parse(_quantityBidController.text.trim()) >
           int.parse(product.remainingQty)) {
-        errorQuantity = "More than available quantity";
+        errorQuantity = "More than available";
         return false;
       }
     } else if (!isProduct) {
       if (int.parse(_quantityBidController.text.trim()) >
           int.parse(requirement.remainingQty)) {
-        errorQuantity = "More than available quantity";
+        errorQuantity = "More than available";
         return false;
       }
     }
@@ -400,7 +400,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                 context: context,
                 title: text,
                 message: dialogMesage,
-                mainIcon: Icons.close,
+                mainIcon: Icons.check,
                 subIcon: HandShakeIcon.handshake)
             .then((value) => () {
                   FocusManager.instance.primaryFocus.unfocus();
