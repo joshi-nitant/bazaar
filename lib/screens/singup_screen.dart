@@ -235,6 +235,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
   }
 
   Future<void> _clickHandler() async {
+    FocusScope.of(context).unfocus();
     try {
       var address = await _getLocation();
       setState(() {
@@ -353,7 +354,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
         int userId = jsonData["user_id"];
 
         if (userId != -1) {
-          _storeUserId(userId);
+          await _storeUserId(userId);
           String text = "Congratulations!!!";
           String dialogMesage = "Registration successfull.";
           String buttonMessage = "Ok!!";
@@ -393,7 +394,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
     }
   }
 
-  void _storeUserId(int userId) async {
+  Future<void> _storeUserId(int userId) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     sharedPreferences.setInt(User.USER_ID_SHARED_PREFERNCE, userId);
   }
@@ -480,24 +481,28 @@ class _SingUpScreenState extends State<SingUpScreen> {
                                           color: Theme.of(context).primaryColor,
                                         ),
                                         Expanded(
-                                          child: Text(
-                                            errorAddress == null
-                                                ? _addressText
-                                                : errorAddress,
+                                          child: Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 20),
+                                            child: Text(
+                                              errorAddress == null
+                                                  ? _addressText
+                                                  : errorAddress,
 
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText2
-                                                .apply(
-                                                  color: errorAddress == null
-                                                      ? Theme.of(context)
-                                                          .primaryColor
-                                                      : Colors.red,
-                                                ),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2
+                                                  .apply(
+                                                    color: errorAddress == null
+                                                        ? Theme.of(context)
+                                                            .primaryColor
+                                                        : Colors.red,
+                                                  ),
 
-                                            textAlign: TextAlign.center,
-                                            //overflow: TextOverflow.clip,
-                                            //maxLines: 5,
+                                              textAlign: TextAlign.start,
+                                              //overflow: TextOverflow.clip,
+                                              //maxLines: 5,
+                                            ),
                                           ),
                                         ),
                                       ],

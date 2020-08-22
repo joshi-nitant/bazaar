@@ -4,5 +4,6 @@ class ImagePath {
   static final String hindiLang = "assests/images/hindi.png";
   static final String gujaratiLang = "assests/images/gujarati.png";
   static final String rice = "assests/images/rice.png";
-  static final String seller = "assests/images/rs.png";
+  static final String seller = "assests/images/seller2.png";
+  static final String buyer = "assests/images/buyer2.png";
 }

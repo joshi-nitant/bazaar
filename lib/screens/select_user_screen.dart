@@ -96,7 +96,6 @@ class CheckUserScreen extends StatelessWidget {
                                           fontSizeFactor: MediaQuery.of(context)
                                               .textScaleFactor,
                                           fontSizeDelta: 4,
-                                          fontWeightDelta: 1,
                                         ),
                               )
                             ],
@@ -111,7 +110,7 @@ class CheckUserScreen extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Image.asset(
-                                  ImagePath.rice,
+                                  ImagePath.buyer,
                                   height: 150,
                                   width: 150,
                                 ),
@@ -124,7 +123,6 @@ class CheckUserScreen extends StatelessWidget {
                                           fontSizeFactor: MediaQuery.of(context)
                                               .textScaleFactor,
                                           fontSizeDelta: 4,
-                                          fontWeightDelta: 1,
                                         ),
                               ),
                             ],

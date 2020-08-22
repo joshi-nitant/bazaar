@@ -405,6 +405,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
             var data = json.decode(response);
             pr.hide();
             print(data);
+            print("acccepting");
             if (data['response_code'] == 404) {
               String text = "Sorry!!!";
               String dialogMesage = "Offer acceptance failed. Retry.....";

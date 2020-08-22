@@ -66,6 +66,7 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
   bool _isPhotoError = false;
   String errorRemainingQuantity;
   bool _initialLoad = true;
+  String _breedDropDownValue;
 
   static const String kGoogleApiKey = "AIzaSyBuZTVFf0pDt_MgQedl5aNsOxu286k7Wmw";
   GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
@@ -433,6 +434,18 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
     super.didChangeDependencies();
   }
 
+  List<String> getBreedAsList() {
+    return ["1200", "1300", "1400", "1500"];
+  }
+
+  void _breedHandler(String value) {
+    print(value);
+    setState(() {
+      this._breedDropDownValue = value;
+      _breedController.text = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     //print("build");
@@ -483,13 +496,27 @@ class _ProdReqUpdateState extends State<ProdReqUpdate> {
                     Row(
                       children: <Widget>[
                         Expanded(
-                          child: TextInputCard(
-                            icon: Icons.fiber_pin,
-                            titype: TextInputType.number,
-                            htext: 'Breed',
-                            mdata: data,
-                            controller: _breedController,
-                            width: data.size.width * 0.9,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0, vertical: 8.0),
+                            child: CategoryDropDown(
+                              categoryHandler: _breedHandler,
+                              dropDownItems: getBreedAsList(),
+                              dropdownValue: this._breedDropDownValue,
+                              errorText: errorBreed,
+                              titleText: AppLocalizations.of(context)
+                                  .translate("Breed"),
+                              hintText: AppLocalizations.of(context)
+                                  .translate("Drop Down Hint"),
+                            ),
+                            // child: TextInputCard(
+                            //   icon: Icons.fiber_pin,
+                            //   titype: TextInputType.number,
+                            //   htext: 'Breed',
+                            //   mdata: data,
+                            //   controller: _breedController,
+                            //   width: data.size.width * 0.9,
+                            // ),
                           ),
                         ),
                       ],

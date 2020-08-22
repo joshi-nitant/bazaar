@@ -94,12 +94,39 @@ flutter:
   fonts:
     - family: Adam
       fonts:
-        - asset: assests/fonts/adam/Adam-Bold.ttf
+        - asset: assests/fonts/adam/Adam-Medium.ttf
           weight: 700
         - asset: assests/fonts/adam/Adam-Light.ttf 
           weight: 300
         - asset: assests/fonts/adam/Adam-Medium.ttf
           weight: 400
+    - family: Helvetica
+      fonts:
+        - asset: assests/fonts/helvetica/HelveticaNeueMedium.ttf
+          weight: 700
+        - asset: assests/fonts/helvetica/HelveticaNeueThin.ttf
+          weight: 300
+        - asset: assests/fonts/helvetica/HelveticaNeue.ttf
+          weight: 400
+
+    - family: OpenSans
+      fonts:
+        - asset: assests/fonts/Open_Sans/OpenSans-SemiBold.ttf
+          weight: 700
+        - asset: assests/fonts/Open_Sans/OpenSans-Light.ttf
+          weight: 300
+        - asset: assests/fonts/Open_Sans/OpenSans-Regular.ttf
+          weight: 400
+    
+    - family: ProximaNova
+      fonts:
+        - asset: assests/fonts/proxima_ssv/Proxima Nova Bold.otf
+          weight: 700
+        - asset: assests/fonts/proxima_ssv/Proxima Nova Thin.otf
+          weight: 300
+        - asset: assests/fonts/proxima_ssv/ProximaNova-Regular.otf
+          weight: 400
+        
     - family:  MYBaazar
       fonts:
         - asset: assests/images/MYBaazar.ttf

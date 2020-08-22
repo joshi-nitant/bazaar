@@ -644,7 +644,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                                 TextDirection.rtl,
                                               ),
                                         firstCardInnerRow(
-                                          "${_ownerUser.city},${_ownerUser.state}",
+                                          "${_ownerUser.city}",
                                           context,
                                           TextDirection.rtl,
                                         ),
@@ -804,61 +804,61 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                 ),
                               ],
                             ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                Row(
-                                  children: <Widget>[
-                                    Icon(
-                                      MYBaazar.balance,
-                                      color: Theme.of(context).primaryColor,
-                                      size: 20.0,
-                                    ),
-                                    isProduct
-                                        ? Text(
-                                            product.quantity,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headline2
-                                                .apply(
-                                                  fontSizeFactor:
-                                                      MediaQuery.of(context)
-                                                          .textScaleFactor,
-                                                  fontSizeDelta: _detlaValue,
-                                                ),
-                                          )
-                                        : Text(
-                                            requirement.quantity + "QTL",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headline2
-                                                .apply(
-                                                  fontSizeFactor:
-                                                      MediaQuery.of(context)
-                                                          .textScaleFactor,
-                                                  fontSizeDelta: _detlaValue,
-                                                ),
-                                          ),
-                                  ],
-                                ),
-                                Row(
-                                  children: <Widget>[
-                                    Text('Total',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headline2
-                                            .apply(
-                                              fontSizeFactor:
-                                                  MediaQuery.of(context)
-                                                      .textScaleFactor,
-                                              fontWeightDelta: -1,
-                                              fontSizeDelta: _detlaValue,
-                                            )),
-                                  ],
-                                ),
-                              ],
-                            ),
+                            // Column(
+                            //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            //   crossAxisAlignment: CrossAxisAlignment.center,
+                            //   children: <Widget>[
+                            //     Row(
+                            //       children: <Widget>[
+                            //         Icon(
+                            //           MYBaazar.balance,
+                            //           color: Theme.of(context).primaryColor,
+                            //           size: 20.0,
+                            //         ),
+                            //         isProduct
+                            //             ? Text(
+                            //                 product.quantity,
+                            //                 style: Theme.of(context)
+                            //                     .textTheme
+                            //                     .headline2
+                            //                     .apply(
+                            //                       fontSizeFactor:
+                            //                           MediaQuery.of(context)
+                            //                               .textScaleFactor,
+                            //                       fontSizeDelta: _detlaValue,
+                            //                     ),
+                            //               )
+                            //             : Text(
+                            //                 requirement.quantity + "QTL",
+                            //                 style: Theme.of(context)
+                            //                     .textTheme
+                            //                     .headline2
+                            //                     .apply(
+                            //                       fontSizeFactor:
+                            //                           MediaQuery.of(context)
+                            //                               .textScaleFactor,
+                            //                       fontSizeDelta: _detlaValue,
+                            //                     ),
+                            //               ),
+                            //       ],
+                            //     ),
+                            //     // Row(
+                            //     //   children: <Widget>[
+                            //     //     Text('Total',
+                            //     //         style: Theme.of(context)
+                            //     //             .textTheme
+                            //     //             .headline2
+                            //     //             .apply(
+                            //     //               fontSizeFactor:
+                            //     //                   MediaQuery.of(context)
+                            //     //                       .textScaleFactor,
+                            //     //               fontWeightDelta: -1,
+                            //     //               fontSizeDelta: _detlaValue,
+                            //     //             )),
+                            //     //   ],
+                            //     // ),
+                            //   ],
+                            // ),
                           ],
                         ),
                         color: Colors.grey[200],

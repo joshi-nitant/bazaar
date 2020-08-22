@@ -67,6 +67,7 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   String errorCategory;
   String _photoText = "Add Photo";
   bool _isPhotoError = false;
+  String _breedDropDownValue;
 
   Future getImage() async {
     final pickedFile = await picker.getImage(source: ImageSource.camera);
@@ -120,6 +121,14 @@ class _ProdReqAddState extends State<ProdReqAdd> {
       this.dropDownValue = value;
       selectedCategory =
           catgeoryList.firstWhere((category) => category.name == value);
+    });
+  }
+
+  void _breedHandler(String value) {
+    print(value);
+    setState(() {
+      this._breedDropDownValue = value;
+      _breedController.text = value;
     });
   }
 
@@ -431,6 +440,10 @@ class _ProdReqAddState extends State<ProdReqAdd> {
     return catList;
   }
 
+  List<String> getBreedAsList() {
+    return ["1200", "1300", "1400", "1500"];
+  }
+
   void _clickHandler() async {
     String address = await _getLocation();
     setState(() {
@@ -492,24 +505,34 @@ class _ProdReqAddState extends State<ProdReqAdd> {
                     ),
                     Container(
                       width: width,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
+                      child:
+                          // Padding(
+                          //   padding:
+                          //       const EdgeInsets.symmetric(horizontal: 8.0),
+                          //   child: TextInputCard(
+                          //     icon: Icons.fiber_pin,
+                          //     titype: TextInputType.number,
+                          //     htext: AppLocalizations.of(context)
+                          //         .translate('Breed'),
+                          //     mdata: data,
+                          //     controller: _breedController,
+                          //     width: data.size.width * 0.9,
+                          //     errorText: errorBreed,
+                          //   ),
+                          // ),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: TextInputCard(
-                              icon: Icons.fiber_pin,
-                              titype: TextInputType.number,
-                              htext: AppLocalizations.of(context)
-                                  .translate('Breed'),
-                              mdata: data,
-                              controller: _breedController,
-                              width: data.size.width * 0.9,
-                              errorText: errorBreed,
-                            ),
-                          ),
-                        ],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 8.0),
+                        child: CategoryDropDown(
+                          categoryHandler: _breedHandler,
+                          dropDownItems: getBreedAsList(),
+                          dropdownValue: this._breedDropDownValue,
+                          errorText: errorBreed,
+                          titleText:
+                              AppLocalizations.of(context).translate("Breed"),
+                          hintText: AppLocalizations.of(context)
+                              .translate("Drop Down Hint"),
+                        ),
                       ),
                     ),
                     Container(

@@ -440,8 +440,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       children: <Widget>[
                                         largeText(context,
                                             _getCategoryname(snapshot.data)),
-                                        normalText(context,
-                                            "${_seller.city},${_seller.state}"),
+                                        normalText(context, "${_seller.city}"),
                                         normalText(
                                             context, _getBreed(snapshot.data)),
                                       ],

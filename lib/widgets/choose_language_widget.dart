@@ -55,25 +55,23 @@ class ChooseLanguageWidget extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        margin: EdgeInsets.only(top: 5),
-                        child: Text(
-                          lang.name,
-                          style: lang.name == "ENGLISH"
-                              ? Theme.of(context).textTheme.bodyText1.apply(
-                                    fontSizeFactor:
-                                        MediaQuery.of(context).textScaleFactor,
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeightDelta: 2,
-                                    fontSizeDelta: -1,
-                                  )
-                              : Theme.of(context).textTheme.bodyText1.apply(
-                                    fontSizeFactor:
-                                        MediaQuery.of(context).textScaleFactor,
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeightDelta: -2,
-                                  ),
-                        ),
-                      )
+                          margin: EdgeInsets.only(top: 5),
+                          child: Text(
+                            lang.name,
+                            style: lang.name == "ENGLISH"
+                                ? Theme.of(context).textTheme.bodyText1.apply(
+                                      fontSizeFactor: MediaQuery.of(context)
+                                          .textScaleFactor,
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeightDelta: 1,
+                                    )
+                                : Theme.of(context).textTheme.bodyText1.apply(
+                                      fontSizeFactor: MediaQuery.of(context)
+                                          .textScaleFactor,
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeightDelta: 1,
+                                    ),
+                          ))
                     ],
                   ),
                 );

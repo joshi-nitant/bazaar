@@ -75,8 +75,8 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<List<Requirement>> _getRequirements() async {
+    this.userId = await _getUserId();
     if (_isInitialLoad) {
-      this.userId = await _getUserId();
       this.user = await _getUser(this.userId);
       var response = await http.post(
         Utils.URL + "getRequirements.php",
@@ -203,8 +203,8 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<List<Product>> _getProducts() async {
+    this.userId = await _getUserId();
     if (_isInitialLoad) {
-      this.userId = await _getUserId();
       this.user = await _getUser(this.userId);
       var response = await http.post(
         Utils.URL + "getProduct.php",
@@ -259,7 +259,8 @@ class _DashboardState extends State<Dashboard> {
   }
 
   void _redirectToManageScreeen() async {
-    Navigator.of(context).pushNamed(ProdReqViewScreen.routeName);
+    Navigator.of(context).pushNamed(ProdReqViewScreen.routeName,
+        arguments: {'category': this.category});
   }
 
   void _redirectToOfferScreeen() async {
@@ -277,7 +278,8 @@ class _DashboardState extends State<Dashboard> {
   void _checkUserIsLoggedIn() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      Navigator.of(context).pushNamed(SingUpScreen.routeName);
+      Navigator.of(context).pushNamed(SingUpScreen.routeName,
+          arguments: {'category': this.category});
     } else {
       Navigator.of(context).pushNamed(ProdReqAdd.routeName);
     }
@@ -360,7 +362,7 @@ class _DashboardState extends State<Dashboard> {
   }
 
   String getPrice(dynamic object) {
-    return "Rs.${object.price_expected}/QTL";
+    return "\u20B9${double.parse(object.price_expected).toInt()}/QTL";
   }
 
   @override
@@ -386,94 +388,99 @@ class _DashboardState extends State<Dashboard> {
 
     category = routeArgs['category'];
     userType = routeArgs['userType'];
-
+    userId = routeArgs['userId'];
     return Scaffold(
       resizeToAvoidBottomInset: false,
       resizeToAvoidBottomPadding: false,
       backgroundColor: Colors.white,
       appBar: appBar,
-      drawer: Drawer(
-        // Add a ListView to the drawer. This ensures the user can scroll
-        // through the options in the drawer if there isn't enough vertical
-        // space to fit everything.
-        child: Column(
-          children: <Widget>[
-            Container(
-              height: height * 0.8,
-              child: ListView(
-                // Important: Remove any padding from the ListView.
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
+      drawer: userId != -1
+          ? Drawer(
+              // Add a ListView to the drawer. This ensures the user can scroll
+              // through the options in the drawer if there isn't enough vertical
+              // space to fit everything.
+              child: Column(
                 children: <Widget>[
-                  DrawerHeader(
-                    child: Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          CircleAvatar(
-                            backgroundColor: Colors.white,
-                            backgroundImage:
-                                AssetImage('assests/images/logo.png'),
-                            radius: 45.0,
+                  Container(
+                    height: height * 0.8,
+                    child: ListView(
+                      // Important: Remove any padding from the ListView.
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      children: <Widget>[
+                        DrawerHeader(
+                          child: Container(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                CircleAvatar(
+                                  backgroundColor: Colors.white,
+                                  backgroundImage:
+                                      AssetImage('assests/images/logo.png'),
+                                  radius: 45.0,
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                          ),
+                        ),
+                        ListTileWidget(
+                          Icons.assignment,
+                          'Transaction History',
+                          _redirectToTransactionHistory,
+                        ),
+                        ListTileWidget(
+                          Icons.people,
+                          'Manage Request',
+                          _redirectToOfferScreeen,
+                        ),
+                        ListTileWidget(
+                          Icons.history,
+                          'Current Transaction',
+                          _redirectToCurrentTransaction,
+                        ),
+                        ListTileWidget(Icons.list, 'Requirement List',
+                            _redirectToManageScreeen),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    flex: 1,
+                    child: Align(
+                      alignment: FractionalOffset.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 18.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            CircleAvatar(
+                              backgroundImage:
+                                  AssetImage('assests/images/logo.png'),
+                              backgroundColor: Colors.white,
+                              radius: 25.0,
+                            ),
+                            SizedBox(
+                              width: 17.0,
+                            ),
+                            Text(
+                              AppLocalizations.of(context)
+                                  .translate('app_title'),
+                              style:
+                                  Theme.of(context).textTheme.headline1.apply(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                    ),
                   ),
-                  ListTileWidget(
-                    Icons.assignment,
-                    'Transaction History',
-                    _redirectToTransactionHistory,
-                  ),
-                  ListTileWidget(
-                    Icons.people,
-                    'Manage Request',
-                    _redirectToOfferScreeen,
-                  ),
-                  ListTileWidget(
-                    Icons.history,
-                    'Current Transaction',
-                    _redirectToCurrentTransaction,
-                  ),
-                  ListTileWidget(
-                      Icons.list, 'Requirement List', _redirectToManageScreeen),
                 ],
               ),
-            ),
-            Flexible(
-              flex: 1,
-              child: Align(
-                alignment: FractionalOffset.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 18.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      CircleAvatar(
-                        backgroundImage: AssetImage('assests/images/logo.png'),
-                        backgroundColor: Colors.white,
-                        radius: 25.0,
-                      ),
-                      SizedBox(
-                        width: 17.0,
-                      ),
-                      Text(
-                        AppLocalizations.of(context).translate('app_title'),
-                        style: Theme.of(context).textTheme.headline1.apply(
-                              color: Theme.of(context).primaryColor,
-                            ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
       body: FutureBuilder(
           future: userType == "buyer" ? _getProducts() : _getRequirements(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -616,12 +623,12 @@ class _DashboardState extends State<Dashboard> {
                     ),
                   ),
                   Container(
-                    height: height * 0.77,
+                    height: height * 0.75,
                     width: width,
                     margin: EdgeInsets.all(5.0),
                     child: Card(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       color: Theme.of(context).primaryColor,
                       child: Padding(
@@ -629,148 +636,252 @@ class _DashboardState extends State<Dashboard> {
                         child: ListView.builder(
                           itemCount: snapshot.data.length,
                           itemBuilder: (BuildContext context, int index) {
-                            return Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              color: Colors.white,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: <Widget>[
-                                  Align(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                          left: 10,
-                                          top: 10,
-                                          bottom: 10,
-                                          right: 5),
-                                      child: CircleAvatar(
-                                          radius: 25,
-                                          backgroundImage: NetworkImage(
-                                              "${Utils.URL}images/${category.imgPath}")),
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pushNamed(
+                                  ProdReqDetail.routeName,
+                                  arguments: {"object": snapshot.data[index]},
+                                ).then((value) => setState(() {}));
+                              },
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                color: Colors.white,
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Align(
+                                      alignment:
+                                          AlignmentDirectional.centerStart,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                            left: 10,
+                                            top: 10,
+                                            bottom: 10,
+                                            right: 5),
+                                        child: CircleAvatar(
+                                            radius: 25,
+                                            backgroundImage: NetworkImage(
+                                                "${Utils.URL}images/${category.imgPath}")),
+                                      ),
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: <Widget>[
-                                        Padding(
-                                          padding: EdgeInsets.all(3),
-                                          child: Text(
-                                            snapshot.data[index].breed +
-                                                " | " +
-                                                "${AppLocalizations.of(context).translate(category.name)}" +
-                                                " in " +
-                                                getCity(snapshot.data[index]),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText2
-                                                .apply(
-                                                  fontSizeFactor:
-                                                      MediaQuery.of(context)
-                                                          .textScaleFactor,
-                                                ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                        FittedBox(
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 0),
+                                        child: Container(
+                                          margin: EdgeInsets.only(
+                                              left: width * 0.05),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: <Widget>[
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(
-                                                    Icons.gavel,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                  ),
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          right: 3)),
-                                                  Text(
-                                                    getPrice(
-                                                        snapshot.data[index]),
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1
-                                                        .apply(
-                                                          color: Colors.black,
-                                                          fontSizeFactor:
-                                                              MediaQuery.of(
-                                                                      context)
-                                                                  .textScaleFactor,
-                                                          fontSizeDelta: -2,
+                                              Padding(
+                                                padding: EdgeInsets.all(3),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Container(
+                                                      width: width * 0.15,
+                                                      child: Text(
+                                                          snapshot.data[index]
+                                                              .breed,
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodyText2
+                                                                  .apply(
+                                                                    fontSizeFactor:
+                                                                        MediaQuery.of(context)
+                                                                            .textScaleFactor,
+                                                                    fontSizeDelta:
+                                                                        -2,
+                                                                  ),
+                                                          textAlign:
+                                                              TextAlign.start),
+                                                    ),
+                                                    Container(
+                                                      width: width * 0.25,
+                                                      child: Text(
+                                                        "${AppLocalizations.of(context).translate(category.name)}",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyText2
+                                                            .apply(
+                                                                fontSizeFactor:
+                                                                    MediaQuery.of(
+                                                                            context)
+                                                                        .textScaleFactor,
+                                                                fontSizeDelta:
+                                                                    3,
+                                                                color: Colors
+                                                                    .black),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        softWrap: true,
+                                                      ),
+                                                    ),
+                                                    FittedBox(
+                                                      child: Container(
+                                                        width: width * 0.22,
+                                                        height: height * 0.03,
+                                                        child: Text(
+                                                          getCity(snapshot
+                                                              .data[index]),
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodyText2
+                                                                  .apply(
+                                                                    fontSizeFactor:
+                                                                        MediaQuery.of(context)
+                                                                            .textScaleFactor,
+                                                                    fontSizeDelta:
+                                                                        -4,
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
+                                                          textAlign:
+                                                              TextAlign.start,
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow
+                                                              .visible,
                                                         ),
-                                                  ),
-                                                ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                               Padding(
-                                                padding:
-                                                    EdgeInsets.only(right: 10),
-                                              ),
-                                              Row(
-                                                children: <Widget>[
-                                                  Icon(
-                                                    MYBaazar.balance,
-                                                    color: Theme.of(context)
-                                                        .primaryColor,
-                                                  ),
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          right: 3)),
-                                                  Text(
-                                                    "${snapshot.data[index].quantity}QTL",
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyText1
-                                                        .apply(
-                                                          color: Colors.black,
-                                                          fontSizeFactor:
-                                                              MediaQuery.of(
+                                                padding: const EdgeInsets.only(
+                                                    top: 8.0),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Container(
+                                                      width: width * 0.28,
+                                                      child: FittedBox(
+                                                        child: Row(
+                                                          children: <Widget>[
+                                                            Icon(
+                                                              Icons.gavel,
+                                                              color: Theme.of(
                                                                       context)
-                                                                  .textScaleFactor,
-                                                          fontSizeDelta: -2,
+                                                                  .primaryColor,
+                                                            ),
+                                                            Padding(
+                                                                padding: EdgeInsets
+                                                                    .only(
+                                                                        right:
+                                                                            3)),
+                                                            Wrap(
+                                                              children: <
+                                                                  Widget>[
+                                                                Text(
+                                                                  getPrice(snapshot
+                                                                          .data[
+                                                                      index]),
+                                                                  style: Theme.of(
+                                                                          context)
+                                                                      .textTheme
+                                                                      .headline2
+                                                                      .apply(
+                                                                        fontSizeFactor:
+                                                                            MediaQuery.of(context).textScaleFactor,
+                                                                      ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
                                                         ),
-                                                  )
-                                                ],
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: 10),
+                                                    ),
+                                                    Container(
+                                                      width: width * 0.25,
+                                                      margin: EdgeInsets.only(
+                                                          left: width * 0.08),
+                                                      child: FittedBox(
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .start,
+                                                          children: <Widget>[
+                                                            Icon(
+                                                              MYBaazar.balance,
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .primaryColor,
+                                                            ),
+                                                            Padding(
+                                                                padding: EdgeInsets
+                                                                    .only(
+                                                                        right:
+                                                                            3)),
+                                                            Text(
+                                                              "${snapshot.data[index].remainingQty} QTL",
+                                                              style: Theme.of(
+                                                                      context)
+                                                                  .textTheme
+                                                                  .headline2
+                                                                  .apply(
+                                                                    fontSizeFactor:
+                                                                        MediaQuery.of(context)
+                                                                            .textScaleFactor,
+                                                                  ),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: AlignmentDirectional.centerEnd,
-                                    child: Padding(
-                                      padding: EdgeInsets.all(3),
-                                      child: RaisedButton(
-                                        color: Theme.of(context).primaryColor,
-                                        onPressed: () {
-                                          Navigator.of(context).pushNamed(
-                                            ProdReqDetail.routeName,
-                                            arguments: {
-                                              "object": snapshot.data[index]
-                                            },
-                                          ).then((value) => setState(() {}));
-                                        },
-                                        child: Text("Bid",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headline2
-                                                .apply(
-                                                  color: Colors.white,
-                                                )),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(30.0),
-                                            side: BorderSide(
-                                                color: Color(0xFF739b21))),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    // Align(
+                                    //   alignment: AlignmentDirectional.centerEnd,
+                                    //   child: Padding(
+                                    //     padding: EdgeInsets.all(3),
+                                    //     child: RaisedButton(
+                                    //       color: Theme.of(context).primaryColor,
+                                    //       onPressed: () {
+                                    //         Navigator.of(context).pushNamed(
+                                    //           ProdReqDetail.routeName,
+                                    //           arguments: {
+                                    //             "object": snapshot.data[index]
+                                    //           },
+                                    //         ).then((value) => setState(() {}));
+                                    //       },
+                                    //       child: Text("Bid",
+                                    //           style: Theme.of(context)
+                                    //               .textTheme
+                                    //               .headline2
+                                    //               .apply(
+                                    //                 color: Colors.white,
+                                    //               )),
+                                    //       shape: RoundedRectangleBorder(
+                                    //           borderRadius:
+                                    //               BorderRadius.circular(30.0),
+                                    //           side: BorderSide(
+                                    //               color: Color(0xFF739b21))),
+                                    //     ),
+                                    //   ),
+                                    // ),
+                                  ],
+                                ),
                               ),
                             );
                           },

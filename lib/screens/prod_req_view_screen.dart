@@ -365,6 +365,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                                           .bodyText1
                                           .apply(
                                             fontSizeDelta: 2,
+                                            color: Colors.grey,
                                           ),
                                     ),
                                   ],
@@ -384,6 +385,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                                           .bodyText1
                                           .apply(
                                             fontSizeDelta: 2,
+                                            color: Colors.grey,
                                           ),
                                     ),
                                   ],

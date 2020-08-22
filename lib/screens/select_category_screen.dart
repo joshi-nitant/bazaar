@@ -4,6 +4,7 @@ import 'package:baazar/classes/app_localizations.dart';
 import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/breed.dart';
 import 'package:baazar/models/category.dart';
+import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/widgets/footer_widget.dart';
@@ -23,7 +24,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   String userType;
-
+  int userId;
   // List<Category> categoryList = [
   //   Category(id: 1, name: "Castor", imgPath: "assests/images/rice.png"),
   //   Category(id: 2, name: "GroundNut", imgPath: "assests/images/rice.png"),
@@ -36,6 +37,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
     sharedPreference.setString(
         CategoryScreen.CATEGORY_LIST_SHARED_PREFERENCE, json.encode(jsonData));
     //print("Data stored ${json.encode(jsonData)}");
+  }
+
+  Future<int> _getUserId() async {
+    SharedPreferences sharedPreference = await SharedPreferences.getInstance();
+    if (sharedPreference.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
+      return -1;
+    } else {
+      return sharedPreference.getInt(User.USER_ID_SHARED_PREFERNCE);
+    }
   }
 
   Future<List<Breed>> _getCategoryBreed(String categoryId) async {
@@ -72,7 +82,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
     var response = await http.get(
       Utils.URL + "getCategory.php",
     );
-
+    this.userId = await _getUserId();
+    print(userId);
     var jsonData = json.decode(response.body);
     List<Category> categories = [];
     for (var u in jsonData) {
@@ -170,6 +181,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                       arguments: {
                                         'category': category,
                                         'userType': userType,
+                                        'userId': userId,
                                       },
                                     );
                                   },
@@ -178,15 +190,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                       Card(
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(55.0)),
+                                                BorderRadius.circular(50.0)),
                                         child: CircleAvatar(
                                           backgroundImage: NetworkImage(
                                             Utils.URL +
                                                 "images/" +
                                                 category.imgPath,
                                           ),
-                                          backgroundColor: Colors.white,
-                                          radius: 42.0,
+                                          radius: 50.0,
                                         ),
                                       ),
                                       Text(

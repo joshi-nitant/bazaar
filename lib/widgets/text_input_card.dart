@@ -53,6 +53,7 @@ class _TextInputCardState extends State<TextInputCard> {
               labelStyle: Theme.of(context).textTheme.bodyText2.apply(
                     color: Theme.of(context).primaryColor,
                   ),
+
               contentPadding: EdgeInsets.all(12),
               focusedBorder: InputBorder.none,
               enabledBorder: InputBorder.none,

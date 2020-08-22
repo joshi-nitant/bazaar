@@ -16,7 +16,7 @@
     "Add Products": "Add Products",
     "Dashboard Empty": "Nothing available yet.",
     "Search": "Search",
-    "Filter Km Drop": "Select Region",
+    "Filter Km Drop": "Select Radius Km",
 
     "Breed": "Breed",
     "Select Location": "Select Location",
@@ -54,7 +54,7 @@
     "Name": "Name",
     "Contact Number": "Contact Number",
     "Address": "Address",
-    "Sign Up": "SignUp",
+    "Sign Up": "Sign Up",
     "Pan Card": "Pan Card",
     "Signup successful": "Signup successful",
     "Signup unsuccessful": "Signup unsuccessful. Retry...",
@@ -78,7 +78,7 @@
     "Packaging Charge": "Packaging Charge",
     "Product Charge": "Product Charge",
     "Total": "Total",
-    "Post Offer": "POST OFFER",
+    "Post Offer": "Post Offer",
     "Checkout": "Checkout",
 
     "DASHBOARD ERROR": "ERROR: NO PRODUCT EXISTS.",
