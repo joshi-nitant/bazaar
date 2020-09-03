@@ -54,7 +54,7 @@ class _CustomDialogState extends State<CustomDialog> {
         children: <Widget>[
           Container(
             width: data.size.width * 0.9,
-            height: data.size.height * 0.4,
+            height: data.size.height * 0.35,
             margin: EdgeInsets.only(top: 40.0),
             decoration: new BoxDecoration(
               color: Colors.white,
@@ -92,7 +92,7 @@ class _CustomDialogState extends State<CustomDialog> {
             ),
           ),
           Positioned(
-            left: 100,
+            left: data.size.width * 0.30,
             child: ClipOval(
               child: Material(
                 color: primarycolor, // button color
@@ -112,8 +112,8 @@ class _CustomDialogState extends State<CustomDialog> {
             ),
           ),
           Positioned(
-            left: 110,
-            top: 220,
+            left: data.size.width * 0.33,
+            top: data.size.height * 0.30,
             child: ClipOval(
               child: Material(
                 color: primarycolor, // button color

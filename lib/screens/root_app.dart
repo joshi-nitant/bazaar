@@ -2,6 +2,7 @@ import 'package:baazar/screens/current_transaction_screen.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
 import 'package:baazar/screens/manage_offer_screen.dart';
+import 'package:baazar/screens/offer_detail_screen.dart';
 import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
@@ -9,7 +10,9 @@ import 'package:baazar/screens/prod_req_view_screen.dart';
 import 'package:baazar/screens/prod_req_update_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/singup_screen.dart';
+import 'package:baazar/screens/transaction_detail_screen.dart';
 import 'package:baazar/screens/transaction_histroy_scree.dart';
+import 'package:baazar/screens/update_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -41,6 +44,9 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  static final Color primarycolor = Color(0xFF739b21);
+  static final Color primaryColorLight = Color(0xFFc4d5a1);
+  static final Color accentColor = Color(0xFF739b21);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -50,15 +56,15 @@ class _MyAppState extends State<MyApp> {
           // Color("0xff85b02b");
           //156, 205, 50
           //Color.fromRGBO(140, 185, 45, 1)
-          primaryColor: Colors.lightGreen[600],
-          accentColor: Color(0xff739b21),
-          primaryColorLight: Color(0xffc4d5a1),
+          primaryColor: primarycolor,
+          accentColor: accentColor,
+          primaryColorLight: primaryColorLight,
           brightness: Brightness.light,
           fontFamily: 'Adam',
           textTheme: ThemeData.light().textTheme.copyWith(
                 headline1: TextStyle(
                     fontSize: 20.0,
-                    letterSpacing: 7.0,
+                    letterSpacing: 3.0,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'ProximaNova'),
                 bodyText1: TextStyle(
@@ -135,6 +141,9 @@ class _MyAppState extends State<MyApp> {
         PaymentScreen.routeName: (ctx) => PaymentScreen(),
         CurrentTransaction.routeName: (ctx) => CurrentTransaction(),
         TransactionHistory.routeName: (ctx) => TransactionHistory(),
+        UpdateProfileScreen.routeName: (ctx) => UpdateProfileScreen(),
+        OfferDetailScreen.routeName: (ctx) => OfferDetailScreen(),
+        TransactionDetailScreen.routeName: (ctx) => TransactionDetailScreen(),
       },
 
       home: isLangSelected ? CheckUserScreen() : ChooseLanguageScreen(),

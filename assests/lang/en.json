@@ -50,6 +50,8 @@
     "Manage Offer": "Manage Offer",
     "Bid": "Bid",
     "Manage Request": "Manage Request",
+    "Manage Profile": "Manage Profile",
+    "Update Profile": "Update Profile",
 
     "Name": "Name",
     "Contact Number": "Contact Number",
@@ -60,6 +62,10 @@
     "Signup unsuccessful": "Signup unsuccessful. Retry...",
     "Trade Details": "Trade Details",
     "Update Product": "Update Product",
+    "Update": "Update",
+    "Pan Card Accepted": "Your Pan Card is accepted",
+    "Pan Card Rejected": "Your Pan Card is rejected. Upload again..",
+    "Pan Card Pending": "Your Pan Card is not yet approved",
 
     "Quantity": "Quantity",
     "Choose category": "Choose Category",

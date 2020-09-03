@@ -48,7 +48,7 @@ class ChooseLanguageWidget extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       Container(
-                        height: 100,
+                        height: 110,
                         child: Image.asset(
                           lang.path,
                           fit: BoxFit.fill,

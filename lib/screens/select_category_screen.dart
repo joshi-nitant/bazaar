@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:baazar/classes/app_localizations.dart';
+import 'package:baazar/classes/images_path.dart';
 import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/breed.dart';
 import 'package:baazar/models/category.dart';
@@ -133,6 +134,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     var routeArgs =
         ModalRoute.of(context).settings.arguments as Map<String, String>;
     userType = routeArgs['userType'];
+    var height = (MediaQuery.of(context).size.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
@@ -167,58 +171,179 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   Expanded(
                     flex: 1,
                     child: Container(
-                      child: SingleChildScrollView(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: snapshot.data.map<Widget>(
-                              (category) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).pushNamed(
-                                      Dashboard.routeName,
-                                      arguments: {
-                                        'category': category,
-                                        'userType': userType,
-                                        'userId': userId,
-                                      },
-                                    );
+                      width: width,
+                      height: height * 0.6,
+                      margin: EdgeInsets.only(top: height * 0.1),
+                      child: GridView.count(
+                        crossAxisCount: 2,
+                        scrollDirection: Axis.vertical,
+                        children: List.generate(
+                          snapshot.data.length,
+                          (index) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pushNamed(
+                                  Dashboard.routeName,
+                                  arguments: {
+                                    'category': snapshot.data[index],
+                                    'userType': userType,
+                                    'userId': userId,
                                   },
-                                  child: Column(
-                                    children: <Widget>[
-                                      Card(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(50.0)),
-                                        child: CircleAvatar(
-                                          backgroundImage: NetworkImage(
-                                            Utils.URL +
-                                                "images/" +
-                                                category.imgPath,
-                                          ),
-                                          radius: 50.0,
-                                        ),
-                                      ),
-                                      Text(
-                                          AppLocalizations.of(context)
-                                              .translate(category.name),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyText1
-                                              .apply(
-                                                color: Theme.of(context)
-                                                    .primaryColor,
-                                              )),
-                                      SizedBox(height: 15.0),
-                                    ],
-                                  ),
                                 );
                               },
-                            ).toList(),
-                          ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: <Widget>[
+                                  Card(
+                                    child: CircleAvatar(
+                                      backgroundImage: NetworkImage(
+                                        Utils.URL +
+                                            "images/" +
+                                            snapshot.data[index].imgPath,
+                                      ),
+                                      backgroundColor: Colors.grey[300],
+                                      // backgroundImage:
+                                      //     AssetImage(ImagePath.buyer),
+                                      radius: 55,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(55),
+                                    ),
+                                    shadowColor: Colors.grey[300],
+                                    elevation: 5.0,
+                                  ),
+                                  // Container(
+                                  //   width: 150,
+                                  //   height: 150,
+                                  //   decoration: BoxDecoration(
+                                  //       shape: BoxShape.circle,
+                                  //       image: DecorationImage(
+                                  //         fit: BoxFit.fill,
+                                  //         // image: NetworkImage(
+                                  //         //   Utils.URL +
+                                  //         //       "images/" +
+                                  //         //       snapshot.data[index].imgPath,
+                                  //         // ),
+                                  //         image: AssetImage(ImagePath.buyer),
+                                  //       )),
+                                  // ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8),
+                                    child: Text(
+                                        AppLocalizations.of(context).translate(
+                                            snapshot.data[index].name),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1
+                                            .apply(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                            )),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
+                        // itemBuilder: (BuildContext context, int index) {
+                        //   return GestureDetector(
+                        //     onTap: () {
+                        //       Navigator.of(context).pushNamed(
+                        //         Dashboard.routeName,
+                        //         arguments: {
+                        //           'category': snapshot.data[index].name,
+                        //           'userType': userType,
+                        //           'userId': userId,
+                        //         },
+                        //       );
+                        //     },
+                        //     child: Column(
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       crossAxisAlignment: CrossAxisAlignment.center,
+                        //       children: <Widget>[
+                        //         Container(
+                        //           width: 150,
+                        //           height: 150,
+                        //           decoration: BoxDecoration(
+                        //               shape: BoxShape.circle,
+                        //               image: DecorationImage(
+                        //                 fit: BoxFit.fill,
+                        //                 // image: NetworkImage(
+                        //                 //   Utils.URL +
+                        //                 //       "images/" +
+                        //                 //       snapshot.data[index].imgPath,
+                        //                 // ),
+                        //                 image: AssetImage(ImagePath.buyer),
+                        //               )),
+                        //         ),
+                        //         Padding(
+                        //           padding: EdgeInsets.all(8),
+                        //           child: Text(
+                        //               AppLocalizations.of(context)
+                        //                   .translate(snapshot.data[index].name),
+                        //               style: Theme.of(context)
+                        //                   .textTheme
+                        //                   .bodyText1
+                        //                   .apply(
+                        //                     color:
+                        //                         Theme.of(context).primaryColor,
+                        //                   )),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   );
+                        // },
                       ),
+
+                      // child: Row(
+                      //   mainAxisAlignment: MainAxisAlignment.center,
+                      //   crossAxisAlignment: CrossAxisAlignment.center,
+                      //   children: snapshot.data.map<Widget>(
+                      //     (category) {
+                      //       return GestureDetector(
+                      //         onTap: () {
+                      //           Navigator.of(context).pushNamed(
+                      //             Dashboard.routeName,
+                      //             arguments: {
+                      //               'category': category,
+                      //               'userType': userType,
+                      //               'userId': userId,
+                      //             },
+                      //           );
+                      //         },
+                      //         child: Column(
+                      //           children: <Widget>[
+                      //             Card(
+                      //               shape: RoundedRectangleBorder(
+                      //                   borderRadius:
+                      //                       BorderRadius.circular(50.0)),
+                      //               child: CircleAvatar(
+                      //                 backgroundImage: NetworkImage(
+                      //                   Utils.URL +
+                      //                       "images/" +
+                      //                       category.imgPath,
+                      //                 ),
+                      //                 radius: 50.0,
+                      //               ),
+                      //             ),
+                      //             Text(
+                      //                 AppLocalizations.of(context)
+                      //                     .translate(category.name),
+                      //                 style: Theme.of(context)
+                      //                     .textTheme
+                      //                     .bodyText1
+                      //                     .apply(
+                      //                       color: Theme.of(context)
+                      //                           .primaryColor,
+                      //                     )),
+                      //             SizedBox(height: 15.0),
+                      //           ],
+                      //         ),
+                      //       );
+                      //     },
+                      //   ).toList(),
+                      // ),
                     ),
                   ),
                   Container(

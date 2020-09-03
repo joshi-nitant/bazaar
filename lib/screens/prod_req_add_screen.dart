@@ -309,6 +309,16 @@ class _ProdReqAddState extends State<ProdReqAdd> {
             message: dialogMesage,
             mainIcon: Icons.check,
             subIcon: HandShakeIcon.handshake);
+      } else if (data['response_code'] == 409) {
+        String text = "Sorry!!!";
+        String dialogMesage = "Your pan card is not yet approved.";
+        String buttonMessage = "Ok!!";
+        await CustomDialog.openDialog(
+            context: context,
+            title: text,
+            message: dialogMesage,
+            mainIcon: Icons.check,
+            subIcon: Icons.error);
       }
     }
   }
@@ -454,12 +464,21 @@ class _ProdReqAddState extends State<ProdReqAdd> {
   @override
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
+    // var appBar = AppBar(
+    //   title: Text(AppLocalizations.of(context).translate('Product Details'),
+    //       style: Theme.of(context).textTheme.headline1.apply(
+    //             color: Colors.white,
+    //             letterSpacingDelta: -5.0,
+    //           )),
+    //   iconTheme: IconThemeData(color: Colors.white),
+    // );
     var appBar = AppBar(
-      title: Text(AppLocalizations.of(context).translate('Product Details'),
-          style: Theme.of(context).textTheme.headline1.apply(
-                color: Colors.white,
-                letterSpacingDelta: -5.0,
-              )),
+      title: Text(
+        AppLocalizations.of(context).translate('Product Details'),
+        style: Theme.of(context).textTheme.headline1.apply(
+              color: Colors.white,
+            ),
+      ),
       iconTheme: IconThemeData(color: Colors.white),
     );
     var height = (MediaQuery.of(context).size.height -

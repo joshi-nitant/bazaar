@@ -12,6 +12,7 @@ import 'package:baazar/screens/error_screen.dart';
 import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
+import 'package:baazar/screens/transaction_detail_screen.dart';
 import 'package:baazar/widgets/button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -123,7 +124,14 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             sellerId: int.parse(u['seller_id']),
             reqbidId: bid,
             endDate: DateTime.parse(u['end_date']),
+            completionDate: DateTime.parse(u['complete_date']),
             totalAmount: int.parse(u['total_amount']),
+            deliveryDate: DateTime.parse(u['delivery_date']),
+            deliveryAddress: u['delivery_address'],
+            deliveryAmount: int.parse(u['delivery_amount']),
+            packagingAmount: int.parse(u['packaging_amount']),
+            productCharge: int.parse(u['product_charge']),
+            transactionAmount: int.parse(u['transaction_amount']),
           );
           _pendingTransactions.add(transaction);
         }
@@ -159,7 +167,14 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             sellerId: int.parse(u['seller_id']),
             productBidId: bid,
             endDate: DateTime.parse(u['end_date']),
+            completionDate: DateTime.parse(u['complete_date']),
             totalAmount: int.parse(u['total_amount']),
+            deliveryDate: DateTime.parse(u['delivery_date']),
+            deliveryAddress: u['delivery_address'],
+            deliveryAmount: int.parse(u['delivery_amount']),
+            packagingAmount: int.parse(u['packaging_amount']),
+            productCharge: int.parse(u['product_charge']),
+            transactionAmount: int.parse(u['transaction_amount']),
           );
 
           _pendingTransactions.add(transaction);
@@ -243,6 +258,11 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     return DateFormat.jm().format(object);
   }
 
+  void _detailTransaction(Transaction object) {
+    Navigator.of(context).pushNamed(TransactionDetailScreen.routeName,
+        arguments: {'transaction_object': object});
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = MediaQuery.of(context);
@@ -258,7 +278,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               AppLocalizations.of(context).translate('Transaction History'),
               style: Theme.of(context).textTheme.headline1.apply(
                     color: Colors.white,
-                    letterSpacingDelta: -5,
+                    letterSpacingDelta: -2,
                   ),
             ),
           ),
@@ -294,72 +314,88 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             child: Card(
               color: Theme.of(context).primaryColor,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0)),
+                  borderRadius:
+                      BorderRadius.circular(Utils.BORDER_RADIUS_CARD)),
               child: ListView.builder(
                 itemBuilder: (ctx, index) {
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 5,
-                    margin: EdgeInsets.all(8),
-                    child: ListTile(
-                      //contentPadding: EdgeInsets.only(bottom: 10),
-                      //isThreeLine: true,
-                      leading: CircleAvatar(
-                        radius: 30.0,
-                        backgroundImage: _getImage(snapshot.data[index]),
-                        backgroundColor: Colors.transparent,
+                  return GestureDetector(
+                    onTap: () {
+                      _detailTransaction(snapshot.data[index]);
+                    },
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(Utils.BORDER_RADIUS_CARD),
                       ),
-                      title: Container(
-                        width: width * 0.7,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            _getTitle(snapshot.data[index]),
-                            style: Theme.of(context).textTheme.bodyText1,
-                            textAlign: TextAlign.start,
+                      elevation: 5,
+                      margin: EdgeInsets.all(8),
+                      child: ListTile(
+                        //contentPadding: EdgeInsets.only(bottom: 10),
+                        //isThreeLine: true,
+                        leading: Container(
+                          margin: EdgeInsets.only(left: 3),
+                          child: CircleAvatar(
+                            radius: 30.0,
+                            backgroundImage: _getImage(snapshot.data[index]),
+                            backgroundColor: Colors.transparent,
                           ),
                         ),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(
-                          //"Pending transaction of \u20B9 ${_getTotalAmount(snapshot.data[index])}",
-
-                          "Date\n${getDate(snapshot.data[index].endDate)}\nTime\n${getTime(snapshot.data[index].endDate)}",
-                          style: Theme.of(context).textTheme.headline2,
-                          textAlign: TextAlign.start,
-                          softWrap: true,
+                        title: Container(
+                          width: width * 0.7,
+                          child: Padding(
+                            padding: const EdgeInsets.all(0.0),
+                            child: Text(
+                              _getTitle(snapshot.data[index]),
+                              style: Theme.of(context).textTheme.bodyText1,
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
                         ),
-                      ),
+                        contentPadding: EdgeInsets.all(0),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 3.0),
+                          child: FittedBox(
+                            child: Text(
+                              //"Pending transaction of \u20B9 ${_getTotalAmount(snapshot.data[index])}",
+                              "Delivered on ${getDate(snapshot.data[index].deliveryDate)}",
+                              //"Date\n${getDate(snapshot.data[index].completionDate)}\nTime\n${getTime(snapshot.data[index].completionDate)}",
+                              style: Theme.of(context).textTheme.headline2,
+                              textAlign: TextAlign.start,
+                              softWrap: true,
+                            ),
+                          ),
+                        ),
 
-                      trailing: Container(
-                        height: 55,
-                        width: width * 0.3,
-                        child: FittedBox(
-                          child: Card(
-                            color: Theme.of(context).primaryColor,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25.0)),
-                            child: RaisedButton(
+                        trailing: Container(
+                          height: 55,
+                          width: width * 0.3,
+                          child: FittedBox(
+                            child: Card(
+                              color: Theme.of(context).primaryColor,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25.0)),
-                              color: Theme.of(context).primaryColor,
-                              child: Text(
-                                //"\u20B9300000000",
-                                "\u20B9${_formatter.format(snapshot.data[index].totalAmount)}",
-                                overflow: TextOverflow.fade,
-                                style:
-                                    Theme.of(context).textTheme.bodyText1.apply(
-                                          color: Colors.white,
-                                        ),
-                              ),
-                              onPressed: () {},
-                              textColor: Theme.of(context).primaryColor,
-                              padding: EdgeInsets.all(8.0),
+                              child: RaisedButton(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25.0)),
+                                color: Colors.white,
+                                child: Text(
+                                  //"\u20B9300000000",
+                                  "\u20B9${_formatter.format(snapshot.data[index].totalAmount)}",
+                                  overflow: TextOverflow.fade,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyText1
+                                      .apply(
+                                        //fontWeightDelta: -1,
+                                        color: Colors.grey[400],
+                                      ),
+                                ),
+                                onPressed: () {},
+                                textColor: Theme.of(context).primaryColor,
+                                padding: EdgeInsets.all(8.0),
 
-                              //label:
+                                //label:
+                              ),
                             ),
                           ),
                         ),

@@ -14,7 +14,10 @@ import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/prod_req_detail.dart';
 import 'package:baazar/screens/prod_req_view_screen.dart';
 import 'package:baazar/screens/transaction_histroy_scree.dart';
+import 'package:baazar/screens/update_profile_screen.dart';
+import 'package:baazar/widgets/dialog_widget.dart';
 import 'package:baazar/widgets/filter_dialog_widget.dart';
+import 'package:baazar/widgets/hand_shake_icon_icons.dart';
 import 'package:baazar/widgets/list_tile_widget.dart';
 import 'package:baazar/screens/singup_screen.dart';
 import 'package:baazar/widgets/m_y_baazar_icons.dart';
@@ -49,19 +52,10 @@ class _DashboardState extends State<Dashboard> {
   Function breedHandler;
   bool _isInitialLoad = true;
   var appBar;
+  double _TRANSACTION_CHARGE_PERCENTAGE;
+  double _DELIVERY_CHARGE_PER_KM;
 
   List<String> kilometerList = ["None", "50", "100", "150", "200", "300"];
-  @override
-  void didChangeDependencies() {
-    cusSearchBar = Text(
-      AppLocalizations.of(context).translate('app_title'),
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 25,
-      ),
-    );
-    super.didChangeDependencies();
-  }
 
   Future<double> _getDistance(
       LatLng startCoordinates, LatLng destinationCoordinates) async {
@@ -93,8 +87,12 @@ class _DashboardState extends State<Dashboard> {
       var jsondata = json.decode(response.body);
       print(jsondata);
       List<Requirement> requirements = [];
-      if (jsondata != 404) {
-        for (var u in jsondata) {
+      if (jsondata['response_code'] != "404") {
+        _DELIVERY_CHARGE_PER_KM =
+            double.tryParse(jsondata['DELIVERY_CHARGE_PER_KM']);
+        _TRANSACTION_CHARGE_PERCENTAGE =
+            double.tryParse(jsondata['TRANSACTION_CHARGE_PERCENTAGE']);
+        for (var u in jsondata['requirements']) {
           Requirement requirement = Requirement(
             id: u['req_id'],
             quantity: u['quantity'],
@@ -120,13 +118,16 @@ class _DashboardState extends State<Dashboard> {
         }
       }
       this.requirementList = requirements;
-      if (userId != null) await _calculateDistanceRequirement(requirementList);
+      if (userId != null) {
+        await _calculateDistanceRequirement(requirementList);
+      }
       return this.requirementList;
     }
     return this.requirementFilterList;
   }
 
-  Future<void> _calculateDistanceProduct(List<Product> productList) async {
+  Future<List<Product>> _calculateDistanceProduct(
+      List<Product> productList) async {
     LatLng startCordinate = LatLng(
       double.parse(this.user.latitude),
       double.parse(this.user.longitude),
@@ -142,6 +143,7 @@ class _DashboardState extends State<Dashboard> {
       productList[i].distance =
           (await _getDistance(startCordinate, endCordinate)).toInt();
     }
+    return productList;
   }
 
   Future<void> _calculateDistanceRequirement(
@@ -217,11 +219,16 @@ class _DashboardState extends State<Dashboard> {
           },
         ),
       );
+      print(response.body);
       var jsondata = json.decode(response.body);
       print(jsondata);
       List<Product> products = [];
-      if (jsondata != 404) {
-        for (var u in jsondata) {
+      if (jsondata['response_code'] != "404") {
+        _DELIVERY_CHARGE_PER_KM =
+            double.tryParse(jsondata['DELIVERY_CHARGE_PER_KM']);
+        _TRANSACTION_CHARGE_PERCENTAGE =
+            double.tryParse(jsondata['TRANSACTION_CHARGE_PERCENTAGE']);
+        for (var u in jsondata['products']) {
           Product product = Product(
             id: u['prod_id'],
             quantity: u['quantity'],
@@ -252,10 +259,21 @@ class _DashboardState extends State<Dashboard> {
       }
 
       this.productList = products;
-      if (userId != null) await _calculateDistanceProduct(productList);
+      print("before distance");
+      if (userId != null) {
+        this.productList = await _calculateDistanceProduct(productList);
+        for (Product prod in productList) {
+          print(prod.distance);
+        }
+      }
+      print("returnng");
       return this.productList;
     }
     return this.productFilterList;
+  }
+
+  void _redirectToManageProfile() async {
+    Navigator.of(context).pushNamed(UpdateProfileScreen.routeName);
   }
 
   void _redirectToManageScreeen() async {
@@ -278,8 +296,12 @@ class _DashboardState extends State<Dashboard> {
   void _checkUserIsLoggedIn() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      Navigator.of(context).pushNamed(SingUpScreen.routeName,
+      await Navigator.of(context).pushNamed(SingUpScreen.routeName,
           arguments: {'category': this.category});
+      print("poped");
+      setState(() {
+        userId = sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE);
+      });
     } else {
       Navigator.of(context).pushNamed(ProdReqAdd.routeName);
     }
@@ -313,11 +335,15 @@ class _DashboardState extends State<Dashboard> {
 
       if (userType == "buyer") {
         productFilterList = this.productList;
+        // for (Product req in productFilterList) {
+        //   print(req.distance);
+        // }
         if (breed.length != 0) {
           productFilterList = (productFilterList
               .where((product) => breed.contains(product.breed))
               .toList());
         }
+
         if (kilometer != "None") {
           int distance = int.parse(kilometer);
           productFilterList = productFilterList
@@ -332,17 +358,24 @@ class _DashboardState extends State<Dashboard> {
             .toList();
       } else {
         requirementFilterList = this.requirementList;
+
+        for (Requirement req in requirementFilterList) {
+          print(req.distance);
+        }
+
         if (kilometer != "None") {
           int distance = int.parse(kilometer);
           requirementFilterList = (requirementFilterList
               .where((requirement) => requirement.distance <= distance)
               .toList());
         }
+
         if (breed.length != 0) {
           requirementFilterList = (requirementFilterList
               .where((requirement) => breed.contains(requirement.breed))
               .toList());
         }
+
         requirementFilterList = (requirementFilterList
             .where((requirement) =>
                 startPrice <=
@@ -363,6 +396,31 @@ class _DashboardState extends State<Dashboard> {
 
   String getPrice(dynamic object) {
     return "\u20B9${double.parse(object.price_expected).toInt()}/QTL";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print("init");
+    SharedPreferences.getInstance().then((prefs) {
+      setState(() => userId = prefs.getInt(User.USER_ID_SHARED_PREFERNCE));
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    print("didChangeDependencies");
+    cusSearchBar = Text(
+      AppLocalizations.of(context).translate('app_title'),
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 25,
+      ),
+    );
+    SharedPreferences.getInstance().then((prefs) {
+      setState(() => userId = prefs.getInt(User.USER_ID_SHARED_PREFERNCE));
+    });
   }
 
   @override
@@ -388,13 +446,13 @@ class _DashboardState extends State<Dashboard> {
 
     category = routeArgs['category'];
     userType = routeArgs['userType'];
-    userId = routeArgs['userId'];
+    // userId = routeArgs['userId'];
     return Scaffold(
       resizeToAvoidBottomInset: false,
       resizeToAvoidBottomPadding: false,
       backgroundColor: Colors.white,
       appBar: appBar,
-      drawer: userId != -1
+      drawer: userId != null
           ? Drawer(
               // Add a ListView to the drawer. This ensures the user can scroll
               // through the options in the drawer if there isn't enough vertical
@@ -402,7 +460,7 @@ class _DashboardState extends State<Dashboard> {
               child: Column(
                 children: <Widget>[
                   Container(
-                    height: height * 0.8,
+                    height: height,
                     child: ListView(
                       // Important: Remove any padding from the ListView.
                       padding: EdgeInsets.zero,
@@ -427,9 +485,9 @@ class _DashboardState extends State<Dashboard> {
                           ),
                         ),
                         ListTileWidget(
-                          Icons.assignment,
-                          'Transaction History',
-                          _redirectToTransactionHistory,
+                          Icons.person,
+                          'Manage Profile',
+                          _redirectToManageProfile,
                         ),
                         ListTileWidget(
                           Icons.people,
@@ -441,8 +499,16 @@ class _DashboardState extends State<Dashboard> {
                           'Current Transaction',
                           _redirectToCurrentTransaction,
                         ),
-                        ListTileWidget(Icons.list, 'Requirement List',
-                            _redirectToManageScreeen),
+                        ListTileWidget(
+                          Icons.assignment,
+                          'Transaction History',
+                          _redirectToTransactionHistory,
+                        ),
+                        ListTileWidget(
+                          Icons.list,
+                          'Requirement List',
+                          _redirectToManageScreeen,
+                        ),
                       ],
                     ),
                   ),
@@ -502,7 +568,8 @@ class _DashboardState extends State<Dashboard> {
                     Container(
                       height: height * 0.1,
                       width: data.size.width,
-                      margin: EdgeInsets.all(5.0),
+                      margin:
+                          EdgeInsets.symmetric(horizontal: 7.0, vertical: 5.0),
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -520,9 +587,10 @@ class _DashboardState extends State<Dashboard> {
                           });
                         },
                         child: Card(
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).primaryColorLight,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0)),
+                              borderRadius:
+                                  BorderRadius.circular(Utils.BORDER_RADIUS)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10.0, vertical: 5.0),
@@ -569,7 +637,8 @@ class _DashboardState extends State<Dashboard> {
                   Container(
                     height: height * 0.1,
                     width: data.size.width,
-                    margin: EdgeInsets.all(5.0),
+                    margin:
+                        EdgeInsets.symmetric(horizontal: 7.0, vertical: 5.0),
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
@@ -587,9 +656,10 @@ class _DashboardState extends State<Dashboard> {
                         });
                       },
                       child: Card(
-                        color: Theme.of(context).primaryColor,
+                        color: Theme.of(context).primaryColorLight,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0)),
+                            borderRadius:
+                                BorderRadius.circular(Utils.BORDER_RADIUS)),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10.0, vertical: 5.0),
@@ -625,10 +695,12 @@ class _DashboardState extends State<Dashboard> {
                   Container(
                     height: height * 0.75,
                     width: width,
-                    margin: EdgeInsets.all(5.0),
+                    margin:
+                        EdgeInsets.symmetric(horizontal: 5.0, vertical: 5.0),
                     child: Card(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius:
+                            BorderRadius.circular(Utils.BORDER_RADIUS_CARD),
                       ),
                       color: Theme.of(context).primaryColor,
                       child: Padding(
@@ -640,56 +712,85 @@ class _DashboardState extends State<Dashboard> {
                               onTap: () {
                                 Navigator.of(context).pushNamed(
                                   ProdReqDetail.routeName,
-                                  arguments: {"object": snapshot.data[index]},
+                                  arguments: {
+                                    "object": snapshot.data[index],
+                                    'TRANSACTION_CHARGE_PERCENTAGE':
+                                        _TRANSACTION_CHARGE_PERCENTAGE,
+                                    'DELIVERY_CHARGE_PER_KM':
+                                        _DELIVERY_CHARGE_PER_KM,
+                                    'checkUserIsLoggedIn': _checkUserIsLoggedIn
+                                  },
                                 ).then((value) => setState(() {}));
                               },
-                              child: Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                color: Colors.white,
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Align(
-                                      alignment:
-                                          AlignmentDirectional.centerStart,
-                                      child: Padding(
-                                        padding: EdgeInsets.only(
-                                            left: 10,
-                                            top: 10,
-                                            bottom: 10,
-                                            right: 5),
-                                        child: CircleAvatar(
+                              child: Container(
+                                height: height * 0.14,
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        Utils.BORDER_RADIUS_CARD),
+                                  ),
+                                  color: Colors.white,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: <Widget>[
+                                      Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: Padding(
+                                          padding: EdgeInsets.only(
+                                              left: 10,
+                                              top: 10,
+                                              bottom: 10,
+                                              right: 5),
+                                          child: CircleAvatar(
                                             radius: 25,
                                             backgroundImage: NetworkImage(
-                                                "${Utils.URL}images/${category.imgPath}")),
+                                                "${Utils.URL}images/${category.imgPath}"),
+                                            backgroundColor: Colors.grey[300],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 0),
+                                      Expanded(
                                         child: Container(
                                           margin: EdgeInsets.only(
-                                              left: width * 0.05),
-                                          child: Column(
+                                              left: width * 0.03),
+                                          child: Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
                                             children: <Widget>[
-                                              Padding(
-                                                padding: EdgeInsets.all(3),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Container(
-                                                      width: width * 0.15,
-                                                      child: Text(
-                                                          snapshot.data[index]
-                                                              .breed,
-                                                          style:
-                                                              Theme.of(context)
+                                              //First column
+                                              Expanded(
+                                                flex: 2,
+                                                child: Container(
+                                                  height: height * 0.15,
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceEvenly,
+                                                    children: <Widget>[
+                                                      //breed + price
+                                                      Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: <Widget>[
+                                                          //Breed
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                        .only(
+                                                                    top: 5.0),
+                                                            child: Text(
+                                                              snapshot
+                                                                  .data[index]
+                                                                  .breed,
+                                                              style: Theme.of(
+                                                                      context)
                                                                   .textTheme
                                                                   .bodyText2
                                                                   .apply(
@@ -699,118 +800,158 @@ class _DashboardState extends State<Dashboard> {
                                                                     fontSizeDelta:
                                                                         -2,
                                                                   ),
-                                                          textAlign:
-                                                              TextAlign.start),
-                                                    ),
-                                                    Container(
-                                                      width: width * 0.25,
-                                                      child: Text(
-                                                        "${AppLocalizations.of(context).translate(category.name)}",
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodyText2
-                                                            .apply(
-                                                                fontSizeFactor:
-                                                                    MediaQuery.of(
-                                                                            context)
-                                                                        .textScaleFactor,
-                                                                fontSizeDelta:
-                                                                    3,
-                                                                color: Colors
-                                                                    .black),
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        softWrap: true,
-                                                      ),
-                                                    ),
-                                                    FittedBox(
-                                                      child: Container(
-                                                        width: width * 0.22,
-                                                        height: height * 0.03,
-                                                        child: Text(
-                                                          getCity(snapshot
-                                                              .data[index]),
-                                                          style:
-                                                              Theme.of(context)
-                                                                  .textTheme
-                                                                  .bodyText2
-                                                                  .apply(
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                            ),
+                                                          ),
+
+                                                          //Name
+                                                          Text(
+                                                            "${AppLocalizations.of(context).translate(category.name)}",
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodyText2
+                                                                .apply(
                                                                     fontSizeFactor:
                                                                         MediaQuery.of(context)
                                                                             .textScaleFactor,
                                                                     fontSizeDelta:
-                                                                        -4,
+                                                                        3,
                                                                     color: Colors
-                                                                        .grey,
-                                                                  ),
-                                                          textAlign:
-                                                              TextAlign.start,
-                                                          maxLines: 2,
-                                                          overflow: TextOverflow
-                                                              .visible,
-                                                        ),
+                                                                        .black),
+                                                            textAlign:
+                                                                TextAlign.start,
+                                                            softWrap: true,
+                                                          ),
+                                                        ],
                                                       ),
-                                                    ),
-                                                  ],
+
+                                                      //Price
+                                                      Row(
+                                                        children: <Widget>[
+                                                          Icon(
+                                                            Icons.gavel,
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .primaryColor,
+                                                            size: 20,
+                                                          ),
+                                                          Padding(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      right:
+                                                                          3)),
+                                                          Text(
+                                                            getPrice(snapshot
+                                                                .data[index]),
+                                                            // "1234567 /QTL",
+                                                            style:
+                                                                Theme.of(
+                                                                        context)
+                                                                    .textTheme
+                                                                    .bodyText2
+                                                                    .apply(
+                                                                      fontSizeFactor:
+                                                                          MediaQuery.of(context)
+                                                                              .textScaleFactor,
+                                                                      fontSizeDelta:
+                                                                          -4,
+                                                                    ),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8.0),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Container(
-                                                      width: width * 0.28,
-                                                      child: FittedBox(
-                                                        child: Row(
-                                                          children: <Widget>[
-                                                            Icon(
-                                                              Icons.gavel,
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .primaryColor,
-                                                            ),
-                                                            Padding(
-                                                                padding: EdgeInsets
-                                                                    .only(
-                                                                        right:
-                                                                            3)),
-                                                            Wrap(
-                                                              children: <
-                                                                  Widget>[
-                                                                Text(
-                                                                  getPrice(snapshot
-                                                                          .data[
-                                                                      index]),
-                                                                  style: Theme.of(
-                                                                          context)
-                                                                      .textTheme
-                                                                      .headline2
-                                                                      .apply(
-                                                                        fontSizeFactor:
-                                                                            MediaQuery.of(context).textScaleFactor,
-                                                                      ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
+                                              //Second Column
+                                              // Container(
+                                              //   height: height * 0.1,
+                                              //   width: width * 0.2,
+                                              //   child: Column(
+                                              //     crossAxisAlignment:
+                                              //         CrossAxisAlignment.start,
+                                              //     mainAxisAlignment:
+                                              //         MainAxisAlignment.start,
+                                              //     children: <Widget>[
+                                              //       Text(
+                                              //         "${AppLocalizations.of(context).translate(category.name)}",
+                                              //         style: Theme.of(context)
+                                              //             .textTheme
+                                              //             .bodyText2
+                                              //             .apply(
+                                              //                 fontSizeFactor:
+                                              //                     MediaQuery.of(
+                                              //                             context)
+                                              //                         .textScaleFactor,
+                                              //                 fontSizeDelta: 3,
+                                              //                 color:
+                                              //                     Colors.black),
+                                              //         textAlign: TextAlign.center,
+                                              //         softWrap: true,
+                                              //       ),
+                                              //     ],
+                                              //   ),
+                                              // ),
+                                              //Third Column
+                                              Expanded(
+                                                flex: 2,
+                                                child: Container(
+                                                    height: height * 0.15,
+                                                    margin: EdgeInsets.only(
+                                                        left: 12.0),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceEvenly,
+                                                      children: <Widget>[
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  top: 5.0),
+                                                          child: Text(
+                                                            getCity(snapshot
+                                                                .data[index]),
+                                                            //"abcdefghijklmn",
+                                                            style:
+                                                                Theme.of(
+                                                                        context)
+                                                                    .textTheme
+                                                                    .bodyText2
+                                                                    .apply(
+                                                                      fontSizeFactor:
+                                                                          MediaQuery.of(context)
+                                                                              .textScaleFactor,
+                                                                      fontSizeDelta:
+                                                                          -4,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                    ),
+                                                            textAlign:
+                                                                TextAlign.start,
+
+                                                            maxLines: 2,
+
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .visible,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ),
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          right: 10),
-                                                    ),
-                                                    Container(
-                                                      width: width * 0.25,
-                                                      margin: EdgeInsets.only(
-                                                          left: width * 0.08),
-                                                      child: FittedBox(
-                                                        child: Row(
+                                                        Row(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
+                                                                  .start,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
                                                                   .start,
                                                           children: <Widget>[
                                                             Icon(
@@ -818,6 +959,7 @@ class _DashboardState extends State<Dashboard> {
                                                               color: Theme.of(
                                                                       context)
                                                                   .primaryColor,
+                                                              size: 20,
                                                             ),
                                                             Padding(
                                                                 padding: EdgeInsets
@@ -826,61 +968,244 @@ class _DashboardState extends State<Dashboard> {
                                                                             3)),
                                                             Text(
                                                               "${snapshot.data[index].remainingQty} QTL",
+
+                                                              // "12345 QTL",
                                                               style: Theme.of(
                                                                       context)
                                                                   .textTheme
-                                                                  .headline2
+                                                                  .bodyText2
                                                                   .apply(
                                                                     fontSizeFactor:
                                                                         MediaQuery.of(context)
                                                                             .textScaleFactor,
+                                                                    fontSizeDelta:
+                                                                        -4,
                                                                   ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .start,
-                                                            )
+                                                              maxLines: 2,
+                                                            ),
                                                           ],
                                                         ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
+                                                      ],
+                                                    )),
                                               ),
                                             ],
                                           ),
+                                          // child: Column(
+                                          //   crossAxisAlignment:
+                                          //       CrossAxisAlignment.start,
+                                          //   children: <Widget>[
+                                          //     Padding(
+                                          //       padding: EdgeInsets.all(3),
+                                          //       child: Row(
+                                          //         mainAxisAlignment:
+                                          //             MainAxisAlignment.start,
+                                          //         children: <Widget>[
+                                          //           Expanded(
+                                          //             flex: 1,
+                                          //             child: Container(
+                                          //               width: width * 0.15,
+                                          //               child: Text(
+                                          //                   snapshot.data[index]
+                                          //                       .breed,
+                                          //                   style:
+                                          //                       Theme.of(
+                                          //                               context)
+                                          //                           .textTheme
+                                          //                           .bodyText2
+                                          //                           .apply(
+                                          //                             fontSizeFactor:
+                                          //                                 MediaQuery.of(context)
+                                          //                                     .textScaleFactor,
+                                          //                             fontSizeDelta:
+                                          //                                 -2,
+                                          //                           ),
+                                          //                   textAlign: TextAlign
+                                          //                       .start),
+                                          //             ),
+                                          //           ),
+                                          //           Container(
+                                          //             width: width * 0.25,
+                                          //             child: Text(
+                                          //               "${AppLocalizations.of(context).translate(category.name)}",
+                                          //               style: Theme.of(context)
+                                          //                   .textTheme
+                                          //                   .bodyText2
+                                          //                   .apply(
+                                          //                       fontSizeFactor:
+                                          //                           MediaQuery.of(
+                                          //                                   context)
+                                          //                               .textScaleFactor,
+                                          //                       fontSizeDelta:
+                                          //                           3,
+                                          //                       color: Colors
+                                          //                           .black),
+                                          //               textAlign:
+                                          //                   TextAlign.center,
+                                          //               softWrap: true,
+                                          //             ),
+                                          //           ),
+                                          //           Expanded(
+                                          //             flex: 2,
+                                          //             child: Container(
+                                          //               width: width * 0.25,
+                                          //               //height: height * 0.1,
+                                          //               child: Text(
+                                          //                 getCity(snapshot
+                                          //                     .data[index]),
+                                          //                 //"abcdefghijklmn",
+                                          //                 style:
+                                          //                     Theme.of(context)
+                                          //                         .textTheme
+                                          //                         .bodyText2
+                                          //                         .apply(
+                                          //                           fontSizeFactor:
+                                          //                               MediaQuery.of(context)
+                                          //                                   .textScaleFactor,
+                                          //                           fontSizeDelta:
+                                          //                               -4,
+                                          //                           color: Colors
+                                          //                               .grey,
+                                          //                         ),
+                                          //                 textAlign:
+                                          //                     TextAlign.start,
+
+                                          //                 maxLines: 2,
+                                          //                 // softWrap: true,
+                                          //                 overflow: TextOverflow
+                                          //                     .visible,
+                                          //               ),
+                                          //             ),
+                                          //           ),
+                                          //         ],
+                                          //       ),
+                                          //     ),
+                                          //     Padding(
+                                          //       padding: const EdgeInsets.only(
+                                          //           top: 8.0),
+                                          //       child: Row(
+                                          //         mainAxisAlignment:
+                                          //             MainAxisAlignment.end,
+                                          //         children: <Widget>[
+                                          //           Expanded(
+                                          //             flex: 1,
+                                          //             child: Container(
+                                          //               width: width * 0.40,
+                                          //               child: Row(
+                                          //                 children: <Widget>[
+                                          //                   Icon(
+                                          //                     Icons.gavel,
+                                          //                     color: Theme.of(
+                                          //                             context)
+                                          //                         .primaryColor,
+                                          //                   ),
+                                          //                   Padding(
+                                          //                       padding: EdgeInsets
+                                          //                           .only(
+                                          //                               right:
+                                          //                                   3)),
+                                          //                   Text(
+                                          //                     getPrice(snapshot
+                                          //                         .data[index]),
+                                          //                     style: Theme.of(
+                                          //                             context)
+                                          //                         .textTheme
+                                          //                         .bodyText2
+                                          //                         .apply(
+                                          //                           fontSizeFactor:
+                                          //                               MediaQuery.of(context)
+                                          //                                   .textScaleFactor,
+                                          //                           fontSizeDelta:
+                                          //                               -4,
+                                          //                         ),
+                                          //                     overflow:
+                                          //                         TextOverflow
+                                          //                             .ellipsis,
+                                          //                   ),
+                                          //                 ],
+                                          //               ),
+                                          //             ),
+                                          //           ),
+                                          //           Expanded(
+                                          //             flex: 1,
+                                          //             child: Container(
+                                          //               width: width * 0.25,
+                                          //               child: Row(
+                                          //                 mainAxisAlignment:
+                                          //                     MainAxisAlignment
+                                          //                         .start,
+                                          //                 children: <Widget>[
+                                          //                   Icon(
+                                          //                     MYBaazar.balance,
+                                          //                     color: Theme.of(
+                                          //                             context)
+                                          //                         .primaryColor,
+                                          //                   ),
+                                          //                   Padding(
+                                          //                       padding: EdgeInsets
+                                          //                           .only(
+                                          //                               right:
+                                          //                                   3)),
+                                          //                   Wrap(
+                                          //                     children: <
+                                          //                         Widget>[
+                                          //                       Text(
+                                          //                         "${snapshot.data[index].remainingQty} QTL",
+                                          //                         style: Theme.of(
+                                          //                                 context)
+                                          //                             .textTheme
+                                          //                             .bodyText2
+                                          //                             .apply(
+                                          //                               fontSizeFactor:
+                                          //                                   MediaQuery.of(context).textScaleFactor,
+                                          //                               fontSizeDelta:
+                                          //                                   -4,
+                                          //                             ),
+                                          //                         maxLines: 2,
+                                          //                       ),
+                                          //                     ],
+                                          //                   )
+                                          //                 ],
+                                          //               ),
+                                          //             ),
+                                          //           ),
+                                          //         ],
+                                          //       ),
+                                          //     ),
+                                          //   ],
+                                          // ),
                                         ),
                                       ),
-                                    ),
-                                    // Align(
-                                    //   alignment: AlignmentDirectional.centerEnd,
-                                    //   child: Padding(
-                                    //     padding: EdgeInsets.all(3),
-                                    //     child: RaisedButton(
-                                    //       color: Theme.of(context).primaryColor,
-                                    //       onPressed: () {
-                                    //         Navigator.of(context).pushNamed(
-                                    //           ProdReqDetail.routeName,
-                                    //           arguments: {
-                                    //             "object": snapshot.data[index]
-                                    //           },
-                                    //         ).then((value) => setState(() {}));
-                                    //       },
-                                    //       child: Text("Bid",
-                                    //           style: Theme.of(context)
-                                    //               .textTheme
-                                    //               .headline2
-                                    //               .apply(
-                                    //                 color: Colors.white,
-                                    //               )),
-                                    //       shape: RoundedRectangleBorder(
-                                    //           borderRadius:
-                                    //               BorderRadius.circular(30.0),
-                                    //           side: BorderSide(
-                                    //               color: Color(0xFF739b21))),
-                                    //     ),
-                                    //   ),
-                                    // ),
-                                  ],
+                                      // Align(
+                                      //   alignment: AlignmentDirectional.centerEnd,
+                                      //   child: Padding(
+                                      //     padding: EdgeInsets.all(3),
+                                      //     child: RaisedButton(
+                                      //       color: Theme.of(context).primaryColor,
+                                      //       onPressed: () {
+                                      //         Navigator.of(context).pushNamed(
+                                      //           ProdReqDetail.routeName,
+                                      //           arguments: {
+                                      //             "object": snapshot.data[index]
+                                      //           },
+                                      //         ).then((value) => setState(() {}));
+                                      //       },
+                                      //       child: Text("Bid",
+                                      //           style: Theme.of(context)
+                                      //               .textTheme
+                                      //               .headline2
+                                      //               .apply(
+                                      //                 color: Colors.white,
+                                      //               )),
+                                      //       shape: RoundedRectangleBorder(
+                                      //           borderRadius:
+                                      //               BorderRadius.circular(30.0),
+                                      //           side: BorderSide(
+                                      //               color: Color(0xFF739b21))),
+                                      //     ),
+                                      //   ),
+                                      // ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );

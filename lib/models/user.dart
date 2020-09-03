@@ -15,7 +15,8 @@ class User {
   String pincode;
   String panCard;
   String address;
-
+  String panCardStatus;
+  String isSeller;
   User({
     this.id,
     this.latitude,
@@ -25,5 +26,9 @@ class User {
     this.city,
     this.pincode,
     this.contactNumber,
+    this.panCardStatus,
+    this.name,
+    this.panCard,
+    this.isSeller,
   });
 }

@@ -17,8 +17,8 @@ class _NoProductState extends State<NoProduct> {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.5,
-        height: MediaQuery.of(context).size.width * 0.5,
+        width: MediaQuery.of(context).size.width * 0.6,
+        height: MediaQuery.of(context).size.width * 0.6,
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(12.0),

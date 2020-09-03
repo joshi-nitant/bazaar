@@ -1,4 +1,5 @@
 import 'package:baazar/classes/app_localizations.dart';
+import 'package:baazar/classes/utils.dart';
 import 'package:flutter/material.dart';
 
 class DropDownFormField extends StatefulWidget {
@@ -32,11 +33,11 @@ class _DropDownFormFieldState extends State<DropDownFormField> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
       borderOnForeground: false,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 18.0),
+        padding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 18.0),
         child: InputDecorator(
           decoration: InputDecoration(
             border: InputBorder.none,
-            contentPadding: EdgeInsets.fromLTRB(14, 12, 8, 0),
+            contentPadding: EdgeInsets.fromLTRB(14, 10, 8, 0),
             labelText: widget.titleText,
             labelStyle: Theme.of(context).textTheme.bodyText2.apply(
                   color: Theme.of(context).primaryColor,
@@ -48,9 +49,8 @@ class _DropDownFormFieldState extends State<DropDownFormField> {
               hint: Text(
                 widget.hintText,
                 style: Theme.of(context).textTheme.bodyText2.apply(
-                    color: widget.errorText == null
-                        ? Theme.of(context).primaryColor
-                        : Colors.red),
+                    color:
+                        widget.errorText == null ? Colors.black : Colors.red),
               ),
               value: widget.value == '' ? null : widget.value,
               onChanged: (dynamic newValue) {

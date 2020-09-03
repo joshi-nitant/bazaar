@@ -12,6 +12,9 @@ class ProductBid {
   double price;
   Product prodId;
   User buyer;
+  int deliveryDays;
+  double packagingCharges;
+
   ProductBid({
     @required this.prodBidId,
     @required this.prodId,
@@ -21,5 +24,7 @@ class ProductBid {
     @required this.userId,
     this.bidDays,
     this.buyer,
+    this.deliveryDays,
+    this.packagingCharges,
   });
 }

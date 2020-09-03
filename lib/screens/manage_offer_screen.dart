@@ -10,6 +10,7 @@ import 'package:baazar/models/requirement.dart';
 import 'package:baazar/models/requirement_bid.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/error_screen.dart';
+import 'package:baazar/screens/offer_detail_screen.dart';
 import 'package:baazar/screens/payment_screen.dart';
 import 'package:baazar/screens/select_category_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
@@ -26,7 +27,8 @@ import 'package:baazar/screens/prod_req_update_screen.dart';
 Text normalText(BuildContext context, String text) {
   return Text(
     text,
-    style: Theme.of(context).textTheme.bodyText2,
+    style: Theme.of(context).textTheme.bodyText2.apply(),
+    textAlign: TextAlign.left,
   );
 }
 
@@ -47,6 +49,9 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
   bool _isSeller;
   int _userId;
   bool _isProduct;
+  double _TRANSACTION_CHARGE_PERCENTAGE;
+  double _DELIVERY_CHARGE_PER_KM;
+
   // List<Product> _productsList;
   // List<Requirement> _requirementsList;
   // List<ProductBid> _productBidList;
@@ -120,8 +125,15 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
     );
     print(response.body);
     var jsondata = json.decode(response.body);
+
+    ///setting the charges
+    _DELIVERY_CHARGE_PER_KM =
+        double.tryParse(jsondata['DELIVERY_CHARGE_PER_KM']);
+    _TRANSACTION_CHARGE_PERCENTAGE =
+        double.tryParse(jsondata['TRANSACTION_CHARGE_PERCENTAGE']);
+
     List<ProductBid> productBid = [];
-    for (var u in jsondata) {
+    for (var u in jsondata['list']) {
       Product product = Product(
         id: u['prod_id'],
         quantity: u['quantity'],
@@ -143,6 +155,8 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         buyer: await _getUser(
           int.parse(u['user_id']),
         ),
+        bidDays: int.parse(u['delivery_days']),
+        packagingCharges: double.parse(u['packaging_charges']),
       );
       productBid.add(bid);
     }
@@ -163,11 +177,18 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         },
       ),
     );
-
+    print(response.body);
     var jsondata = json.decode(response.body);
-    print(jsondata);
+
+    ///setting the charges
+    _DELIVERY_CHARGE_PER_KM =
+        double.tryParse(jsondata['DELIVERY_CHARGE_PER_KM']);
+    _TRANSACTION_CHARGE_PERCENTAGE =
+        double.tryParse(jsondata['TRANSACTION_CHARGE_PERCENTAGE']);
+    print(jsondata['list']);
+
     List<RequirementBid> requirementBids = [];
-    for (var u in jsondata) {
+    for (var u in jsondata['list']) {
       Requirement requirement = Requirement(
         id: u['req_id'],
         quantity: u['quantity'],
@@ -193,6 +214,8 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
         seller: await _getUser(
           int.parse(u['user_id']),
         ),
+        bidDays: int.parse(u['delivery_days']),
+        packagingCharges: double.parse(u['packaging_charges']),
       );
       requirementBids.add(bid);
     }
@@ -466,7 +489,12 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                 PaymentScreen.routeName,
                 arguments: {
                   'bid_object': object,
-                  'transaction_id': data['transaction_id']
+                  'transaction_id': data['transaction_id'],
+                  'TRANSACTION_CHARGE_PERCENTAGE':
+                      _TRANSACTION_CHARGE_PERCENTAGE,
+                  'DELIVERY_CHARGE_PER_KM': _DELIVERY_CHARGE_PER_KM,
+                  'end_date': DateTime.parse(data['end_date']),
+                  'delivery_status': 0
                 },
               ).then((value) => setState(() {}));
           },
@@ -490,7 +518,7 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
               AppLocalizations.of(context).translate('Manage Offer'),
               style: Theme.of(context).textTheme.headline1.apply(
                     color: Colors.white,
-                    letterSpacingDelta: -5,
+                    letterSpacingDelta: -2,
                   ),
             ),
           ),
@@ -530,7 +558,17 @@ class _OfferViewScreenState extends State<OfferViewScreen> {
                 itemBuilder: (ctx, index) {
                   return GestureDetector(
                     onTap: () {
-                      // _updateScreen(snapshot.data[index]);
+                      Navigator.of(context).pushNamed(
+                        OfferDetailScreen.routeName,
+                        arguments: {
+                          'bid_object': snapshot.data[index],
+                          'TRANSACTION_CHARGE_PERCENTAGE':
+                              _TRANSACTION_CHARGE_PERCENTAGE,
+                          'DELIVERY_CHARGE_PER_KM': _DELIVERY_CHARGE_PER_KM,
+                          'accept_handler': _selectItem,
+                          'delete_handler': _deleteItem,
+                        },
+                      );
                     },
                     child: Container(
                       width: data.size.width,

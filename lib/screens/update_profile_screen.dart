@@ -7,6 +7,7 @@ import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/user.dart';
 import 'package:baazar/screens/dashboard_screen.dart';
 import 'package:baazar/screens/google_maps_screen.dart';
+import 'package:baazar/screens/image_detail_screen.dart';
 import 'package:baazar/screens/prod_req_add_screen.dart';
 import 'package:baazar/screens/select_user_screen.dart';
 import 'package:baazar/widgets/button_widget.dart';
@@ -20,18 +21,20 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_otp/flutter_otp.dart';
 import 'package:otp/otp.dart';
+import 'package:http/http.dart' as http;
 
-class SingUpScreen extends StatefulWidget {
-  static final String routeName = "/singup";
+class UpdateProfileScreen extends StatefulWidget {
+  static final String routeName = "/updateProfile";
   @override
-  _SingUpScreenState createState() => _SingUpScreenState();
+  _UpdateProfileScreenState createState() => _UpdateProfileScreenState();
 }
 
-class _SingUpScreenState extends State<SingUpScreen> {
+class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _contactNumberController = TextEditingController();
@@ -49,7 +52,11 @@ class _SingUpScreenState extends State<SingUpScreen> {
   String errorAddress;
   String errorPanCard;
   bool _isOtpRight;
-
+  File _image;
+  bool isPanCardChanged = false;
+  List<String> allowedExtension = ['gif', 'png', 'jpg', 'jpeg'];
+  bool isInitialLoad = true;
+  User user;
   @override
   void didChangeDependencies() {
     errorPanCard = AppLocalizations.of(context).translate("Name of the file");
@@ -89,6 +96,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
   }
 
   bool _validateUsername() {
+    print("username ");
     if (_usernameController == null) {
       errorUsername = "Username is required";
       return false;
@@ -107,6 +115,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
   }
 
   bool _validateAddress() {
+    print("address");
     if (_selectedAddress == null) {
       errorAddress = "Address is required";
       return false;
@@ -116,7 +125,8 @@ class _SingUpScreenState extends State<SingUpScreen> {
   }
 
   bool _validatePanCard() {
-    if (_panCard == null) {
+    print("panCard");
+    if (_image == null && isPanCardChanged) {
       errorPanCard = "PanCard is required";
       return false;
     }
@@ -125,6 +135,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
   }
 
   bool _validateContactNumber() {
+    print("contact");
     if (_contactNumberController == null) {
       errorContactNumber = "Contact Number is required";
       return false;
@@ -148,6 +159,23 @@ class _SingUpScreenState extends State<SingUpScreen> {
       return false;
     }
     return double.tryParse(str) != null;
+  }
+
+  Future getImage() async {
+    File file = await FilePicker.getFile();
+    String exten = file.path.split('.').last.toLowerCase();
+    print(exten);
+
+    if (file != null) {
+      setState(() {
+        if (allowedExtension.contains(exten)) {
+          _image = file;
+          isPanCardChanged = true;
+        } else {
+          isPanCardChanged = false;
+        }
+      });
+    }
   }
 
   Future<String> _getLocation() async {
@@ -207,26 +235,33 @@ class _SingUpScreenState extends State<SingUpScreen> {
     }
   }
 
-  Future<String> _uploadData(bool isSeller) async {
-    String panCardName = _panCard.path.split('/').last;
+  Future<String> _uploadData(User user) async {
+    print('uploading');
+    String panCardName = "";
+    if (isPanCardChanged) {
+      panCardName = _image.path.split('/').last;
+    }
     //print(isSeller);
     FormData formData = FormData.fromMap({
-      "panCard":
-          await MultipartFile.fromFile(_panCard.path, filename: panCardName),
+      "panCard": isPanCardChanged
+          ? await MultipartFile.fromFile(_image.path, filename: panCardName)
+          : user.panCard,
+      "panCardStatus": isPanCardChanged ? "0" : user.panCardStatus,
       "username": _usernameController.text.trim(),
       "address": _selectedAddress.addressLine.toString().trim(),
       "contact_number": _contactNumberController.text.trim(),
-      "isSeller": isSeller,
       "state": _selectedAddress.adminArea,
       "pincode": _selectedAddress.postalCode,
       "city": _selectedAddress.subAdminArea,
       "latitude": _selectedCoord.latitude,
       "longitude": _selectedCoord.longitude,
+      "id": user.id,
+      "isPanChanged": isPanCardChanged,
     });
     try {
       var dio = Dio();
       Response response =
-          await dio.post(Utils.URL + "/insertUser.php", data: formData);
+          await dio.post(Utils.URL + "/updateUser.php", data: formData);
       print(response);
       return response.data;
     } on Exception catch (e) {
@@ -262,9 +297,12 @@ class _SingUpScreenState extends State<SingUpScreen> {
         this._isOtpRight = false;
       });
     }
+    // setState(() {
+    //   this._isOtpRight = true;
+    // });
   }
 
-  Future<bool> showOtpDialog(bool isSeller) async {
+  Future<bool> showOtpDialog() async {
     try {
       FlutterOtp otp = FlutterOtp();
       otp.sendOtp(_contactNumberController.text);
@@ -327,16 +365,17 @@ class _SingUpScreenState extends State<SingUpScreen> {
     return false;
   }
 
-  void _submitData(bool isSeller) async {
+  void _submitData(User user) async {
+    print('submiting');
     if (_validator()) {
-      await showOtpDialog(isSeller);
+      await showOtpDialog();
       if (this._isOtpRight) {
         final ProgressDialog pr = ProgressDialog(context,
             type: ProgressDialogType.Normal,
             isDismissible: true,
             showLogs: true);
         pr.style(
-          message: 'Singing Up Please Wait...',
+          message: 'Updating Up Please Wait...',
           borderRadius: 10.0,
           backgroundColor: Colors.white,
           progressWidget: CircularProgressIndicator(),
@@ -350,15 +389,14 @@ class _SingUpScreenState extends State<SingUpScreen> {
               color: Colors.black, fontSize: 19.0, fontWeight: FontWeight.w600),
         );
         await pr.show();
-        String jsonString = await _uploadData(isSeller);
+        String jsonString = await _uploadData(user);
         var jsonData = json.decode(jsonString);
         pr.hide();
-        int userId = jsonData["user_id"];
-
-        if (userId != -1) {
-          await _storeUserId(userId);
+        int response_code = jsonData["response_code"];
+        print(response_code);
+        if (response_code == 101) {
           String text = "Congratulations!!!";
-          String dialogMesage = "Registration successfull.";
+          String dialogMesage = "Update successfull.";
           String buttonMessage = "Ok!!";
           await CustomDialog.openDialog(
               context: context,
@@ -367,11 +405,11 @@ class _SingUpScreenState extends State<SingUpScreen> {
               mainIcon: Icons.check,
               subIcon: HandShakeIcon.handshake);
           print("here");
-          Navigator.of(context).pop();
-          Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
+          // Navigator.of(context).pop();
+          // Navigator.of(context).pushReplacementNamed(ProdReqAdd.routeName);
         } else {
           String text = "Sorry!!!";
-          String dialogMesage = "Singup insertion failed.";
+          String dialogMesage = "Update failed.";
           String buttonMessage = "Ok!!";
           await CustomDialog.openDialog(
               context: context,
@@ -396,28 +434,126 @@ class _SingUpScreenState extends State<SingUpScreen> {
     }
   }
 
-  Future<void> _storeUserId(int userId) async {
+  Future<int> _getUserId() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setInt(User.USER_ID_SHARED_PREFERNCE, userId);
+    return sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE);
+  }
+
+  Future<User> _getUserData() async {
+    if (isInitialLoad == true) {
+      int id = await _getUserId();
+      if (id != null) {
+        var response = await http.post(
+          Utils.URL + "getUserDataForUpdate.php",
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(
+            <String, int>{
+              'id': id,
+            },
+          ),
+        );
+        print(response.body);
+        var jsondata = json.decode(response.body);
+        print(jsondata);
+        var userMap = jsondata[0];
+        user = User(
+          id: userMap['user_id'],
+          latitude: userMap['latitude'],
+          longitude: userMap['longitude'],
+          address: userMap['address'],
+          state: userMap['state'],
+          city: userMap['city'],
+          contactNumber: userMap['contact'],
+          name: userMap['name'],
+          panCardStatus: userMap['pan_card_status'],
+          panCard: userMap['pan_card'],
+          isSeller: userMap['is_seller'],
+        );
+        _usernameController.text = user.name;
+        _contactNumberController.text = user.contactNumber;
+        _addressText = user.address;
+        var address = await Geocoder.local.findAddressesFromQuery(_addressText);
+        _selectedAddress = address.first;
+
+        _selectedCoord = new LatLng(
+            double.parse(user.latitude), double.parse(user.longitude));
+
+        print(user.panCard);
+        isInitialLoad = false;
+      }
+    }
+    return user;
+  }
+
+  ///0 means pending
+  ///1 means approved
+  ///2 means rejected
+  String _getPanCardStatus(User user) {
+    if (user.panCardStatus == "0" || isPanCardChanged) {
+      return AppLocalizations.of(context).translate("Pan Card Pending");
+    } else if (user.panCardStatus == "1") {
+      return AppLocalizations.of(context).translate("Pan Card Accepted");
+    } else if (user.panCardStatus == "2") {
+      return AppLocalizations.of(context).translate("Pan Card Rejected");
+    }
+  }
+
+  ///0 means pending
+  ///1 means approved
+  ///2 means rejected
+  Color _getPanCardColor(User user) {
+    if (user.panCardStatus == "0" || isPanCardChanged) {
+      return Colors.orange;
+    } else if (user.panCardStatus == "1") {
+      return Colors.green;
+    } else if (user.panCardStatus == "2") {
+      return Colors.red;
+    }
+  }
+
+  Widget getLocalImage(User user) {
+    print(_image);
+    return DetailScreen(
+      tag: "panCard",
+      url: Utils.URL + "panCard/" + user.panCard,
+      isNetworkImage: false,
+      imageFile: _image,
+    );
   }
 
   var appBar;
   @override
   Widget build(BuildContext context) {
-    appBar = AppBar(
-      title: Text(
-        AppLocalizations.of(context).translate('app_title'),
-        style: Theme.of(context).textTheme.headline1.apply(
-              color: Colors.white,
+    final appBar = AppBar(
+      titleSpacing: 0,
+      title: Row(
+        children: <Widget>[
+          Icon(Icons.person),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              AppLocalizations.of(context).translate('Update Profile'),
+              style: Theme.of(context).textTheme.headline1.apply(
+                    color: Colors.white,
+                    letterSpacingDelta: -2,
+                  ),
             ),
+          ),
+        ],
       ),
       iconTheme: IconThemeData(color: Colors.white),
     );
+    var height = (MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top);
+    var width = MediaQuery.of(context).size.width;
     final data = MediaQuery.of(context);
     return Scaffold(
       appBar: appBar,
       body: FutureBuilder(
-        future: _checkUserType(),
+        future: _getUserData(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.data == null) {
             return Container(
@@ -534,31 +670,63 @@ class _SingUpScreenState extends State<SingUpScreen> {
                                   iconData: Icons.insert_drive_file,
                                   text: AppLocalizations.of(context)
                                       .translate('Pan Card'),
-                                  handlerMethod: pickPanCard,
+                                  handlerMethod: getImage,
                                   height: 55,
                                   width: 150,
-                                  isError: errorPanCard == null,
+                                  isError: false,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) {
+                                      return isPanCardChanged
+                                          ? getLocalImage(snapshot.data)
+                                          : DetailScreen(
+                                              tag: "panCard",
+                                              url: Utils.URL +
+                                                  "panCard/" +
+                                                  snapshot.data.panCard,
+                                              isNetworkImage: true,
+                                            );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: width * 0.30,
+                                child: FittedBox(
+                                  child: CircleAvatar(
+                                    backgroundImage: _image == null
+                                        ? NetworkImage(
+                                            "${Utils.URL}panCard/${snapshot.data.panCard}")
+                                        : FileImage(File(_image.path)),
+                                    backgroundColor: Colors.white,
+                                    radius: 35.0,
+                                  ),
                                 ),
                               ),
                             ),
                             SizedBox(
                               width: 12.0,
                             ),
-                            Expanded(
-                              child: Text(
-                                _panCard == null
-                                    ? errorPanCard
-                                    : _panCard.path.split('/').last,
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          _getPanCardStatus(snapshot.data),
+                          style: TextStyle(
+                            color: _getPanCardColor(snapshot.data),
+                          ),
+                        ),
+                      ),
                       SizedBox(
-                        height: 20.0,
+                        height: 10.0,
                       ),
                       Container(
                         height: 55,
@@ -580,7 +748,7 @@ class _SingUpScreenState extends State<SingUpScreen> {
                             });
                           },
                           child: Text(
-                            AppLocalizations.of(context).translate("Sign Up"),
+                            AppLocalizations.of(context).translate("Update"),
                             style: TextStyle(
                               fontSize: 18.0,
                             ),
@@ -593,68 +761,6 @@ class _SingUpScreenState extends State<SingUpScreen> {
               ),
             ),
           );
-          // return Card(
-          //   elevation: 5,
-          //   child: Container(
-          //     height: 400,
-          //     padding: EdgeInsets.all(10),
-          //     child: Column(
-          //       crossAxisAlignment: CrossAxisAlignment.end,
-          //       children: <Widget>[
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Name')),
-          //           controller: _usernameController,
-          //         ),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Password')),
-          //           controller: _passwordController,
-          //         ),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText: AppLocalizations.of(context)
-          //                   .translate('Contact Number')),
-          //           controller: _contactNumberController,
-          //           keyboardType: TextInputType.phone,
-          //         ),
-          //         TextField(
-          //           decoration: InputDecoration(
-          //               labelText:
-          //                   AppLocalizations.of(context).translate('Address')),
-          //           controller: _addressController,
-          //         ),
-          //         Row(
-          //           children: <Widget>[
-          //             RaisedButton(
-          //               child: Text(AppLocalizations.of(context)
-          //                   .translate("Aadhar Card")),
-          //               onPressed: () {
-          //                 pickAadharCard();
-          //               },
-          //             ),
-          //             RaisedButton(
-          //               child: Text(
-          //                   AppLocalizations.of(context).translate("Pan Card")),
-          //               onPressed: () {
-          //                 pickPanCard();
-          //               },
-          //             ),
-          //             RaisedButton(
-          //               child: Text(
-          //                   AppLocalizations.of(context).translate("Sign Up")),
-          //               onPressed: () {
-          //                 _submitData(snapshot.data);
-          //               },
-          //             ),
-          //           ],
-          //         )
-          //       ],
-          //     ),
-          //   ),
-          // );
         },
       ),
     );

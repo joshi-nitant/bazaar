@@ -12,6 +12,8 @@ class RequirementBid {
   double price;
   Requirement reqId;
   User seller;
+  int deliveryDays;
+  double packagingCharges;
 
   RequirementBid({
     @required this.reqBidId,
@@ -22,5 +24,7 @@ class RequirementBid {
     @required this.userId,
     this.bidDays,
     this.seller,
+    this.deliveryDays,
+    this.packagingCharges,
   });
 }

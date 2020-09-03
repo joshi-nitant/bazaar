@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:baazar/classes/app_localizations.dart';
+import 'package:baazar/classes/utils.dart';
 import 'package:baazar/models/breed.dart';
 import 'package:baazar/widgets/drop_down_widget.dart';
 import 'package:flutter/material.dart';
@@ -132,13 +133,14 @@ class _FilterState extends State<Filter> {
     final data = MediaQuery.of(context);
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Utils.BORDER_RADIUS_CARD)),
       child: Container(
         width: data.size.width,
         height: data.size.height * 0.8,
         child: Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(32.0)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Utils.BORDER_RADIUS_CARD)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -185,7 +187,7 @@ class _FilterState extends State<Filter> {
                     .toList(),
               ),
               Container(
-                width: data.size.width * 0.97,
+                width: data.size.width * 1,
                 //height: 65.0,
                 child: Card(
                   shape: RoundedRectangleBorder(
@@ -212,34 +214,31 @@ class _FilterState extends State<Filter> {
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(top: 35),
-                child: RangeSlider(
-                    min: widget.minPrice.toDouble(),
-                    max: widget.maxPrice.toDouble(),
-                    divisions: 10,
-                    labels: _labels,
-                    activeColor: primarycolor,
-                    values: _values,
-                    onChanged: (RangeValues values) {
-                      setState(() {
-                        this.selectedMinPrice = values.start.toInt();
-                        this.selectedMaxPrice = values.end.toInt();
-                        _values = values;
-                        _labels = RangeLabels('${values.start.toString()}\ Rs',
-                            '${values.end.toString()}\Rs');
-                      });
-                    }),
+              Container(
+                width: data.size.width * 1,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 35),
+                  child: RangeSlider(
+                      min: widget.minPrice.toDouble(),
+                      max: widget.maxPrice.toDouble(),
+                      divisions: 10,
+                      labels: _labels,
+                      activeColor: primarycolor,
+                      values: _values,
+                      onChanged: (RangeValues values) {
+                        setState(() {
+                          this.selectedMinPrice = values.start.toInt();
+                          this.selectedMaxPrice = values.end.toInt();
+                          _values = values;
+                          _labels = RangeLabels(
+                              '${values.start.toString()}\ Rs',
+                              '${values.end.toString()}\Rs');
+                        });
+                      }),
+                ),
               ),
               Container(
                 width: data.size.width * 0.97,
-                //height: 65.0,
-                // child: Card(
-                //   shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(32.0)),
-                //   child: Padding(
-                //     padding: const EdgeInsets.all(8.0),
-                //     child:
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
@@ -254,20 +253,8 @@ class _FilterState extends State<Filter> {
                         hintText: AppLocalizations.of(context)
                             .translate("Drop Down Hint"),
                       ),
-                      // child: Text(
-                      //   'Select Region',
-                      //   style: TextStyle(
-                      //     color: primarycolor,
-                      //     fontSize: 17.0,
-                      //   ),
-                      //   textAlign: TextAlign.left,
-                      //   //overflow: TextOverflow.clip,
-                      //   //maxLines: 5,
-                      // ),
                     ),
                   ],
-                  //   ),
-                  // ),
                 ),
               ),
               Row(

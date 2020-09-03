@@ -272,7 +272,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
               AppLocalizations.of(context).translate('Requirement List'),
               style: Theme.of(context).textTheme.headline1.apply(
                     color: Colors.white,
-                    letterSpacingDelta: -5,
+                    letterSpacingDelta: -2,
                   ),
             ),
           ),
@@ -336,6 +336,7 @@ class _ProdReqViewScreenState extends State<ProdReqViewScreen> {
                                       snapshot.data[index].category.imgPath,
                                 ),
                           radius: 30,
+                          backgroundColor: Colors.grey[300],
                         ),
                         title: Padding(
                           padding: const EdgeInsets.all(8.0),

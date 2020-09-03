@@ -16,6 +16,17 @@ class Transaction {
   String razorpaySignature;
   String deliveryAddress;
   int totalAmount;
+  DateTime completionDate;
+  DateTime deliveryDate;
+  int deliveryStauts;
+  int transactionAmount;
+  int packagingAmount;
+  int deliveryAmount;
+  int productCharge;
+
+  static int DELIVERY_PREPARING_TO_DELIVER = 1;
+  static int DELIVERY_ON_THE_WAY = 2;
+  static int DELIVERD = 3;
 
   Transaction({
     this.transactionId,
@@ -26,5 +37,13 @@ class Transaction {
     this.isProdBidId,
     this.endDate,
     this.totalAmount,
+    this.completionDate,
+    this.deliveryStauts,
+    this.deliveryDate,
+    this.deliveryAddress,
+    this.productCharge,
+    this.deliveryAmount,
+    this.packagingAmount,
+    this.transactionAmount,
   });
 }

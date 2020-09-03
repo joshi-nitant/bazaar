@@ -57,7 +57,9 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
   String errorPrice;
   String errorQuantity;
   bool _initialLoad = true;
-
+  double _TRANSACTION_CHARGE_PERCENTAGE;
+  double _DELIVERY_CHARGE_PER_KM;
+  Function _checkUserIsLoggedIn;
   bool _validator() {
     if (_validatorQuantity() && _validatorPrice()) {
       print("success");
@@ -188,7 +190,10 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
       var routeArgs =
           ModalRoute.of(context).settings.arguments as Map<String, dynamic>;
       Object _detailObject = routeArgs['object'];
-
+      _TRANSACTION_CHARGE_PERCENTAGE =
+          routeArgs['_TRANSACTION_CHARGE_PERCENTAGE'];
+      _DELIVERY_CHARGE_PER_KM = routeArgs['DELIVERY_CHARGE_PER_KM'];
+      _checkUserIsLoggedIn = routeArgs['checkUserIsLoggedIn'];
       if (_detailObject is Product) {
         product = _detailObject;
         isProduct = true;
@@ -219,7 +224,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
         );
         double distance = await _getDistance(startCoordinate, endCoordinate);
         distance = distance / 1000;
-        _deliveryAmount = (distance * _costPerKm).toInt();
+        _deliveryAmount = (distance * _DELIVERY_CHARGE_PER_KM).toInt();
       }
       String jsonString = await _getCategoryList();
       var jsonData = json.decode(jsonString);
@@ -391,6 +396,21 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                   FocusManager.instance.primaryFocus.unfocus();
                   Navigator.of(context).pop();
                 });
+      } else if (data['response_code'] == 409) {
+        String text = "Sorry!!!";
+        String dialogMesage = "Your pan card is not yet approved.";
+        String buttonMessage = "Ok!!";
+        // _showMyDialog(text, dialogMesage, buttonMessage);
+        CustomDialog.openDialog(
+                context: context,
+                title: text,
+                message: dialogMesage,
+                mainIcon: Icons.close,
+                subIcon: Icons.error)
+            .then((value) => () {
+                  FocusManager.instance.primaryFocus.unfocus();
+                  Navigator.of(context).pop();
+                });
       } else if (data['response_code'] == 100) {
         String text = "Congratulations!!!";
         String dialogMesage = "Offer sent successfully.";
@@ -458,27 +478,50 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
     );
   }
 
-  Widget firstCardInnerRow(
-      String text, BuildContext context, TextDirection direction) {
+  Widget firstCardInnerRow(String text, BuildContext context,
+      TextDirection direction, double fontSizeDetla) {
     return Text(
       text,
       textDirection: direction,
       //softWrap: false,
       //overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.bodyText2.apply(),
+      style: Theme.of(context)
+          .textTheme
+          .bodyText2
+          .apply(fontSizeDelta: fontSizeDetla),
     );
   }
 
-  void _checkUserIsLoggedIn() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
-      Navigator.of(context).pushReplacementNamed(SingUpScreen.routeName);
+  // void _checkUserIsLoggedIn() async {
+  //   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  //   if (sharedPreferences.getInt(User.USER_ID_SHARED_PREFERNCE) == null) {
+  //     Navigator.of(context).pushReplacementNamed(SingUpScreen.routeName);
+  //   }
+  // }
+
+  String getTransactionCharge() {
+    if (!isSeller) {
+      return "0";
     }
+  }
+
+  String getPackagingCharge() {
+    if (!isSeller) {
+      return "0";
+    }
+  }
+
+  String getDeliveryCharge() {
+    if (!isSeller)
+      return this.userId == null && !isSeller
+          ? "0"
+          : _deliveryAmount.toString();
   }
 
   @override
   Widget build(BuildContext context) {
     double _detlaValue = 0;
+    double _belowDetla = -2;
     final data = MediaQuery.of(context);
     final curScaleFactor = MediaQuery.of(context).textScaleFactor;
     final appBar = AppBar(
@@ -512,18 +555,21 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                   children: <Widget>[
                     Container(
                       height: isSeller
-                          ? data.size.height * 0.25
-                          : data.size.height * 0.30,
+                          ? data.size.height * 0.18
+                          : data.size.height * 0.25,
                       width: data.size.width,
-                      margin: EdgeInsets.all(data.size.width * 0.02),
                       child: Card(
-                        child: FittedBox(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: <Widget>[
-                              Row(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            //image
+                            Container(
+                              height: isSeller
+                                  ? data.size.height * 0.18
+                                  : data.size.height * 0.25,
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
+                                children: <Widget>[
                                   isSeller
                                       ? GestureDetector(
                                           onTap: () {
@@ -536,6 +582,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                                     url: Utils.URL +
                                                         "images/" +
                                                         category.imgPath,
+                                                    isNetworkImage: true,
                                                   );
                                                 },
                                               ),
@@ -548,7 +595,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                                   category.imgPath,
                                             ),
                                             backgroundColor: Colors.grey[200],
-                                            radius: data.size.height * 0.06,
+                                            radius: data.size.height * 0.07,
                                           ),
                                         )
                                       : GestureDetector(
@@ -562,6 +609,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                                     url: Utils.URL +
                                                         "productImage/" +
                                                         product.image,
+                                                    isNetworkImage: true,
                                                   );
                                                 },
                                               ),
@@ -574,108 +622,240 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                                   product.image,
                                             ),
                                             backgroundColor: Colors.grey[200],
-                                            radius: data.size.height * 0.06,
+                                            radius: data.size.height * 0.07,
                                           ),
                                         ),
                                 ],
                               ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
+                            ),
+
+                            //details
+                            Container(
+                              height: isSeller
+                                  ? data.size.height * 0.20
+                                  : data.size.height * 0.25,
+                              margin: EdgeInsets.only(left: 15.0),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
                                   Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: <Widget>[
-                                        firstCardInnerRow(
-                                          AppLocalizations.of(context)
-                                              .translate(category.name),
-                                          context,
-                                          TextDirection.ltr,
-                                        ),
-                                        firstCardInnerRow(
-                                          'Location',
-                                          context,
-                                          TextDirection.ltr,
-                                        ),
-                                        if (isSeller == false)
-                                          firstCardInnerRow(
-                                            'Delivery Charges',
-                                            context,
-                                            TextDirection.ltr,
-                                          ),
-                                        if (isSeller == false)
-                                          firstCardInnerRow(
-                                            'Packaging Charges',
-                                            context,
-                                            TextDirection.ltr,
-                                          ),
-                                        if (isSeller == false)
-                                          firstCardInnerRow(
-                                            'Transaction Charges',
-                                            context,
-                                            TextDirection.ltr,
-                                          ),
-                                      ],
+                                    padding: const EdgeInsets.only(bottom: 6.0),
+                                    child: firstCardInnerRow(
+                                      AppLocalizations.of(context)
+                                          .translate(category.name),
+                                      context,
+                                      TextDirection.ltr,
+                                      2,
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: <Widget>[
-                                        isProduct
-                                            ? firstCardInnerRow(
-                                                product.breed,
-                                                context,
-                                                TextDirection.rtl,
-                                              )
-                                            : firstCardInnerRow(
-                                                requirement.breed,
-                                                context,
-                                                TextDirection.rtl,
-                                              ),
-                                        firstCardInnerRow(
-                                          "${_ownerUser.city}",
-                                          context,
-                                          TextDirection.rtl,
-                                        ),
-                                        if (!isSeller)
-                                          firstCardInnerRow(
-                                            this.userId == null && !isSeller
-                                                ? "0"
-                                                : _deliveryAmount.toString(),
-                                            context,
-                                            TextDirection.rtl,
-                                          ),
-                                        if (!isSeller)
-                                          firstCardInnerRow(
-                                            "0",
-                                            context,
-                                            TextDirection.rtl,
-                                          ),
-                                        if (!isSeller)
-                                          firstCardInnerRow(
-                                            "0",
-                                            context,
-                                            TextDirection.rtl,
-                                          ),
-                                      ],
+                                    padding: const EdgeInsets.only(bottom: 6.0),
+                                    child: firstCardInnerRow(
+                                      "${_ownerUser.city}",
+                                      context,
+                                      TextDirection.rtl,
+                                      -3,
                                     ),
                                   ),
+                                  if (isSeller == false)
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 6.0),
+                                      child: firstCardInnerRow(
+                                        'Delivery Charges = ' +
+                                            getDeliveryCharge() +
+                                            '\u20B9',
+                                        context,
+                                        TextDirection.ltr,
+                                        -2,
+                                      ),
+                                    ),
+                                  if (isSeller == false)
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 6.0),
+                                      child: firstCardInnerRow(
+                                        'Packaging Charges = ' +
+                                            getPackagingCharge() +
+                                            '\u20B9',
+                                        context,
+                                        TextDirection.ltr,
+                                        -2,
+                                      ),
+                                    ),
+                                  if (isSeller == false)
+                                    firstCardInnerRow(
+                                      'Transaction Charge = ' +
+                                          getTransactionCharge() +
+                                          '\u20B9',
+                                      context,
+                                      TextDirection.ltr,
+                                      -2,
+                                    ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                        // child: Column(
+                        //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        //   children: <Widget>[
+                        //     Row(
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       children: [
+                        //         isSeller
+                        //             ? GestureDetector(
+                        //                 onTap: () {
+                        //                   Navigator.push(
+                        //                     context,
+                        //                     MaterialPageRoute(
+                        //                       builder: (_) {
+                        //                         return DetailScreen(
+                        //                           tag: "qualityCertificate",
+                        //                           url: Utils.URL +
+                        //                               "images/" +
+                        //                               category.imgPath,
+                        //                         );
+                        //                       },
+                        //                     ),
+                        //                   );
+                        //                 },
+                        //                 child: CircleAvatar(
+                        //                   backgroundImage: NetworkImage(
+                        //                     Utils.URL +
+                        //                         "images/" +
+                        //                         category.imgPath,
+                        //                   ),
+                        //                   backgroundColor: Colors.grey[200],
+                        //                   radius: data.size.height * 0.06,
+                        //                 ),
+                        //               )
+                        //             : GestureDetector(
+                        //                 onTap: () {
+                        //                   Navigator.push(
+                        //                     context,
+                        //                     MaterialPageRoute(
+                        //                       builder: (_) {
+                        //                         return DetailScreen(
+                        //                           tag: "qualityCertificate",
+                        //                           url: Utils.URL +
+                        //                               "productImage/" +
+                        //                               product.image,
+                        //                         );
+                        //                       },
+                        //                     ),
+                        //                   );
+                        //                 },
+                        //                 child: CircleAvatar(
+                        //                   backgroundImage: NetworkImage(
+                        //                     Utils.URL +
+                        //                         "productImage/" +
+                        //                         product.image,
+                        //                   ),
+                        //                   backgroundColor: Colors.grey[200],
+                        //                   radius: data.size.height * 0.06,
+                        //                 ),
+                        //               ),
+                        //       ],
+                        //     ),
+                        //     Row(
+                        //       mainAxisAlignment:
+                        //           MainAxisAlignment.spaceAround,
+                        //       crossAxisAlignment: CrossAxisAlignment.start,
+                        //       children: <Widget>[
+                        //         Padding(
+                        //           padding: const EdgeInsets.all(8.0),
+                        //           child: Column(
+                        //             crossAxisAlignment:
+                        //                 CrossAxisAlignment.start,
+                        //             mainAxisAlignment:
+                        //                 MainAxisAlignment.spaceEvenly,
+                        //             children: <Widget>[
+                        //               firstCardInnerRow(
+                        //                 AppLocalizations.of(context)
+                        //                     .translate(category.name),
+                        //                 context,
+                        //                 TextDirection.ltr,
+                        //               ),
+                        //               firstCardInnerRow(
+                        //                 'Location',
+                        //                 context,
+                        //                 TextDirection.ltr,
+                        //               ),
+                        //               if (isSeller == false)
+                        //                 firstCardInnerRow(
+                        //                   'Delivery Charges',
+                        //                   context,
+                        //                   TextDirection.ltr,
+                        //                 ),
+                        //               if (isSeller == false)
+                        //                 firstCardInnerRow(
+                        //                   'Packaging Charges',
+                        //                   context,
+                        //                   TextDirection.ltr,
+                        //                 ),
+                        //               if (isSeller == false)
+                        //                 firstCardInnerRow(
+                        //                   'Transaction Charges',
+                        //                   context,
+                        //                   TextDirection.ltr,
+                        //                 ),
+                        //             ],
+                        //           ),
+                        //         ),
+                        //         Padding(
+                        //           padding: const EdgeInsets.all(8.0),
+                        //           child: Column(
+                        //             crossAxisAlignment:
+                        //                 CrossAxisAlignment.end,
+                        //             mainAxisAlignment:
+                        //                 MainAxisAlignment.spaceEvenly,
+                        //             children: <Widget>[
+                        //               isProduct
+                        //                   ? firstCardInnerRow(
+                        //                       product.breed,
+                        //                       context,
+                        //                       TextDirection.rtl,
+                        //                     )
+                        //                   : firstCardInnerRow(
+                        //                       requirement.breed,
+                        //                       context,
+                        //                       TextDirection.rtl,
+                        //                     ),
+                        //               firstCardInnerRow(
+                        //                 "${_ownerUser.city}",
+                        //                 context,
+                        //                 TextDirection.rtl,
+                        //               ),
+                        //               if (!isSeller)
+                        //                 firstCardInnerRow(
+                        //                   this.userId == null && !isSeller
+                        //                       ? "0"
+                        //                       : _deliveryAmount.toString(),
+                        //                   context,
+                        //                   TextDirection.rtl,
+                        //                 ),
+                        //               if (!isSeller)
+                        //                 firstCardInnerRow(
+                        //                   "0",
+                        //                   context,
+                        //                   TextDirection.rtl,
+                        //                 ),
+                        //               if (!isSeller)
+                        //                 firstCardInnerRow(
+                        //                   "0",
+                        //                   context,
+                        //                   TextDirection.rtl,
+                        //                 ),
+                        //             ],
+                        //           ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ],
+                        // ),
+
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25.0)),
                         color: Colors.grey[200],
@@ -705,7 +885,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                     Padding(
                                       padding: EdgeInsets.only(left: 1.0),
                                       child: isProduct
-                                          ? Text(product.remainingQty,
+                                          ? Text(product.remainingQty + "QTL",
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .headline2
@@ -739,7 +919,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                             fontSizeFactor:
                                                 MediaQuery.of(context)
                                                     .textScaleFactor,
-                                            fontSizeDelta: _detlaValue,
+                                            fontSizeDelta: _belowDetla,
                                           )),
                                 ),
                               ],
@@ -797,7 +977,7 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                             fontSizeFactor:
                                                 MediaQuery.of(context)
                                                     .textScaleFactor,
-                                            fontSizeDelta: _detlaValue,
+                                            fontSizeDelta: _belowDetla,
                                           ),
                                     ),
                                   ],
@@ -872,9 +1052,11 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                             MaterialPageRoute(
                               builder: (_) {
                                 return DetailScreen(
-                                    tag: "qualityCertificate",
-                                    url:
-                                        "${Utils.URL}qualityCertificate/${product.qualityCertificate}");
+                                  tag: "qualityCertificate",
+                                  url:
+                                      "${Utils.URL}qualityCertificate/${product.qualityCertificate}",
+                                  isNetworkImage: true,
+                                );
                               },
                             ),
                           );
@@ -943,11 +1125,15 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                 flex: 1,
                                 child: Container(
                                   width: data.size.width * 1,
+                                  margin: EdgeInsets.only(top: 4.0),
                                   child: RaisedButton(
                                     disabledColor:
                                         Theme.of(context).primaryColorLight,
                                     onPressed: userId == null
-                                        ? _checkUserIsLoggedIn
+                                        ? () {
+                                            Navigator.of(context).pop();
+                                            _checkUserIsLoggedIn();
+                                          }
                                         : () {
                                             setState(() {
                                               FocusScope.of(context).unfocus();
@@ -971,8 +1157,8 @@ class _ProdReqDetailState extends State<ProdReqDetail> {
                                             )),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(12.0)),
-                                    elevation: 25.0,
+                                            BorderRadius.circular(10)),
+                                    //elevation: 25.0,
                                     color: Colors.white,
                                   ),
                                 ),
